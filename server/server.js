@@ -12,6 +12,19 @@ const PASSWORD = process.env.PASSWORD || 'changeme';
 app.use(cors());
 app.use(express.json());
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Alpha Kappa Psi Family Trees API',
+    status: 'running',
+    endpoints: {
+      families: '/api/families',
+      familyTree: '/api/families/:familyId/tree',
+      auth: '/api/auth'
+    }
+  });
+});
+
 // Initialize database connection
 const dbPath = process.env.DATABASE_PATH || 'database.sqlite';
 const db = new Database(dbPath);
