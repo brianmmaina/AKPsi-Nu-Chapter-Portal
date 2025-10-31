@@ -21,9 +21,9 @@ npm run dev
 
 ## Free Deployment
 
-See `DEPLOY_MANUAL_FREE.md` for step-by-step guides:
-- **Render Free Tier** (manual setup)
+See `DEPLOY.md` for step-by-step guides:
 - **Railway** (recommended - instant, free)
+- **Render Free Tier** (manual setup)
 - **Vercel + Railway** (fastest option)
 
 ## Project Structure
