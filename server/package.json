@@ -2,6 +2,9 @@
   "name": "family-trees-server",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "node --watch server.js",
     "init-db": "node init-db.js"
