@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme fonts - matching BU AKPsi aesthetic */
+@import url('https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  body {
+    @apply m-0 p-0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #1a1a1a;
+    background-color: #ffffff;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'PT Serif', serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Subtle fade + zoom-in on mount */
+@keyframes fadeZoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.fade-zoom {
+  animation: fadeZoomIn 500ms ease-out both;
+}
+
+/* Stagger helper */
+.fade-stagger-1 { animation-delay: 60ms; }
+.fade-stagger-2 { animation-delay: 120ms; }
+.fade-stagger-3 { animation-delay: 180ms; }
+.fade-stagger-4 { animation-delay: 240ms; }
+.fade-stagger-5 { animation-delay: 300ms; }
+
+/* Slight zoom on select */
+@keyframes clickZoom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.03); }
+}
+
+.click-zoom {
+  animation: clickZoom 260ms ease-out forwards;
+}
+
+/* Watermark utility - large centered AKΨ */
+.watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.watermark-inner {
+  font-family: 'PT Serif', serif;
+  font-weight: 700;
+  font-size: clamp(180px, 28vw, 320px);
+  letter-spacing: 12px;
+  color: rgba(211, 175, 55, 0.1);
+  text-align: center;
+}
+
+/* Variant: place watermark near the top (behind seal) */
+.watermark-top {
+  align-items: flex-start;
+  padding-top: 16px; /* distance from top; aligns behind seal */
+}
+
+/* Subtle repeating pattern overlay */
+.pattern-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 80px,
+      rgba(211, 175, 55, 0.15) 80px,
+      rgba(211, 175, 55, 0.15) 82px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 80px,
+      rgba(211, 175, 55, 0.15) 80px,
+      rgba(211, 175, 55, 0.15) 82px
+    );
+  background-size: 80px 80px;
+}
+
+/* Tile hover/focus system */
+.tiles:hover .tile {
+  opacity: 0.7;
+  filter: blur(0.3px);
+}
+.tiles:hover .tile:hover,
+.tiles:focus-within .tile:focus {
+  opacity: 1;
+  filter: none;
+}
+
+.tile {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, opacity 220ms ease;
+  will-change: transform, filter;
+}
+.tile:hover,
+.tile:focus-visible {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+}
+
+.tile-underline {
+  transform-origin: center;
+  transform: scaleX(0.6);
+  transition: transform 220ms ease, background-color 220ms ease;
+}
+.tile:hover .tile-underline,
+.tile:focus-visible .tile-underline {
+  transform: scaleX(1);
+  background-color: #D3AF37 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-zoom, .click-zoom, .tile, .tile-underline { animation: none; transition: none; }
+}
+
+/* Elevated deep royal background */
+.royal-bg {
+  /* Base color */
+  background-color: #000042;
+  /* Layered gradients + very subtle noise for depth */
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(900px 520px at 50% 120%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, #010236 0%, #000042 55%, #010236 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.03'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: cover, cover, cover, 256px 256px;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+}
