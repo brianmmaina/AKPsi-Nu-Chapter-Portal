@@ -90,6 +90,9 @@ const checkPassword = (req, res, next) => {
 // Auth endpoint
 app.post('/api/auth', (req, res) => {
   const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ error: 'Password required' });
+  }
   if (password === PASSWORD) {
     res.json({ success: true });
   } else {
