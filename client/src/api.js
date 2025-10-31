@@ -1,7 +1,22 @@
 import axios from 'axios';
 
+// Ensure baseURL ends with /api
+const getBaseURL = () => {
+  const envURL = import.meta.env.VITE_API_URL;
+  if (envURL) {
+    // Remove trailing slash if present
+    const cleanURL = envURL.replace(/\/$/, '');
+    // If URL already ends with /api, use as-is; otherwise append /api
+    return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
+  }
+  return '/api';
+};
+
+// Debug: Log the baseURL being used
+console.log('API BaseURL:', getBaseURL());
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getBaseURL(),
 });
 
 export const auth = {

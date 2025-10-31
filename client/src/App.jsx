@@ -53,17 +53,41 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log('Attempting login with password:', password ? '***' : 'empty');
       const response = await auth.login(password);
-      if (response.data.success) {
+      console.log('Login response:', response);
+      
+      // Check for success - handle both response.data.success and direct success
+      if (response?.data?.success === true || response?.data?.success === 'true') {
+        console.log('Login successful, updating state...');
         setIsAuthenticated(true);
         sessionStorage.setItem('authenticated', 'true');
-        const familiesData = await loadFamilies();
-        setFamiliesList(familiesData);
+        
+        // Load families before showing selection
+        try {
+          const familiesData = await loadFamilies();
+          console.log('Families loaded:', familiesData);
+          setFamiliesList(familiesData);
+        } catch (familyError) {
+          console.error('Failed to load families:', familyError);
+          setToast({ message: 'Login successful, but failed to load families. Please refresh.', type: 'error' });
+        }
+        
         setShowFamilySelection(true);
+        setPassword(''); // Clear password field
         setToast({ message: 'Welcome!', type: 'success' });
+      } else {
+        console.error('Unexpected response structure:', response);
+        setToast({ message: 'Invalid response from server', type: 'error' });
+        setPassword('');
       }
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        data: error.response?.data
+      });
       const errorMessage = error.response?.data?.error || error.message || 'Connection error. Check backend URL.';
       setToast({ message: errorMessage, type: 'error' });
       setPassword('');
@@ -80,6 +104,15 @@ function App() {
     setShowFamilySelection(true);
   };
 
+  // Debug logging for render
+  console.log('App render state:', {
+    loading,
+    isAuthenticated,
+    showFamilySelection,
+    familiesCount: familiesList.length,
+    selectedFamily: selectedFamily?.name
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen royal-bg">
@@ -91,11 +124,33 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <Login password={password} setPassword={setPassword} handleLogin={handleLogin} />;
+    return (
+      <>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+        <Login password={password} setPassword={setPassword} handleLogin={handleLogin} />
+      </>
+    );
   }
 
   if (showFamilySelection) {
-    return <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />;
+    return (
+      <>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+        <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+      </>
+    );
   }
 
   if (selectedFamily) {
