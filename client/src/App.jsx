@@ -63,7 +63,9 @@ function App() {
         setToast({ message: 'Welcome!', type: 'success' });
       }
     } catch (error) {
-      setToast({ message: 'Invalid password. Please try again.', type: 'error' });
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Connection error. Check backend URL.';
+      setToast({ message: errorMessage, type: 'error' });
       setPassword('');
     }
   };
