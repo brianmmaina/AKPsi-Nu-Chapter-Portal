@@ -19,6 +19,13 @@ cd server && npm run init-db
 npm run dev
 ```
 
+## Free Deployment
+
+See `DEPLOY_MANUAL_FREE.md` for step-by-step guides:
+- **Render Free Tier** (manual setup)
+- **Railway** (recommended - instant, free)
+- **Vercel + Railway** (fastest option)
+
 ## Project Structure
 
 ```
@@ -29,24 +36,6 @@ npm run dev
 │       ├── api.js         # API client
 │       └── themes.js      # Theme configurations
 └── server/          # Express backend
-    ├── server.js    # API server
-    ├── init-db.js   # Database initialization
-    └── database.sqlite    # SQLite database (auto-generated)
+    ├── server.js    # API server (auto-inits DB)
+    └── init-db.js   # Manual DB init (optional)
 ```
-
-## Deployment (Render)
-
-### Backend (Web Service)
-- **Build**: `cd server && npm install`
-- **Start**: `cd server && node server.js`
-- **Env Vars**: `PORT` (auto), `PASSWORD` (your password)
-
-### Frontend (Static Site)
-- **Build**: `cd client && npm install && npm run build`
-- **Publish**: `client/dist`
-- **Env Vars**: `VITE_API_URL` (your backend URL)
-
-## Adding Brothers
-
-Use the web interface (click brother → "Add Little") or modify `server/add-brother-example.js`.
-
