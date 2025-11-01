@@ -200,10 +200,27 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               {familyKey === 'wolfpack' && (
                 <div style={{ height: 6, background: '#3d5373', marginBottom: 6, borderRadius: 2 }} />
               )}
+              {familyKey === 'empire' && (
+                <div style={{ 
+                  height: 3, 
+                  background: 'linear-gradient(90deg, transparent, #c9a857, transparent)', 
+                  marginBottom: 8, 
+                  borderRadius: 2 
+                }} />
+              )}
               <div className="font-semibold" style={{ fontFamily: theme.titleFont }}>
                 {brother.name}
               </div>
-              {isTransfer && <div className="text-xs text-gray-400 mt-1">(Transfer)</div>}
+              {isTransfer && (
+                <div 
+                  className="text-xs mt-1" 
+                  style={{ 
+                    color: familyKey === 'empire' ? '#999999' : 'rgba(156, 163, 175, 1)'
+                  }}
+                >
+                  (Transfer)
+                </div>
+              )}
             </div>
           ),
           brother: brother,
