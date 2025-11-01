@@ -308,23 +308,32 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
   try {
     const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
     
+    console.log('Creating brother with data:', { family_id, name, big_id, hasPassword: !!req.body.password });
+    
     // Validate inputs
     if (!family_id || !Number.isInteger(family_id) || family_id < 1) {
       return res.status(400).json({ error: 'Invalid family_id' });
     }
     
-    const validatedName = validateString(name, 'Name', 100);
-    if (!validatedName) {
-      return res.status(400).json({ error: 'Name is required and cannot be empty' });
-    }
+    let validatedName, validatedPledgeClass, validatedMajor, validatedCareerAspirations, validatedFunFacts, validatedGraduationYear, validatedStatus, validatedIsTransfer;
     
-    const validatedPledgeClass = validateString(pledge_class, 'Pledge Class', 50);
-    const validatedMajor = validateString(major, 'Major', 100);
-    const validatedCareerAspirations = validateString(career_aspirations, 'Career Aspirations', 1000);
-    const validatedFunFacts = validateString(fun_facts, 'Fun Facts', 1000);
-    const validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
-    const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
-    const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+    try {
+      validatedName = validateString(name, 'Name', 100);
+      if (!validatedName) {
+        return res.status(400).json({ error: 'Name is required and cannot be empty' });
+      }
+      
+      validatedPledgeClass = validateString(pledge_class, 'Pledge Class', 50);
+      validatedMajor = validateString(major, 'Major', 100);
+      validatedCareerAspirations = validateString(career_aspirations, 'Career Aspirations', 1000);
+      validatedFunFacts = validateString(fun_facts, 'Fun Facts', 1000);
+      validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
+      validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
+      validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+    } catch (validationError) {
+      console.error('Validation error:', validationError);
+      return res.status(400).json({ error: validationError.message });
+    }
     
     const insertResult = await pool.query(`
       INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer)
@@ -343,19 +352,30 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
     ]);
     
     const brotherId = insertResult.rows[0].id;
+    console.log('Brother created with ID:', brotherId);
     
     // Create relationship if big_id is provided
     if (big_id && Number.isInteger(big_id) && big_id > 0) {
-      await pool.query(`
-        INSERT INTO relationships (family_id, big_id, little_id)
-        VALUES ($1, $2, $3)
-      `, [family_id, big_id, brotherId]);
+      try {
+        await pool.query(`
+          INSERT INTO relationships (family_id, big_id, little_id)
+          VALUES ($1, $2, $3)
+        `, [family_id, big_id, brotherId]);
+        console.log('Relationship created:', { family_id, big_id, little_id: brotherId });
+      } catch (relError) {
+        console.error('Error creating relationship (brother still created):', relError);
+        // Don't fail the whole request if relationship creation fails
+      }
     }
     
     res.json({ id: brotherId, success: true });
   } catch (error) {
     console.error('Error creating brother:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: error.message || 'Failed to create brother',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

@@ -85,7 +85,9 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
       onClose();
       onToast?.({ message: 'Brother added successfully!', type: 'success' });
     } catch (error) {
-      onToast?.({ message: 'Failed to add brother. Please check your password.', type: 'error' });
+      console.error('Error adding brother:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please check your password and try again.';
+      onToast?.({ message: errorMessage, type: 'error' });
     } finally {
       setSaving(false);
     }
