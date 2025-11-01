@@ -27,10 +27,22 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
     );
   }
 
+  const selectedTheme = getThemeStyles(selectedFamily.theme);
+  const themeBackground = selectedTheme?.background || '#003366';
+  const themeAccent = selectedTheme?.accent || '#D3AF37';
+
   return (
     <div className="min-h-screen royal-bg">
-      {/* Minimalist Header - Combined */}
-      <div className="glass-panel sticky top-0 z-sticky border-b" style={{ borderBottomColor: 'var(--glass-border)' }}>
+      {/* Minimalist Header - Themed */}
+      <div 
+        className="sticky top-0 z-sticky border-b"
+        style={{
+          backgroundColor: hexToRgba(themeBackground, 0.85),
+          backdropFilter: 'blur(12px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          borderBottomColor: hexToRgba(themeAccent, 0.2),
+        }}
+      >
         <div className="container">
           <div className="flex items-center justify-between" style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)' }}>
             {/* Left: Compact family name */}
@@ -41,6 +53,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   width: '28px',
                   height: '28px',
                   fontSize: '14px',
+                  borderColor: hexToRgba(themeAccent, 0.4),
+                  color: themeAccent,
                 }}
               >
                 {selectedFamily.name.charAt(0)}
@@ -50,7 +64,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                 style={{
                   fontSize: 'var(--text-base)',
                   fontFamily: 'var(--font-display)',
-                  color: 'var(--primary)',
+                  color: themeAccent,
                   letterSpacing: 'var(--tracking-wide)',
                   margin: 0,
                 }}
@@ -72,7 +86,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     onClick={() => setSelectedFamily(family)}
                     className="relative"
                     style={{
-                      padding: 'var(--space-1) var(--space-2)',
+                      padding: 'var(--space-1) var(--space-3)',
                       borderRadius: 'var(--radius-md)',
                       backgroundColor: isActive ? hexToRgba(familyAccent, 0.15) : 'transparent',
                       transition: 'all var(--motion-fast) var(--ease-standard)',
@@ -89,7 +103,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         color: isActive ? familyAccent : 'var(--text-subtle)',
                       }}
                     >
-                      {family.name.charAt(0)}
+                      {family.name}
                     </span>
                     {isActive && (
                       <span
@@ -109,17 +123,20 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               })}
             </div>
 
-            {/* Right: Change Family button */}
+            {/* Right: Back button */}
             <button
               onClick={onChangeFamily}
-              className="btn btn-glass"
+              className="btn"
               style={{
                 padding: 'var(--space-1) var(--space-3)',
                 fontSize: 'var(--text-xs)',
                 borderRadius: 'var(--radius-md)',
+                backgroundColor: hexToRgba(themeAccent, 0.15),
+                borderColor: hexToRgba(themeAccent, 0.3),
+                color: themeAccent,
               }}
             >
-              Change
+              Back
             </button>
           </div>
         </div>
