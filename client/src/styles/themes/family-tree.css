@@ -1,0 +1,48 @@
+/**
+ * Family Tree Theme Overrides
+ * 
+ * Maps family-specific themes (WOLFPACK, PRIDE, POWER, GREED, EMPIRE) to tokens.
+ * Only affects UI containers/panels around trees, NOT the tree node/edge rendering.
+ * 
+ * Tree node/edge colors remain in themes.js for ReactFlow visualization.
+ */
+
+:root {
+  /* Family-specific accents will be applied via JS getThemeStyles() */
+  /* This CSS only provides token overrides for UI panels/modals around trees */
+  
+  /* Glass surfaces for tree view containers */
+  --glass-surface: rgba(255, 255, 255, 0.1);
+  --glass-surface-elevated: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Family-specific theme classes (applied dynamically via JS) */
+.family-theme-wolfpack {
+  --accent: #3d5373;
+  --accent-subtle: rgba(61, 83, 115, 0.15);
+}
+
+.family-theme-pride {
+  --accent: #d4af7e;
+  --accent-subtle: rgba(212, 175, 126, 0.15);
+}
+
+.family-theme-power {
+  --accent: #ebd290;
+  --accent-subtle: rgba(235, 210, 144, 0.15);
+}
+
+.family-theme-greed {
+  --accent: #f4d961;
+  --accent-subtle: rgba(244, 217, 97, 0.15);
+}
+
+.family-theme-empire {
+  --accent: #c9a857;
+  --accent-subtle: rgba(201, 168, 87, 0.15);
+}
+
+/* Note: Tree node/edge rendering colors remain in themes.js */
+/* This CSS is for UI panels, modals, headers around the tree visualization */
+

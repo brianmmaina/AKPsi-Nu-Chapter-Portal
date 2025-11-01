@@ -1,0 +1,114 @@
+/**
+ * AKPsi Brand Theme Overrides
+ * 
+ * Preserves AKPsi navy/gold identity while mapping to token system.
+ * Only overrides base tokens; does not change brand colors.
+ */
+
+:root {
+  /* ============================================
+     AKPsi Brand Colors
+     ============================================ */
+  
+  /* Navy Background (AKPsi Primary) */
+  --akpsi-navy: #003366;
+  --akpsi-navy-dark: #001f44;
+  --akpsi-navy-subtle: #002244;
+  --akpsi-navy-light: #001122;
+  
+  /* Gold Accent (AKPsi Secondary) */
+  --akpsi-gold: #D3AF37;
+  --akpsi-gold-hover: #b8941e;
+  --akpsi-gold-active: #9d7a1a;
+  --akpsi-gold-light: rgba(211, 175, 55, 0.15);
+  --akpsi-gold-subtle: rgba(211, 175, 55, 0.1);
+  --akpsi-gold-muted: rgba(211, 175, 55, 0.05);
+  
+  /* Override base tokens for AKPsi pages */
+  --bg: var(--akpsi-navy);
+  --surface: var(--akpsi-navy-subtle);
+  --surface-elevated: var(--akpsi-navy-subtle);
+  
+  --text: var(--akpsi-gold);
+  --text-muted: rgba(211, 175, 55, 0.8);
+  --text-subtle: rgba(211, 175, 55, 0.6);
+  --text-on-dark: var(--akpsi-gold);
+  
+  --primary: var(--akpsi-gold);
+  --primary-hover: var(--akpsi-gold-hover);
+  --primary-active: var(--akpsi-gold-active);
+  --primary-contrast: var(--akpsi-navy);
+  --primary-light: var(--akpsi-gold-light);
+  --primary-subtle: var(--akpsi-gold-subtle);
+  
+  --accent: var(--akpsi-gold);
+  --accent-hover: var(--akpsi-gold-hover);
+  --accent-subtle: var(--akpsi-gold-light);
+  
+  --ring: rgba(211, 175, 55, 0.5);
+  
+  /* Glass surfaces on navy background */
+  --glass-surface: rgba(0, 51, 102, 0.7);
+  --glass-surface-elevated: rgba(0, 51, 102, 0.85);
+  --glass-border: rgba(211, 175, 55, 0.2);
+  --glass-border-subtle: rgba(211, 175, 55, 0.1);
+  
+  /* Borders on navy */
+  --border: rgba(211, 175, 55, 0.3);
+  --border-subtle: rgba(211, 175, 55, 0.15);
+  --divider: rgba(211, 175, 55, 0.1);
+  
+  /* Shadows with navy/gold tint */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(211, 175, 55, 0.1);
+}
+
+/* AKPsi-specific utility classes */
+.akpsi-bg {
+  background-color: var(--akpsi-navy);
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(900px 520px at 50% 120%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, var(--akpsi-navy-dark) 0%, var(--akpsi-navy) 55%, var(--akpsi-navy-dark) 100%);
+}
+
+.akpsi-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.akpsi-watermark-inner {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: clamp(180px, 28vw, 320px);
+  letter-spacing: 12px;
+  color: var(--akpsi-gold-subtle);
+  text-align: center;
+}
+
+.akpsi-pattern-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 80px,
+      var(--akpsi-gold-subtle) 80px,
+      var(--akpsi-gold-subtle) 82px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 80px,
+      var(--akpsi-gold-subtle) 80px,
+      var(--akpsi-gold-subtle) 82px
+    );
+  background-size: 80px 80px;
+}
+

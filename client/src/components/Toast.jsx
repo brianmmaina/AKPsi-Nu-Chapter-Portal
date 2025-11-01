@@ -8,23 +8,62 @@ const Toast = ({ message, type = 'info', onClose, duration = 3000 }) => {
     return () => clearTimeout(timer);
   }, [onClose, duration]);
 
-  const bgColor = {
-    success: '#10b981',
-    error: '#ef4444',
-    info: '#3b82f6',
-    warning: '#f59e0b',
-  }[type] || bgColor.info;
+  const typeStyles = {
+    success: {
+      bg: 'var(--success)',
+      border: 'var(--success)',
+    },
+    error: {
+      bg: 'var(--danger)',
+      border: 'var(--danger)',
+    },
+    info: {
+      bg: 'var(--info)',
+      border: 'var(--info)',
+    },
+    warning: {
+      bg: 'var(--warning)',
+      border: 'var(--warning)',
+    },
+  }[type] || typeStyles.info;
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg fade-zoom"
-      style={{ backgroundColor: bgColor, color: 'white', minWidth: '300px' }}
+      className="glass-panel-elevated fixed top-4 right-4 z-toast rounded-lg shadow-xl fade-zoom"
+      role="alert"
+      aria-live="polite"
+      style={{
+        padding: 'var(--space-4) var(--space-5)',
+        backgroundColor: typeStyles.bg,
+        borderColor: typeStyles.border,
+        color: 'white',
+        minWidth: '300px',
+        maxWidth: '400px',
+      }}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-medium">{message}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
+        <span
+          style={{
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--weight-medium)',
+            lineHeight: 'var(--leading-normal)',
+          }}
+        >
+          {message}
+        </span>
         <button
           onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200 text-xl leading-none"
+          className="btn btn-sm"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'white',
+            padding: 'var(--space-1)',
+            fontSize: 'var(--text-xl)',
+            lineHeight: '1',
+            minWidth: 'auto',
+          }}
+          aria-label="Close notification"
         >
           ×
         </button>

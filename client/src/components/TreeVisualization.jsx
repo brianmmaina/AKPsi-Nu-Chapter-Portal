@@ -225,7 +225,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div className="text-xl" style={{ color: theme.accent || '#D3AF37', fontFamily: "'PT Serif', serif" }}>
+        <div
+          style={{
+            fontSize: 'var(--text-xl)',
+            fontFamily: 'var(--font-display)',
+            color: theme.accent || 'var(--primary)',
+          }}
+        >
           Loading family tree...
         </div>
       </div>
@@ -236,35 +242,34 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div className="text-center max-w-md px-6">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: theme.accent || '#D3AF37', fontFamily: "'PT Serif', serif" }}>
+        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+          <h2
+            className="font-bold mb-4"
+            style={{
+              fontSize: 'var(--text-3xl)',
+              fontFamily: 'var(--font-display)',
+              color: theme.accent || 'var(--primary)',
+              marginBottom: 'var(--space-4)',
+            }}
+          >
             {family.name} Family Tree
           </h2>
-          <p className="text-lg mb-6" style={{ color: theme.nodeText || '#ffffff' }}>
+          <p
+            className="mb-6"
+            style={{
+              fontSize: 'var(--text-lg)',
+              color: theme.nodeText || 'var(--text-on-dark)',
+              marginBottom: 'var(--space-6)',
+            }}
+          >
             {error}
           </p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={loadTreeData}
-              className="px-6 py-3 rounded-md font-medium transition duration-200"
-              style={{ 
-                backgroundColor: theme.accent || '#D3AF37', 
-                color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
-                border: `2px solid ${theme.accent || '#D3AF37'}`,
-              }}
-            >
+          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
+            <button onClick={loadTreeData} className="btn btn-primary">
               Retry
             </button>
             {onChangeFamily && (
-              <button
-                onClick={onChangeFamily}
-                className="px-6 py-3 rounded-md font-medium transition duration-200"
-                style={{ 
-                  backgroundColor: 'transparent', 
-                  color: theme.accent || '#D3AF37',
-                  border: `2px solid ${theme.accent || '#D3AF37'}`,
-                }}
-              >
+              <button onClick={onChangeFamily} className="btn btn-secondary">
                 Back to Families
               </button>
             )}
@@ -278,38 +283,40 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   if (brothers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div className="text-center max-w-md px-6">
-          <h2 className="text-3xl font-bold mb-4" style={{ color: theme.accent || '#D3AF37', fontFamily: "'PT Serif', serif" }}>
+        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+          <h2
+            className="font-bold mb-4"
+            style={{
+              fontSize: 'var(--text-3xl)',
+              fontFamily: 'var(--font-display)',
+              color: theme.accent || 'var(--primary)',
+              marginBottom: 'var(--space-4)',
+            }}
+          >
             {family.name} Family Tree
           </h2>
-          <p className="text-lg mb-6" style={{ color: theme.nodeText || '#ffffff' }}>
+          <p
+            className="mb-6"
+            style={{
+              fontSize: 'var(--text-lg)',
+              color: theme.nodeText || 'var(--text-on-dark)',
+              marginBottom: 'var(--space-6)',
+            }}
+          >
             This family tree is empty. Add the first brother to get started!
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
             <button
               onClick={() => {
                 setShowAddForm(true);
                 setAddFormParent(null);
               }}
-              className="px-6 py-3 rounded-md font-medium transition duration-200"
-              style={{ 
-                backgroundColor: theme.accent || '#D3AF37', 
-                color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
-                border: `2px solid ${theme.accent || '#D3AF37'}`,
-              }}
+              className="btn btn-primary"
             >
               Add First Brother
             </button>
             {onChangeFamily && (
-              <button
-                onClick={onChangeFamily}
-                className="px-6 py-3 rounded-md font-medium transition duration-200"
-                style={{ 
-                  backgroundColor: 'transparent', 
-                  color: theme.accent || '#D3AF37',
-                  border: `2px solid ${theme.accent || '#D3AF37'}`,
-                }}
-              >
+              <button onClick={onChangeFamily} className="btn btn-secondary">
                 Back to Families
               </button>
             )}

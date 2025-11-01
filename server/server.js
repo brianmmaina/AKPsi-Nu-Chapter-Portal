@@ -7,10 +7,94 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const PASSWORD = process.env.PASSWORD || 'changeme';
 
-app.use(cors());
+// Security: Require password to be set (no default fallback)
+const PASSWORD = process.env.PASSWORD;
+if (!PASSWORD) {
+  console.error('ERROR: PASSWORD environment variable must be set');
+  process.exit(1);
+}
+
+// CORS: Restrict to frontend domain in production, allow all in dev
+const FRONTEND_URL = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? undefined : '*');
+if (FRONTEND_URL && FRONTEND_URL !== '*') {
+  app.use(cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  }));
+} else {
+  app.use(cors());
+}
+
 app.use(express.json());
+
+// Rate limiting middleware (simple in-memory store)
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = 5;
+
+const rateLimit = (req, res, next) => {
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const key = `rate_limit_${ip}`;
+  const now = Date.now();
+  
+  const record = rateLimitStore.get(key);
+  if (record) {
+    // Clean old attempts
+    const recentAttempts = record.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    if (recentAttempts.length >= MAX_ATTEMPTS) {
+      const timeLeft = Math.ceil((RATE_LIMIT_WINDOW - (now - recentAttempts[0])) / 1000 / 60);
+      return res.status(429).json({ 
+        error: `Too many attempts. Please try again in ${timeLeft} minute(s).` 
+      });
+    }
+    
+    recentAttempts.push(now);
+    rateLimitStore.set(key, { attempts: recentAttempts });
+  } else {
+    rateLimitStore.set(key, { attempts: [now] });
+  }
+  
+  // Cleanup old entries (every 100 requests)
+  if (Math.random() < 0.01) {
+    for (const [k, v] of rateLimitStore.entries()) {
+      const filtered = v.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
+      if (filtered.length === 0) {
+        rateLimitStore.delete(k);
+      }
+    }
+  }
+  
+  next();
+};
+
+// Input validation helpers
+const validateString = (value, fieldName, maxLength = 500) => {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') {
+    throw new Error(`${fieldName} must be a string`);
+  }
+  if (value.length > maxLength) {
+    throw new Error(`${fieldName} exceeds maximum length of ${maxLength} characters`);
+  }
+  return value.trim() || null;
+};
+
+const validateInteger = (value, fieldName, min = null, max = null) => {
+  if (value === undefined || value === null || value === '') return null;
+  const num = parseInt(value, 10);
+  if (isNaN(num)) {
+    throw new Error(`${fieldName} must be a valid number`);
+  }
+  if (min !== null && num < min) {
+    throw new Error(`${fieldName} must be at least ${min}`);
+  }
+  if (max !== null && num > max) {
+    throw new Error(`${fieldName} must be at most ${max}`);
+  }
+  return num;
+};
 
 // Root route
 app.get('/', (req, res) => {
@@ -87,10 +171,10 @@ const checkPassword = (req, res, next) => {
   }
 };
 
-// Auth endpoint
-app.post('/api/auth', (req, res) => {
+// Auth endpoint (with rate limiting)
+app.post('/api/auth', rateLimit, (req, res) => {
   const { password } = req.body;
-  if (!password) {
+  if (!password || typeof password !== 'string') {
     return res.status(400).json({ error: 'Password required' });
   }
   if (password === PASSWORD) {
@@ -136,65 +220,117 @@ app.get('/api/brothers/:id', (req, res) => {
 
 // Create new brother
 app.post('/api/brothers', checkPassword, (req, res) => {
-  const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
-  
-  const insert = db.prepare(`
-    INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  
-  const result = insert.run(
-    family_id,
-    name,
-    pledge_class || null,
-    graduation_year || null,
-    major || null,
-    career_aspirations || null,
-    fun_facts || null,
-    status || 'studying',
-    is_transfer ? 1 : 0
-  );
-  
-  const brotherId = result.lastInsertRowid;
-  
-  // Create relationship if big_id is provided
-  if (big_id) {
-    const insertRel = db.prepare(`
-      INSERT INTO relationships (family_id, big_id, little_id)
-      VALUES (?, ?, ?)
+  try {
+    const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
+    
+    // Validate inputs
+    if (!family_id || !Number.isInteger(family_id) || family_id < 1) {
+      return res.status(400).json({ error: 'Invalid family_id' });
+    }
+    
+    const validatedName = validateString(name, 'Name', 100);
+    if (!validatedName) {
+      return res.status(400).json({ error: 'Name is required and cannot be empty' });
+    }
+    
+    const validatedPledgeClass = validateString(pledge_class, 'Pledge Class', 50);
+    const validatedMajor = validateString(major, 'Major', 100);
+    const validatedCareerAspirations = validateString(career_aspirations, 'Career Aspirations', 1000);
+    const validatedFunFacts = validateString(fun_facts, 'Fun Facts', 1000);
+    const validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
+    const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
+    const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+    
+    const insert = db.prepare(`
+      INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insertRel.run(family_id, big_id, brotherId);
+    
+    const result = insert.run(
+      family_id,
+      validatedName,
+      validatedPledgeClass,
+      validatedGraduationYear,
+      validatedMajor,
+      validatedCareerAspirations,
+      validatedFunFacts,
+      validatedStatus,
+      validatedIsTransfer
+    );
+    
+    const brotherId = result.lastInsertRowid;
+    
+    // Create relationship if big_id is provided
+    if (big_id && Number.isInteger(big_id) && big_id > 0) {
+      const insertRel = db.prepare(`
+        INSERT INTO relationships (family_id, big_id, little_id)
+        VALUES (?, ?, ?)
+      `);
+      insertRel.run(family_id, big_id, brotherId);
+    }
+    
+    res.json({ id: brotherId, success: true });
+  } catch (error) {
+    console.error('Error creating brother:', error);
+    res.status(400).json({ error: error.message || 'Invalid input data' });
   }
-  
-  res.json({ id: brotherId, success: true });
 });
 
 // Update brother
 app.put('/api/brothers/:id', checkPassword, (req, res) => {
-  const { id } = req.params;
-  const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer } = req.body;
-  
-  const update = db.prepare(`
-    UPDATE brothers 
-    SET name = ?, pledge_class = ?, graduation_year = ?, major = ?, 
-        career_aspirations = ?, fun_facts = ?, status = ?, is_transfer = ?,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  
-  update.run(
-    name,
-    pledge_class || null,
-    graduation_year || null,
-    major || null,
-    career_aspirations || null,
-    fun_facts || null,
-    status || 'studying',
-    is_transfer ? 1 : 0,
-    id
-  );
-  
-  res.json({ success: true });
+  try {
+    const { id } = req.params;
+    const brotherId = parseInt(id, 10);
+    
+    if (!brotherId || brotherId < 1) {
+      return res.status(400).json({ error: 'Invalid brother ID' });
+    }
+    
+    const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer } = req.body;
+    
+    // Validate inputs
+    const validatedName = validateString(name, 'Name', 100);
+    if (!validatedName) {
+      return res.status(400).json({ error: 'Name is required and cannot be empty' });
+    }
+    
+    const validatedPledgeClass = validateString(pledge_class, 'Pledge Class', 50);
+    const validatedMajor = validateString(major, 'Major', 100);
+    const validatedCareerAspirations = validateString(career_aspirations, 'Career Aspirations', 1000);
+    const validatedFunFacts = validateString(fun_facts, 'Fun Facts', 1000);
+    const validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
+    const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
+    const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+    
+    const update = db.prepare(`
+      UPDATE brothers 
+      SET name = ?, pledge_class = ?, graduation_year = ?, major = ?, 
+          career_aspirations = ?, fun_facts = ?, status = ?, is_transfer = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+    
+    const result = update.run(
+      validatedName,
+      validatedPledgeClass,
+      validatedGraduationYear,
+      validatedMajor,
+      validatedCareerAspirations,
+      validatedFunFacts,
+      validatedStatus,
+      validatedIsTransfer,
+      brotherId
+    );
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Brother not found' });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating brother:', error);
+    res.status(400).json({ error: error.message || 'Invalid input data' });
+  }
 });
 
 // Update relationship (change Big)

@@ -1,105 +1,89 @@
+/**
+ * Main Stylesheet - Token-First Design System
+ * 
+ * Import order:
+ * 1. Tailwind base (reset)
+ * 2. Design tokens (base)
+ * 3. Theme overrides (AKPsi, Family Tree)
+ * 4. Base component primitives
+ * 5. Tailwind components & utilities
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Theme fonts - matching BU AKPsi aesthetic */
-@import url('https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&display=swap');
+/* Design Tokens (Must load first) */
+@import './styles/tokens.css';
+
+/* Theme Overrides */
+@import './styles/themes/akpsi.css';
+@import './styles/themes/family-tree.css';
+
+/* Base Component Primitives */
+@import './styles/base.css';
+
+/* ============================================
+   FONT LOADING (Optimized)
+   ============================================ */
+/* Note: Move to index.html <link> tags for better performance */
 
 @layer base {
   body {
-    @apply m-0 p-0;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #1a1a1a;
-    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'PT Serif', serif;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tighter);
   }
 }
 
-/* Subtle fade + zoom-in on mount */
+/* ============================================
+   LEGACY UTILITIES (Migrate to tokens)
+   ============================================ */
+
+/* Fade + Zoom Animation */
 @keyframes fadeZoomIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .fade-zoom {
-  animation: fadeZoomIn 500ms ease-out both;
+  animation: fadeZoomIn var(--motion-med) var(--ease-standard) both;
 }
 
-/* Stagger helper */
-.fade-stagger-1 { animation-delay: 60ms; }
-.fade-stagger-2 { animation-delay: 120ms; }
-.fade-stagger-3 { animation-delay: 180ms; }
-.fade-stagger-4 { animation-delay: 240ms; }
-.fade-stagger-5 { animation-delay: 300ms; }
-
-/* Slight zoom on select */
+/* Click Zoom */
 @keyframes clickZoom {
-  from { transform: scale(1); }
-  to   { transform: scale(1.03); }
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
 }
 
 .click-zoom {
-  animation: clickZoom 260ms ease-out forwards;
+  animation: clickZoom var(--motion-med) var(--ease-out) forwards;
 }
 
-/* Watermark utility - large centered AKΨ */
-.watermark {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.watermark-inner {
-  font-family: 'PT Serif', serif;
-  font-weight: 700;
-  font-size: clamp(180px, 28vw, 320px);
-  letter-spacing: 12px;
-  color: rgba(211, 175, 55, 0.1);
-  text-align: center;
-}
+/* ============================================
+   TILE SYSTEM (Family Selection)
+   ============================================ */
 
-/* Variant: place watermark near the top (behind seal) */
-.watermark-top {
-  align-items: flex-start;
-  padding-top: 16px; /* distance from top; aligns behind seal */
-}
-
-/* Subtle repeating pattern overlay */
-.pattern-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.04;
-  background-image: 
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 80px,
-      rgba(211, 175, 55, 0.15) 80px,
-      rgba(211, 175, 55, 0.15) 82px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 80px,
-      rgba(211, 175, 55, 0.15) 80px,
-      rgba(211, 175, 55, 0.15) 82px
-    );
-  background-size: 80px 80px;
-}
-
-/* Tile hover/focus system */
 .tiles:hover .tile {
   opacity: 0.7;
   filter: blur(0.3px);
 }
+
 .tiles:hover .tile:hover,
 .tiles:focus-within .tile:focus {
   opacity: 1;
@@ -107,40 +91,142 @@
 }
 
 .tile {
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, opacity 220ms ease;
+  transition: transform var(--motion-med) var(--ease-standard),
+              box-shadow var(--motion-med) var(--ease-standard),
+              border-color var(--motion-med) var(--ease-standard),
+              opacity var(--motion-med) var(--ease-standard);
   will-change: transform, filter;
 }
+
 .tile:hover,
 .tile:focus-visible {
   transform: translateY(-6px) scale(1.015);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  box-shadow: var(--shadow-xl);
 }
 
 .tile-underline {
   transform-origin: center;
   transform: scaleX(0.6);
-  transition: transform 220ms ease, background-color 220ms ease;
+  transition: transform var(--motion-med) var(--ease-standard),
+              background-color var(--motion-med) var(--ease-standard);
 }
+
 .tile:hover .tile-underline,
 .tile:focus-visible .tile-underline {
   transform: scaleX(1);
-  background-color: #D3AF37 !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fade-zoom, .click-zoom, .tile, .tile-underline { animation: none; transition: none; }
+/* ============================================
+   FAMILY CREST
+   ============================================ */
+
+.family-crest {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-subtle) 100%);
+  border: 2px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: var(--weight-bold);
+  color: var(--primary);
+  font-family: var(--font-display);
+  transition: all var(--motion-med) var(--ease-standard);
 }
 
-/* Elevated deep royal background */
+.family-crest:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--accent-subtle) 0%, var(--primary-light) 100%);
+  transform: scale(1.05);
+}
+
+.family-crest.active {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-subtle) 100%);
+  color: var(--primary);
+  box-shadow: 0 0 20px var(--primary-light);
+}
+
+/* ============================================
+   LEGACY CLASSES (Aliases for backward compatibility)
+   ============================================ */
+
 .royal-bg {
-  /* Base color */
-  background-color: #003366;
-  /* Layered gradients + very subtle noise for depth */
+  /* Alias for akpsi-bg */
+  background-color: var(--akpsi-navy);
   background-image:
     radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%),
     radial-gradient(900px 520px at 50% 120%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
-    linear-gradient(180deg, #001f44 0%, #003366 55%, #001f44 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.03'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: cover, cover, cover, 256px 256px;
-  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    linear-gradient(180deg, var(--akpsi-navy-dark) 0%, var(--akpsi-navy) 55%, var(--akpsi-navy-dark) 100%);
+}
+
+.watermark {
+  /* Legacy alias for akpsi-watermark */
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.watermark-inner {
+  /* Legacy alias */
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: clamp(180px, 28vw, 320px);
+  letter-spacing: 12px;
+  color: var(--akpsi-gold-subtle);
+  text-align: center;
+}
+
+.watermark-top {
+  align-items: flex-start;
+  padding-top: var(--space-4);
+}
+
+.pattern-overlay {
+  /* Legacy alias for akpsi-pattern-overlay */
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 80px,
+      var(--akpsi-gold-subtle) 80px,
+      var(--akpsi-gold-subtle) 82px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 80px,
+      var(--akpsi-gold-subtle) 80px,
+      var(--akpsi-gold-subtle) 82px
+    );
+  background-size: 80px 80px;
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-zoom,
+  .click-zoom,
+  .tile,
+  .tile-underline,
+  .family-crest {
+    animation: none;
+    transition: none;
+  }
+  
+  .tile:hover,
+  .tile:focus-visible {
+    transform: none;
+  }
 }

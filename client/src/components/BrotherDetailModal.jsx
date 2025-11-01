@@ -17,8 +17,8 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!password) {
-      alert('Please enter password to save changes');
+    if (!password.trim()) {
+      onToast?.({ message: 'Password is required to save changes', type: 'error' });
       return;
     }
 
@@ -43,26 +43,60 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
+    <div
+      className="fixed inset-0 flex items-center justify-center z-modal"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+      }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div
-        className="bg-white rounded-sm shadow-xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto border-4 border-black"
+        className="glass-panel-elevated rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        style={{
+          padding: 'var(--space-8)',
+          backgroundColor: theme?.modalBg || 'var(--surface-elevated)',
+          border: `1px solid var(--border)`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-black" style={{ fontFamily: "'PT Serif', serif" }}>
+        <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-6)' }}>
+          <h2
+            id="modal-title"
+            className="font-bold"
+            style={{
+              fontSize: 'var(--text-2xl)',
+              fontFamily: 'var(--font-display)',
+              color: theme?.nodeText || 'var(--text)',
+            }}
+          >
             {isEditing ? 'Edit Brother' : 'Brother Details'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-black text-3xl font-light leading-none"
+            className="btn btn-sm"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              padding: 'var(--space-1)',
+              fontSize: 'var(--text-2xl)',
+              lineHeight: '1',
+              minWidth: 'auto',
+            }}
+            aria-label="Close modal"
           >
             ×
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Name
             </label>
             {isEditing ? (
@@ -70,15 +104,16 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               />
             ) : (
-              <p className="text-gray-900 font-semibold">{brother.name}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text)', fontWeight: 'var(--weight-semibold)' }}>{brother.name}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Pledge Class
             </label>
             {isEditing ? (
@@ -86,15 +121,16 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                 type="text"
                 value={formData.pledge_class}
                 onChange={(e) => setFormData({ ...formData, pledge_class: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               />
             ) : (
-              <p className="text-gray-700">{brother.pledge_class || 'N/A'}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.pledge_class || 'N/A'}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Graduation Year (Class of)
             </label>
             {isEditing ? (
@@ -102,15 +138,16 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                 type="number"
                 value={formData.graduation_year}
                 onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value ? parseInt(e.target.value) : '' })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               />
             ) : (
-              <p className="text-gray-700">{brother.graduation_year ? `Class of ${brother.graduation_year}` : 'N/A'}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.graduation_year ? `Class of ${brother.graduation_year}` : 'N/A'}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Major
             </label>
             {isEditing ? (
@@ -118,61 +155,74 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                 type="text"
                 value={formData.major}
                 onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               />
             ) : (
-              <p className="text-gray-700">{brother.major || 'N/A'}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.major || 'N/A'}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Career Aspirations
             </label>
             {isEditing ? (
               <textarea
                 value={formData.career_aspirations}
                 onChange={(e) => setFormData({ ...formData, career_aspirations: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
                 rows="3"
               />
             ) : (
-              <p className="text-gray-700">{brother.career_aspirations || 'N/A'}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.career_aspirations || 'N/A'}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Fun Facts
             </label>
             {isEditing ? (
               <textarea
                 value={formData.fun_facts}
                 onChange={(e) => setFormData({ ...formData, fun_facts: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
                 rows="3"
               />
             ) : (
-              <p className="text-gray-700">{brother.fun_facts || 'N/A'}</p>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.fun_facts || 'N/A'}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
               Status
             </label>
             {isEditing ? (
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               >
                 <option value="studying">Currently Studying</option>
                 <option value="graduated">Graduated</option>
               </select>
             ) : (
-              <p className="text-gray-700">
-                <span className={`px-2 py-1 rounded ${brother.status === 'studying' ? 'bg-green-600' : 'bg-gray-600'}`}>
+              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>
+                <span
+                  style={{
+                    padding: 'var(--space-1) var(--space-2)',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: brother.status === 'studying' ? 'var(--success)' : 'var(--text-muted)',
+                    color: 'white',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 'var(--weight-medium)',
+                  }}
+                >
                   {brother.status === 'studying' ? 'Currently Studying' : 'Graduated'}
                 </span>
               </p>
@@ -181,47 +231,49 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
 
           {isEditing && (
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
                 Transfer?
               </label>
-              <input
-                type="checkbox"
-                checked={formData.is_transfer}
-                onChange={(e) => setFormData({ ...formData, is_transfer: e.target.checked })}
-                className="mr-2"
-              />
-              <span className="text-gray-700">Yes</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.is_transfer}
+                  onChange={(e) => setFormData({ ...formData, is_transfer: e.target.checked })}
+                />
+                <span style={{ color: theme?.nodeText || 'var(--text)' }}>Yes</span>
+              </div>
             </div>
           )}
 
           {isEditing && (
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
                 Password (required to save)
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-white text-gray-900 rounded-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                className="input"
                 placeholder="Enter password"
+                style={{ color: theme?.nodeText || 'var(--text)' }}
               />
             </div>
           )}
         </div>
 
-        <div className="mt-6 flex space-x-3">
+        <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
           {!isEditing ? (
             <>
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex-1 px-4 py-2 rounded-sm font-medium transition bg-black text-white hover:bg-gray-800 border-2 border-black"
+                className="btn btn-primary flex-1"
               >
                 Edit
               </button>
               <button
                 onClick={handleAddLittleClick}
-                className="flex-1 px-4 py-2 rounded-sm font-medium transition bg-black text-white hover:bg-gray-800 border-2 border-black"
+                className="btn btn-primary flex-1"
               >
                 Add Little
               </button>
@@ -231,7 +283,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 px-4 py-2 rounded-sm font-medium transition disabled:opacity-50 bg-black text-white hover:bg-gray-800 border-2 border-black"
+                className="btn btn-primary flex-1"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -250,7 +302,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                     is_transfer: brother.is_transfer === 1,
                   });
                 }}
-                className="flex-1 px-4 py-2 bg-white text-gray-900 rounded-sm font-medium hover:bg-gray-50 transition border-2 border-gray-300"
+                className="btn btn-secondary flex-1"
               >
                 Cancel
               </button>

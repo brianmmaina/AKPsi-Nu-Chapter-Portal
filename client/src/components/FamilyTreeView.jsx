@@ -21,23 +21,63 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
   return (
     <div className="min-h-screen royal-bg">
-      <div className="flex items-center justify-between px-6 pt-6 max-w-[1200px] mx-auto">
-        <div className="text-lg font-semibold" style={{ color: '#D3AF37', fontFamily: "'PT Serif', serif" }}>
-          {selectedFamily.name}
+      {/* Glassmorphism Header */}
+      <div className="glass-panel sticky top-0 z-sticky">
+        <div className="container" style={{ paddingTop: 'var(--space-4)', paddingBottom: 'var(--space-4)' }}>
+          <div className="flex items-center justify-between">
+            {/* Left: Family name with crest */}
+            <div className="flex items-center" style={{ gap: 'var(--space-4)' }}>
+              <div className="family-crest active">
+                {selectedFamily.name.charAt(0)}
+              </div>
+              <div>
+                <h1
+                  className="font-bold"
+                  style={{
+                    fontSize: 'var(--text-xl)',
+                    fontFamily: 'var(--font-display)',
+                    color: 'var(--primary)',
+                    letterSpacing: 'var(--tracking-wide)',
+                  }}
+                >
+                  {selectedFamily.name}
+                </h1>
+                <p
+                  className="mt-0.5"
+                  style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--text-muted)',
+                    marginTop: 'var(--space-1)',
+                  }}
+                >
+                  Family Tree
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Change Family button */}
+            <button
+              onClick={onChangeFamily}
+              className="btn btn-glass"
+              style={{
+                padding: 'var(--space-2) var(--space-4)',
+                fontSize: 'var(--text-sm)',
+                borderRadius: 'var(--radius-full)',
+              }}
+            >
+              Change Family
+            </button>
+          </div>
         </div>
-        <button
-          onClick={onChangeFamily}
-          className="text-sm px-3 py-1 rounded border transition-colors"
-          style={{ borderColor: 'rgba(211,175,55,0.6)', color: '#D3AF37' }}
-        >
-          Change Family
-        </button>
       </div>
+
+      {/* Family Tabs Navigation */}
       <FamilyTabs
         families={families}
         selectedFamily={selectedFamily}
         setSelectedFamily={setSelectedFamily}
       />
+      
       <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
     </div>
   );

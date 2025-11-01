@@ -1,35 +1,68 @@
 const Login = ({ password, setPassword, handleLogin }) => {
   return (
-    <div className="relative min-h-screen flex items-center justify-center royal-bg">
+    <div className="relative min-h-screen flex items-center justify-center akpsi-bg">
       {/* Large centered AKΨ watermark */}
-      <div className="watermark" aria-hidden>
-        <div className="watermark-inner">ΑΚΨ</div>
+      <div className="akpsi-watermark" aria-hidden>
+        <div className="akpsi-watermark-inner">ΑΚΨ</div>
       </div>
       {/* Subtle repeating pattern overlay */}
-      <div className="pattern-overlay" aria-hidden />
+      <div className="akpsi-pattern-overlay" aria-hidden />
       <div
-        className="rounded-md p-10 w-full max-w-md fade-zoom"
-        style={{ backgroundColor: '#002244', border: '2px solid rgba(211,175,55,0.6)', boxShadow: '0 10px 24px rgba(0,0,0,0.35)' }}
+        className="glass-panel-elevated rounded-lg p-8 w-full max-w-md fade-zoom"
+        style={{
+          padding: 'var(--space-8)',
+        }}
       >
         {/* Fraternity Seal */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6" style={{ marginBottom: 'var(--space-8)' }}>
           <img
             src="/akpsi-seal.png"
             alt="Alpha Kappa Psi Seal"
-            className="w-32 h-32 object-contain shadow-lg"
-            style={{ filter: 'drop-shadow(0 4px 8px rgba(211, 175, 55, 0.3))' }}
+            className="w-32 h-32 object-contain"
+            style={{
+              width: '128px',
+              height: '128px',
+              aspectRatio: '1/1',
+              filter: 'drop-shadow(0 4px 8px var(--akpsi-gold-subtle))',
+            }}
+            loading="eager"
           />
         </div>
 
-        <h1 className="text-4xl font-bold text-center mb-2" style={{ fontFamily: "'PT Serif', serif", color: '#D3AF37' }}>
+        <h1
+          className="text-center mb-2 fade-zoom"
+          style={{
+            fontSize: 'var(--text-4xl)',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 'var(--weight-bold)',
+            color: 'var(--primary)',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
           Alpha Kappa Psi
         </h1>
-        <h2 className="text-lg text-center mb-8 font-normal" style={{ color: '#D3AF37' }}>
+        <h2
+          className="text-center mb-8 fade-zoom"
+          style={{
+            fontSize: 'var(--text-lg)',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 'var(--weight-normal)',
+            color: 'var(--primary)',
+            marginBottom: 'var(--space-8)',
+          }}
+        >
           Family Trees
         </h2>
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: '#D3AF37' }}>
+            <label
+              htmlFor="password"
+              className="label"
+              style={{
+                color: 'var(--primary)',
+                marginBottom: 'var(--space-2)',
+              }}
+            >
               Password
             </label>
             <input
@@ -37,19 +70,27 @@ const Login = ({ password, setPassword, handleLogin }) => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-all"
-            style={{ backgroundColor: '#001122', border: '2px solid rgba(211,175,55,0.6)' }}
+              className="input"
+              style={{
+                backgroundColor: 'var(--akpsi-navy-light)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-on-dark)',
+                padding: 'var(--space-3) var(--space-4)',
+              }}
               placeholder="Enter password"
               required
               autoFocus
+              aria-required="true"
             />
           </div>
           <button
             type="submit"
-            className="w-full font-medium py-3 px-4 rounded-sm transition duration-200 font-bold"
-            style={{ backgroundColor: '#002244', color: '#D3AF37', border: '2px solid rgba(211,175,55,0.6)' }}
-            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#D3AF37'; e.currentTarget.style.color = '#003366'; e.currentTarget.style.border = '2px solid #D3AF37'; }}
-            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#002244'; e.currentTarget.style.color = '#D3AF37'; e.currentTarget.style.border = '2px solid rgba(211,175,55,0.6)'; }}
+            className="btn btn-primary w-full"
+            style={{
+              padding: 'var(--space-3) var(--space-4)',
+              fontWeight: 'var(--weight-bold)',
+              fontSize: 'var(--text-base)',
+            }}
           >
             Enter
           </button>

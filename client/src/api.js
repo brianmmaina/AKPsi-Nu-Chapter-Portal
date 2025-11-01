@@ -12,8 +12,7 @@ const getBaseURL = () => {
   return '/api';
 };
 
-// Debug: Log the baseURL being used
-console.log('API BaseURL:', getBaseURL());
+// BaseURL configured (debug logging removed for production)
 
 const api = axios.create({
   baseURL: getBaseURL(),

@@ -1,0 +1,224 @@
+/**
+ * Design Tokens - Base System
+ * 
+ * A lightweight, JS-agnostic token layer for premium glassy aesthetic.
+ * Theme overrides in themes/family-tree.css and themes/akpsi.css
+ */
+
+:root {
+  /* ============================================
+     BASE COLORS
+     ============================================ */
+  
+  /* Backgrounds */
+  --bg: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  
+  /* Text */
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
+  --text-on-dark: #ffffff;
+  
+  /* Borders & Dividers */
+  --border: #e5e7eb;
+  --border-subtle: #f3f4f6;
+  --divider: #e5e7eb;
+  
+  /* Glass Surfaces (Light Mode) */
+  --glass-surface: rgba(255, 255, 255, 0.6);
+  --glass-surface-elevated: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-border-subtle: rgba(255, 255, 255, 0.2);
+  
+  /* Primary (AKPsi Gold) */
+  --primary: #D3AF37;
+  --primary-hover: #b8941e;
+  --primary-active: #9d7a1a;
+  --primary-contrast: #003366;
+  --primary-light: rgba(211, 175, 55, 0.1);
+  --primary-subtle: rgba(211, 175, 55, 0.05);
+  
+  /* Accent (Family-specific, defaults to gold) */
+  --accent: #D3AF37;
+  --accent-hover: #b8941e;
+  --accent-subtle: rgba(211, 175, 55, 0.15);
+  
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  
+  /* Ring (Focus) */
+  --ring: rgba(211, 175, 55, 0.5);
+  --ring-width: 2px;
+  
+  /* ============================================
+     SPACING SCALE (4px base)
+     ============================================ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+  
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+  
+  /* Font Families */
+  --font-display: 'PT Serif', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', Monaco, monospace;
+  
+  /* Font Sizes (Fluid) */
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);      /* 12-14px */
+  --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);        /* 14-16px */
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);     /* 16-18px */
+  --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.5rem);       /* 18-24px */
+  --text-xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);         /* 24-32px */
+  --text-2xl: clamp(1.75rem, 1.5rem + 1.25vw, 2.5rem);       /* 28-40px */
+  --text-3xl: clamp(2rem, 1.75rem + 1.25vw, 3rem);           /* 32-48px */
+  --text-4xl: clamp(2.5rem, 2rem + 2.5vw, 4rem);            /* 40-64px */
+  
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Letter Spacing */
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.01em;
+  --tracking-wider: 0.025em;
+  
+  /* Font Weights */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  
+  /* ============================================
+     RADIUS SCALE
+     ============================================ */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* ============================================
+     SHADOWS (Soft, Layered)
+     ============================================ */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+  
+  /* ============================================
+     MOTION
+     ============================================ */
+  
+  /* Durations */
+  --motion-fast: 120ms;
+  --motion-med: 200ms;
+  --motion-slow: 280ms;
+  
+  /* Easing */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emph: cubic-bezier(0.2, 0.7, 0, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  
+  /* ============================================
+     GLASS EFFECT
+     ============================================ */
+  --glass-blur: 12px;
+  --glass-blur-mobile: 8px;
+  --glass-saturate: 180%;
+  
+  /* ============================================
+     LAYOUT
+     ============================================ */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1400px;
+  
+  --gutter: var(--space-6);
+  --gutter-mobile: var(--space-4);
+  
+  /* ============================================
+     Z-INDEX SCALE
+     ============================================ */
+  --z-base: 0;
+  --z-elevated: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+}
+
+/* ============================================
+   DARK MODE (Future-ready, not active yet)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0f;
+    --bg-subtle: #141419;
+    --surface: #1a1a24;
+    --surface-elevated: #242430;
+    
+    --text: #ffffff;
+    --text-muted: #a1a1b0;
+    --text-subtle: #6b6b7a;
+    --text-on-dark: #ffffff;
+    
+    --border: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --divider: rgba(255, 255, 255, 0.1);
+    
+    --glass-surface: rgba(20, 20, 24, 0.5);
+    --glass-surface-elevated: rgba(20, 20, 24, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-border-subtle: rgba(255, 255, 255, 0.1);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-med: 0ms;
+    --motion-slow: 0ms;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
