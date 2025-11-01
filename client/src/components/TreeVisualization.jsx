@@ -6,6 +6,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { families as familiesApi } from '../api';
@@ -13,7 +14,7 @@ import BrotherDetailModal from './BrotherDetailModal';
 import AddNodeForm from './AddNodeForm';
 import { getThemeStyles } from '../themes';
 
-const TreeVisualization = ({ family, onToast }) => {
+const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [brothers, setBrothers] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [selectedBrother, setSelectedBrother] = useState(null);
@@ -22,27 +23,33 @@ const TreeVisualization = ({ family, onToast }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const theme = getThemeStyles(family.theme);
   const familyKey = family.theme;
   const { setCenter } = useReactFlow();
 
-  useEffect(() => {
-    loadTreeData();
-  }, [family.id]);
-
-  const loadTreeData = async () => {
+  const loadTreeData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await familiesApi.getTree(family.id);
-      setBrothers(response.data.brothers);
-      setRelationships(response.data.relationships);
+      setBrothers(response.data.brothers || []);
+      setRelationships(response.data.relationships || []);
     } catch (error) {
       console.error('Failed to load tree data:', error);
+      setError(error.response?.data?.error || error.message || 'Failed to load family tree');
+      if (onToast) {
+        onToast({ message: 'Failed to load family tree. Please try again.', type: 'error' });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [family.id, onToast]);
+
+  useEffect(() => {
+    loadTreeData();
+  }, [loadTreeData]);
 
   // Calculate tree layout and create nodes/edges
   useEffect(() => {
@@ -210,16 +217,58 @@ const TreeVisualization = ({ family, onToast }) => {
     setShowAddForm(true);
   }, []);
 
-  const handleNodeUpdate = () => {
+  const handleNodeUpdate = useCallback(() => {
     loadTreeData();
     setSelectedBrother(null);
-  };
+  }, [loadTreeData]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
         <div className="text-xl" style={{ color: theme.accent || '#D3AF37', fontFamily: "'PT Serif', serif" }}>
           Loading family tree...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
+        <div className="text-center max-w-md px-6">
+          <h2 className="text-3xl font-bold mb-4" style={{ color: theme.accent || '#D3AF37', fontFamily: "'PT Serif', serif" }}>
+            {family.name} Family Tree
+          </h2>
+          <p className="text-lg mb-6" style={{ color: theme.nodeText || '#ffffff' }}>
+            {error}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={loadTreeData}
+              className="px-6 py-3 rounded-md font-medium transition duration-200"
+              style={{ 
+                backgroundColor: theme.accent || '#D3AF37', 
+                color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
+                border: `2px solid ${theme.accent || '#D3AF37'}`,
+              }}
+            >
+              Retry
+            </button>
+            {onChangeFamily && (
+              <button
+                onClick={onChangeFamily}
+                className="px-6 py-3 rounded-md font-medium transition duration-200"
+                style={{ 
+                  backgroundColor: 'transparent', 
+                  color: theme.accent || '#D3AF37',
+                  border: `2px solid ${theme.accent || '#D3AF37'}`,
+                }}
+              >
+                Back to Families
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -236,20 +285,35 @@ const TreeVisualization = ({ family, onToast }) => {
           <p className="text-lg mb-6" style={{ color: theme.nodeText || '#ffffff' }}>
             This family tree is empty. Add the first brother to get started!
           </p>
-          <button
-            onClick={() => {
-              setShowAddForm(true);
-              setAddFormParent(null);
-            }}
-            className="px-6 py-3 rounded-md font-medium transition duration-200"
-            style={{ 
-              backgroundColor: theme.accent || '#D3AF37', 
-              color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
-              border: `2px solid ${theme.accent || '#D3AF37'}`,
-            }}
-          >
-            Add First Brother
-          </button>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => {
+                setShowAddForm(true);
+                setAddFormParent(null);
+              }}
+              className="px-6 py-3 rounded-md font-medium transition duration-200"
+              style={{ 
+                backgroundColor: theme.accent || '#D3AF37', 
+                color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
+                border: `2px solid ${theme.accent || '#D3AF37'}`,
+              }}
+            >
+              Add First Brother
+            </button>
+            {onChangeFamily && (
+              <button
+                onClick={onChangeFamily}
+                className="px-6 py-3 rounded-md font-medium transition duration-200"
+                style={{ 
+                  backgroundColor: 'transparent', 
+                  color: theme.accent || '#D3AF37',
+                  border: `2px solid ${theme.accent || '#D3AF37'}`,
+                }}
+              >
+                Back to Families
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -315,6 +379,14 @@ const TreeVisualization = ({ family, onToast }) => {
         />
       )}
     </div>
+  );
+};
+
+const TreeVisualization = ({ family, onToast, onChangeFamily }) => {
+  return (
+    <ReactFlowProvider>
+      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} />
+    </ReactFlowProvider>
   );
 };
 

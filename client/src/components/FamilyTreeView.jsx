@@ -38,7 +38,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         selectedFamily={selectedFamily}
         setSelectedFamily={setSelectedFamily}
       />
-      <TreeVisualization family={selectedFamily} onToast={onToast} />
+      <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
     </div>
   );
 };
