@@ -90,6 +90,18 @@
   animation: clickZoom var(--motion-med) var(--ease-out) forwards;
 }
 
+/* Slide In Animation for Tab Indicators */
+@keyframes slideIn {
+  from {
+    width: 0%;
+    opacity: 0;
+  }
+  to {
+    width: 60%;
+    opacity: 1;
+  }
+}
+
 /* ============================================
    TILE SYSTEM (Family Selection)
    ============================================ */
