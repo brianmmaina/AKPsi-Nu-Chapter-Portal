@@ -32,12 +32,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
   const themeAccent = selectedTheme?.accent || '#D3AF37';
 
   return (
-    <div className="min-h-screen royal-bg">
+    <div className="min-h-screen" style={{ backgroundColor: themeBackground }}>
       {/* Minimalist Header - Themed */}
       <div 
         className="sticky top-0 z-sticky border-b"
         style={{
-          backgroundColor: hexToRgba(themeBackground, 0.85),
+          backgroundColor: hexToRgba(themeBackground, 0.95),
           backdropFilter: 'blur(12px) saturate(180%)',
           WebkitBackdropFilter: 'blur(12px) saturate(180%)',
           borderBottomColor: hexToRgba(themeAccent, 0.2),

@@ -328,8 +328,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   return (
     <div
-      className="w-full h-screen"
+      className="w-full"
       style={{
+        minHeight: 'calc(100vh - 60px)', // Account for header height
         backgroundColor: theme.background,
         backgroundImage: theme.backgroundTexture,
         backgroundSize: '280px 280px',
