@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Database from 'better-sqlite3';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -110,7 +112,17 @@ app.get('/', (req, res) => {
 });
 
 // Initialize database connection
+// On Render, use persistent disk path if set, otherwise use local path
 const dbPath = process.env.DATABASE_PATH || 'database.sqlite';
+
+// Ensure directory exists for database file (important for Render persistent disk)
+import fs from 'fs';
+import path from 'path';
+const dbDir = path.dirname(dbPath);
+if (dbDir && dbDir !== '.' && !fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new Database(dbPath);
 
 // Ensure database is initialized (safe to run multiple times)
