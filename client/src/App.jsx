@@ -153,6 +153,38 @@ function App() {
   if (!isAuthenticated) {
   return (
     <ErrorBoundary>
+      {/* Skip to main content link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-toast focus:p-4 focus:bg-primary focus:text-primary-contrast focus:rounded-lg focus:shadow-lg"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0,
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.position = 'absolute';
+          e.currentTarget.style.width = 'auto';
+          e.currentTarget.style.height = 'auto';
+          e.currentTarget.style.padding = 'var(--space-4)';
+          e.currentTarget.style.margin = 'var(--space-4)';
+          e.currentTarget.style.overflow = 'visible';
+          e.currentTarget.style.clip = 'auto';
+          e.currentTarget.style.whiteSpace = 'normal';
+          e.currentTarget.style.backgroundColor = 'var(--primary)';
+          e.currentTarget.style.color = 'var(--primary-contrast)';
+          e.currentTarget.style.borderRadius = 'var(--radius-lg)';
+          e.currentTarget.style.zIndex = 'var(--z-toast)';
+        }}
+      >
+        Skip to main content
+      </a>
       {toast && (
         <Toast
           message={toast.message}
@@ -160,7 +192,9 @@ function App() {
           onClose={() => setToast(null)}
         />
       )}
-      <Login password={password} setPassword={setPassword} handleLogin={handleLogin} />
+      <main id="main-content">
+        <Login password={password} setPassword={setPassword} handleLogin={handleLogin} />
+      </main>
     </ErrorBoundary>
   );
   }
@@ -168,6 +202,38 @@ function App() {
   if (showFamilySelection) {
     return (
       <ErrorBoundary>
+        {/* Skip to main content link for accessibility */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.position = 'absolute';
+            e.currentTarget.style.width = 'auto';
+            e.currentTarget.style.height = 'auto';
+            e.currentTarget.style.padding = 'var(--space-4)';
+            e.currentTarget.style.margin = 'var(--space-4)';
+            e.currentTarget.style.overflow = 'visible';
+            e.currentTarget.style.clip = 'auto';
+            e.currentTarget.style.whiteSpace = 'normal';
+            e.currentTarget.style.backgroundColor = 'var(--primary)';
+            e.currentTarget.style.color = 'var(--primary-contrast)';
+            e.currentTarget.style.borderRadius = 'var(--radius-lg)';
+            e.currentTarget.style.zIndex = 'var(--z-toast)';
+          }}
+        >
+          Skip to main content
+        </a>
         {toast && (
           <Toast
             message={toast.message}
@@ -175,7 +241,9 @@ function App() {
             onClose={() => setToast(null)}
           />
         )}
-        <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+        <main id="main-content">
+          <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+        </main>
       </ErrorBoundary>
     );
   }
@@ -183,6 +251,38 @@ function App() {
   if (selectedFamily) {
     return (
       <ErrorBoundary>
+        {/* Skip to main content link for accessibility */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.position = 'absolute';
+            e.currentTarget.style.width = 'auto';
+            e.currentTarget.style.height = 'auto';
+            e.currentTarget.style.padding = 'var(--space-4)';
+            e.currentTarget.style.margin = 'var(--space-4)';
+            e.currentTarget.style.overflow = 'visible';
+            e.currentTarget.style.clip = 'auto';
+            e.currentTarget.style.whiteSpace = 'normal';
+            e.currentTarget.style.backgroundColor = 'var(--primary)';
+            e.currentTarget.style.color = 'var(--primary-contrast)';
+            e.currentTarget.style.borderRadius = 'var(--radius-lg)';
+            e.currentTarget.style.zIndex = 'var(--z-toast)';
+          }}
+        >
+          Skip to main content
+        </a>
         {toast && (
           <Toast
             message={toast.message}
@@ -190,18 +290,52 @@ function App() {
             onClose={() => setToast(null)}
           />
         )}
-        <FamilyTreeView 
-          families={familiesList} 
-          selectedFamily={selectedFamily} 
-          onChangeFamily={handleChangeFamily}
-          onToast={setToast}
-        />
+        <main id="main-content">
+          <FamilyTreeView 
+            families={familiesList} 
+            selectedFamily={selectedFamily} 
+            onChangeFamily={handleChangeFamily}
+            onToast={setToast}
+          />
+        </main>
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
+      {/* Skip to main content link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0,
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.position = 'absolute';
+          e.currentTarget.style.width = 'auto';
+          e.currentTarget.style.height = 'auto';
+          e.currentTarget.style.padding = 'var(--space-4)';
+          e.currentTarget.style.margin = 'var(--space-4)';
+          e.currentTarget.style.overflow = 'visible';
+          e.currentTarget.style.clip = 'auto';
+          e.currentTarget.style.whiteSpace = 'normal';
+          e.currentTarget.style.backgroundColor = 'var(--primary)';
+          e.currentTarget.style.color = 'var(--primary-contrast)';
+          e.currentTarget.style.borderRadius = 'var(--radius-lg)';
+          e.currentTarget.style.zIndex = 'var(--z-toast)';
+        }}
+      >
+        Skip to main content
+      </a>
       {toast && (
         <Toast
           message={toast.message}
@@ -209,7 +343,9 @@ function App() {
           onClose={() => setToast(null)}
         />
       )}
-      <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+      <main id="main-content">
+        <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+      </main>
     </ErrorBoundary>
   );
 }

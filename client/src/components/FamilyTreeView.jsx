@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react';
 import { getThemeStyles } from '../themes';
 import TreeVisualization from './TreeVisualization';
+import { hexToRgba } from '../utils/color';
 
-// Helper to convert hex to rgba
-const hexToRgba = (hex, alpha = 1) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
+/**
+ * FamilyTreeView Component
+ * 
+ * Main view for displaying and navigating family trees.
+ * Provides a themed header with family tabs and tree visualization.
+ * 
+ * @param {Object} props - Component props
+ * @param {Array<Object>} props.families - List of all available families
+ * @param {Object} props.selectedFamily - Currently selected family (can be null initially)
+ * @param {Function} props.onChangeFamily - Callback to return to family selection
+ * @param {Function} props.onToast - Callback to show toast notifications
+ * @returns {JSX.Element} Family tree view with themed header and visualization
+ */
 const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onChangeFamily, onToast }) => {
   const [selectedFamily, setSelectedFamily] = useState(initialSelectedFamily || families[0] || null);
 
+  /**
+   * Syncs selectedFamily state when initialSelectedFamily prop changes
+   * 
+   * @effect
+   * @dependencies {Object} initialSelectedFamily - Initial family selection prop
+   */
   useEffect(() => {
     if (initialSelectedFamily) {
       setSelectedFamily(initialSelectedFamily);

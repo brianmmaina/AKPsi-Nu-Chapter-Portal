@@ -13,15 +13,20 @@ import { families as familiesApi } from '../api';
 import BrotherDetailModal from './BrotherDetailModal';
 import AddNodeForm from './AddNodeForm';
 import { getThemeStyles } from '../themes';
+import { hexToRgba } from '../utils/color';
 
-// Helper to convert hex to rgba
-const hexToRgba = (hex, alpha = 1) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
+/**
+ * TreeVisualizationInner Component
+ * 
+ * Renders an interactive family tree visualization using React Flow.
+ * Handles tree layout, node interactions, and data loading.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.family - Family object with id, name, and theme
+ * @param {Function} props.onToast - Callback function to show toast notifications
+ * @param {Function} props.onChangeFamily - Callback to change the selected family
+ * @returns {JSX.Element} React Flow tree visualization
+ */
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [brothers, setBrothers] = useState([]);
   const [relationships, setRelationships] = useState([]);
@@ -37,6 +42,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const familyKey = family.theme;
   const { setCenter } = useReactFlow();
 
+  /**
+   * Loads family tree data (brothers and relationships) from the API
+   * 
+   * @async
+   * @function loadTreeData
+   * @throws {Error} If API request fails
+   */
   const loadTreeData = useCallback(async () => {
     try {
       setLoading(true);
@@ -59,7 +71,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     loadTreeData();
   }, [loadTreeData]);
 
-  // Calculate tree layout and create nodes/edges
+  /**
+   * Calculates tree layout using BFS algorithm and creates React Flow nodes/edges
+   * 
+   * Organizes brothers into hierarchical levels based on relationships:
+   * - Level 0: Root nodes (no big brother)
+   * - Level N: Nodes N levels deep from root
+   * 
+   * Positions nodes in a grid layout with configurable spacing.
+   * 
+   * @effect
+   * @dependencies {Array} brothers - List of all brothers
+   * @dependencies {Array} relationships - Parent-child relationships
+   * @dependencies {Object} theme - Theme configuration for styling
+   */
   useEffect(() => {
     if (brothers.length === 0) {
       setNodes([]);
@@ -79,7 +104,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const layoutEdges = [];
     const nodePositions = new Map();
 
-    // BFS to assign levels (distance from root)
+    /**
+     * Recursively calculates the level (depth from root) of a brother in the tree
+     * 
+     * @param {number} brotherId - ID of the brother to calculate level for
+     * @param {Set<number>} visited - Set of visited IDs to prevent cycles
+     * @returns {number} Level (0 = root, 1+ = nested)
+     */
     const getLevel = (brotherId, visited = new Set()) => {
       if (visited.has(brotherId)) return 0;
       visited.add(brotherId);
@@ -198,6 +229,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     setEdges(layoutEdges);
   }, [brothers, relationships, theme]);
 
+  /**
+   * Handles node click events - selects brother and smoothly zooms to node
+   * 
+   * @param {Object} event - React Flow node click event
+   * @param {Object} node - React Flow node object with position and data
+   * @param {Object} node.data.brother - Brother data object
+   * @param {Object} node.position - Node position {x, y}
+   */
   const onNodeClick = useCallback((event, node) => {
     setSelectedBrother(node.data.brother);
     // Smoothly center and zoom to the clicked node
