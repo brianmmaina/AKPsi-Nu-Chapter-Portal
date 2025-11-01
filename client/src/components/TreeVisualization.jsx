@@ -172,10 +172,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       if (familyKey === 'empire') {
+        // EMPIRE: Clean white boxes with elegant tan borders
         nodeStyle.background = '#ffffff';
-        nodeStyle.border = `1px solid ${theme.nodeBorder}`;
+        nodeStyle.border = `2px solid ${theme.nodeBorder}`;
         nodeStyle.color = '#1f1f1f';
-        nodeStyle.borderRadius = '2px';
+        nodeStyle.borderRadius = `${theme.nodeRadius || 12}px`; // Use theme's 12px radius for elegance
+        nodeStyle.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)'; // Subtle, refined shadow
       }
 
       if (familyKey === 'greed') {
@@ -436,7 +438,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         />
       )}
 
-      {showAddForm && addFormParent && (
+      {showAddForm && (
         <AddNodeForm
           parentBrother={addFormParent}
           familyId={family.id}
