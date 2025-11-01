@@ -160,36 +160,52 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         boxShadow: '0 8px 24px rgba(0,0,0,0.25)'
       };
 
-      // Per-family refinements
+      // Per-family refinements based on family-tree-corrected.md specifications
       if (familyKey === 'power') {
-        // Hexagon-like node using clip-path; transparent fill with gold stroke
+        // POWER: Hexagon shapes with transparent fill and champagne gold border
         nodeStyle.background = 'transparent';
-        nodeStyle.color = '#ffffff';
-        nodeStyle.border = `3px solid ${theme.nodeBorder}`;
+        nodeStyle.color = '#ffffff'; // White text
+        nodeStyle.border = `3px solid ${theme.nodeBorder}`; // #ebd290 gold
         nodeStyle.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-        nodeStyle.borderRadius = '0px';
+        nodeStyle.borderRadius = '0px'; // Hexagons use clip-path
         nodeStyle.padding = '14px';
+        nodeStyle.boxShadow = '0 4px 16px rgba(235, 210, 144, 0.3)'; // Subtle gold glow
       }
 
       if (familyKey === 'empire') {
-        // EMPIRE: Clean white boxes with elegant tan borders
+        // EMPIRE: Elegant white boxes with tan borders, 2px border-radius (from spec: border-radius: 2px)
         nodeStyle.background = '#ffffff';
-        nodeStyle.border = `2px solid ${theme.nodeBorder}`;
-        nodeStyle.color = '#1f1f1f';
-        nodeStyle.borderRadius = `${theme.nodeRadius || 12}px`; // Use theme's 12px radius for elegance
-        nodeStyle.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)'; // Subtle, refined shadow
+        nodeStyle.border = `1px solid ${theme.nodeBorder}`; // #d4c9b3 tan border
+        nodeStyle.color = '#1f1f1f'; // Very dark gray/black text
+        nodeStyle.borderRadius = '2px'; // From spec: border-radius: 2px (not 12px)
+        nodeStyle.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; // Subtle shadow
+        nodeStyle.padding = '8px 12px'; // From spec: padding: 8px 12px
       }
 
       if (familyKey === 'greed') {
+        // GREED: White boxes with crisp corners, dark text (UPPERCASE style)
         nodeStyle.background = '#ffffff';
-        nodeStyle.border = '1px solid #e0e0e0';
-        nodeStyle.color = '#333333';
+        nodeStyle.border = '1px solid #e0e0e0'; // Light gray border
+        nodeStyle.color = '#333333'; // Dark text on white boxes
+        nodeStyle.borderRadius = '0px'; // Crisp corners (0px from spec)
+        nodeStyle.padding = '8px 12px'; // From spec
+      }
+
+      if (familyKey === 'wolfpack') {
+        // WOLFPACK: White boxes with dark blue header bar
+        nodeStyle.background = '#ffffff';
+        nodeStyle.border = `1px solid #d0d0d0`; // Light border
+        nodeStyle.color = '#3d5373'; // Dark blue text in boxes (but tabs/headers are white)
+        nodeStyle.borderRadius = '0px'; // Crisp corners
+        nodeStyle.padding = '10px 12px'; // From spec: padding: 10px 12px
       }
 
       if (familyKey === 'pride') {
+        // PRIDE: Dark background with muted gold border
         nodeStyle.background = '#181413';
-        nodeStyle.border = `1.5px solid ${theme.accent}`;
-        nodeStyle.color = '#ffffff';
+        nodeStyle.border = `1.5px solid ${theme.accent}`; // #d4af7e muted gold
+        nodeStyle.color = '#ffffff'; // White text
+        nodeStyle.borderRadius = '0px'; // Photo-focused, crisp corners
       }
 
       layoutNodes.push({
@@ -198,9 +214,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           label: (
             <div className="text-center" style={{ fontFamily: theme.bodyFont }}>
               {familyKey === 'wolfpack' && (
-                <div style={{ height: 6, background: '#3d5373', marginBottom: 6, borderRadius: 2 }} />
+                // WOLFPACK: Dark blue header bar at top of white box
+                <div style={{ 
+                  height: 6, 
+                  background: '#3d5373', 
+                  marginBottom: 6, 
+                  borderRadius: 0,
+                  marginLeft: '-10px',
+                  marginRight: '-10px',
+                  marginTop: '-10px',
+                }} />
               )}
               {familyKey === 'empire' && (
+                // EMPIRE: Elegant gold accent bar
                 <div style={{ 
                   height: 3, 
                   background: 'linear-gradient(90deg, transparent, #c9a857, transparent)', 
@@ -208,14 +234,25 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                   borderRadius: 2 
                 }} />
               )}
-              <div className="font-semibold" style={{ fontFamily: theme.titleFont }}>
+              <div 
+                className="font-semibold" 
+                style={{ 
+                  fontFamily: theme.titleFont,
+                  textTransform: familyKey === 'greed' ? 'uppercase' : 'none', // GREED uses UPPERCASE
+                  fontSize: familyKey === 'greed' ? '10px' : '12px', // From spec: 10-11px
+                  color: theme.nodeText,
+                }}
+              >
                 {brother.name}
               </div>
               {isTransfer && (
                 <div 
                   className="text-xs mt-1" 
                   style={{ 
-                    color: familyKey === 'empire' ? '#999999' : 'rgba(156, 163, 175, 1)'
+                    color: familyKey === 'empire' ? '#999999' : 
+                           familyKey === 'power' ? '#999999' :
+                           'rgba(156, 163, 175, 1)',
+                    fontStyle: 'italic', // Transfer labels in italic per spec
                   }}
                 >
                   (Transfer)
