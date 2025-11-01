@@ -134,12 +134,12 @@
 /* Elevated deep royal background */
 .royal-bg {
   /* Base color */
-  background-color: #000042;
+  background-color: #003366;
   /* Layered gradients + very subtle noise for depth */
   background-image:
     radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%),
     radial-gradient(900px 520px at 50% 120%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
-    linear-gradient(180deg, #010236 0%, #000042 55%, #010236 100%),
+    linear-gradient(180deg, #001f44 0%, #003366 55%, #001f44 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.03'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: cover, cover, cover, 256px 256px;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat;

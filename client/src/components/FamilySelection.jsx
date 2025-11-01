@@ -24,17 +24,14 @@ const FamilySelection = ({ families, onSelectFamily }) => {
         className="relative rounded-sm p-12 w-full max-w-[1200px]"
         style={{ backgroundColor: 'transparent' }}
       >
-        {/* Fraternity Seal Placeholder */}
+        {/* Fraternity Seal */}
         <div className="flex justify-center mb-8">
-          <div
-            className="w-32 h-32 rounded-full flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#0a0a3a', border: '4px solid #D3AF37' }}
-          >
-            <div className="text-center">
-              <div className="font-bold text-xs mb-1" style={{ color: '#D3AF37' }}>ΑΚΨ</div>
-              <div className="text-[8px] font-semibold" style={{ color: '#D3AF37' }}>SEAL</div>
-            </div>
-          </div>
+          <img
+            src="/akpsi-seal.png"
+            alt="Alpha Kappa Psi Seal"
+            className="w-32 h-32 object-contain shadow-lg"
+            style={{ filter: 'drop-shadow(0 4px 8px rgba(211, 175, 55, 0.3))' }}
+          />
         </div>
         <div className="text-center mb-10">
           <h2 className="text-lg font-normal" style={{ color: '#D3AF37' }}>
@@ -83,7 +80,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
               onClick={() => handleClick(family, idx)}
               className={`tile p-8 rounded-md transition-all duration-200 text-center group w-[28rem] fade-zoom ${clickedIndex === idx ? 'click-zoom' : ''} fade-stagger-${idx+1}`}
               style={{
-                backgroundColor: '#111633',
+                backgroundColor: '#002244',
                 border: `2px solid ${accent}99`,
                 boxShadow: '0 10px 24px rgba(0,0,0,0.35)'
                 , backgroundImage, backgroundSize

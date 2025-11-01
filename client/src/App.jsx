@@ -75,7 +75,6 @@ function App() {
         
         setShowFamilySelection(true);
         setPassword(''); // Clear password field
-        setToast({ message: 'Welcome!', type: 'success' });
       } else {
         console.error('Unexpected response structure:', response);
         setToast({ message: 'Invalid response from server', type: 'error' });

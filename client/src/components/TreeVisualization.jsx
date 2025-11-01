@@ -244,7 +244,7 @@ const TreeVisualization = ({ family, onToast }) => {
             className="px-6 py-3 rounded-md font-medium transition duration-200"
             style={{ 
               backgroundColor: theme.accent || '#D3AF37', 
-              color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#000042',
+              color: theme.background === '#181413' || theme.background === '#101a26' || theme.background === '#364c73' ? '#ffffff' : '#003366',
               border: `2px solid ${theme.accent || '#D3AF37'}`,
             }}
           >
