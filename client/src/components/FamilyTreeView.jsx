@@ -101,12 +101,25 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                 const familyTheme = getThemeStyles(family.theme);
                 // Use primary/accent color from corrected theme specs
                 const familyPrimary = familyTheme?.accent || '#D3AF37';
-                // Special handling for inactive tabs to ensure visibility
-                const inactiveColor = family.theme === 'empire' 
-                  ? '#666666' // Gray for cream background
-                  : family.theme === 'wolfpack'
-                  ? 'rgba(255, 255, 255, 0.6)' // Semi-transparent white on blue
-                  : 'rgba(255, 255, 255, 0.5)'; // Semi-transparent white for dark backgrounds
+                
+                // Determine inactive tab color based on CURRENTLY SELECTED family's background
+                // This ensures proper contrast when light backgrounds (like EMPIRE) are selected
+                let inactiveColor;
+                if (selectedFamily.theme === 'empire') {
+                  // When EMPIRE (light cream) is selected, use dark color for all inactive tabs
+                  inactiveColor = '#4a4a4a'; // Dark gray for good contrast on light background
+                } else if (family.theme === 'empire' && !isActive) {
+                  // When EMPIRE tab is inactive on dark background, use lighter variant
+                  inactiveColor = '#999999'; // Medium gray
+                } else if (family.theme === 'wolfpack' && !isActive) {
+                  // WOLFPACK tab on dark background
+                  inactiveColor = 'rgba(255, 255, 255, 0.6)'; // Semi-transparent white
+                } else if (!isActive) {
+                  // Default: semi-transparent white for dark backgrounds
+                  inactiveColor = 'rgba(255, 255, 255, 0.5)';
+                } else {
+                  inactiveColor = familyPrimary; // Active tab uses accent color
+                }
                 
                 return (
                   <button
@@ -127,8 +140,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = hexToRgba(familyPrimary, 0.1);
-                        e.currentTarget.style.borderColor = hexToRgba(familyPrimary, 0.2);
+                        // Ensure hover state is visible - use family's accent with appropriate opacity
+                        const hoverBg = selectedFamily.theme === 'empire' 
+                          ? hexToRgba(familyPrimary, 0.15) // More visible on light background
+                          : hexToRgba(familyPrimary, 0.1);
+                        const hoverBorder = hexToRgba(familyPrimary, 0.3);
+                        e.currentTarget.style.backgroundColor = hoverBg;
+                        e.currentTarget.style.borderColor = hoverBorder;
                       }
                     }}
                     onMouseLeave={(e) => {
