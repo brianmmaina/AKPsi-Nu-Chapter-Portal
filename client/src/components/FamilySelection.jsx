@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import Header from './Header';
-import Footer from './Footer';
 import { getThemeStyles } from '../themes';
 
 const FamilySelection = ({ families, onSelectFamily }) => {
@@ -12,54 +10,70 @@ const FamilySelection = ({ families, onSelectFamily }) => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center akpsi-bg" style={{ padding: 'var(--space-6)' }}>
-      <Header />
+    <div className="relative min-h-screen flex flex-col items-center justify-center akpsi-bg" style={{ padding: 'var(--space-4)' }}>
       {/* Large centered AKΨ watermark */}
-      <div className="akpsi-watermark akpsi-watermark-top" aria-hidden>
+      <div className="akpsi-watermark" aria-hidden>
         <div className="akpsi-watermark-inner">ΑΚΨ</div>
       </div>
       {/* Subtle repeating pattern overlay */}
       <div className="akpsi-pattern-overlay" aria-hidden />
-      <div className="relative container" style={{ paddingTop: 'var(--space-9)', paddingBottom: 'var(--space-9)' }}>
-        {/* Fraternity Seal */}
-        <div className="flex justify-center" style={{ marginBottom: 'var(--space-8)' }}>
-          <img
-            src="/akpsi-seal.png"
-            alt="Alpha Kappa Psi Seal"
-            className="object-contain"
+      
+      <div className="relative container max-w-4xl" style={{ paddingTop: 'var(--space-4)', paddingBottom: 'var(--space-4)' }}>
+        {/* Compact Header Section */}
+        <div className="text-center" style={{ marginBottom: 'var(--space-6)' }}>
+          {/* Fraternity Seal - Smaller */}
+          <div className="flex justify-center" style={{ marginBottom: 'var(--space-3)' }}>
+            <img
+              src="/akpsi-seal.png"
+              alt="Alpha Kappa Psi Seal"
+              className="object-contain"
+              style={{
+                width: '80px',
+                height: '80px',
+                aspectRatio: '1/1',
+                filter: 'drop-shadow(0 4px 8px var(--akpsi-gold-subtle))',
+              }}
+              loading="lazy"
+            />
+          </div>
+          <h1
             style={{
-              width: '128px',
-              height: '128px',
-              aspectRatio: '1/1',
-              filter: 'drop-shadow(0 4px 8px var(--akpsi-gold-subtle))',
-            }}
-            loading="lazy"
-          />
-        </div>
-        <div className="text-center" style={{ marginBottom: 'var(--space-9)' }}>
-          <h2
-            className="font-normal"
-            style={{
-              fontSize: 'var(--text-lg)',
+              fontSize: 'var(--text-2xl)',
               fontFamily: 'var(--font-display)',
               color: 'var(--primary)',
+              fontWeight: 'var(--weight-bold)',
+              letterSpacing: 'var(--tracking-wide)',
+              marginBottom: 'var(--space-1)',
+            }}
+          >
+            Alpha Kappa Psi
+          </h1>
+          <h2
+            style={{
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--font-display)',
+              color: 'var(--primary)',
+              fontWeight: 'var(--weight-normal)',
+              marginBottom: 'var(--space-1)',
             }}
           >
             Select a Family
           </h2>
           <p
-            className="mt-2"
             style={{
-              fontSize: 'var(--text-sm)',
+              fontSize: 'var(--text-xs)',
               color: 'var(--text-muted)',
-              marginTop: 'var(--space-2)',
             }}
           >
-            Explore lineage, classes, and connections.
+            Explore lineage, classes, and connections
           </p>
         </div>
 
-        <div className="tiles flex flex-wrap justify-center" style={{ gap: 'var(--space-8)' }}>
+        {/* Compact Grid Layout */}
+        <div className="grid grid-cols-2 gap-4" style={{ 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 'var(--space-4)',
+        }}>
           {families.map((family, idx) => {
             const theme = getThemeStyles(family.theme);
             const accent = theme?.accent || '#D3AF37';
@@ -101,35 +115,45 @@ const FamilySelection = ({ families, onSelectFamily }) => {
                 }
               }}
               tabIndex={0}
-              className={`tile text-center group fade-zoom ${clickedIndex === idx ? 'click-zoom' : ''} reveal-stagger-${idx+1}`}
+              className={`tile text-center group fade-zoom ${clickedIndex === idx ? 'click-zoom' : ''}`}
               style={{
                 backgroundColor: 'var(--akpsi-navy-subtle)',
-                border: `2px solid ${accent}99`,
-                borderRadius: 'var(--radius-lg)',
-                padding: 'var(--space-8)',
-                width: '28rem',
-                maxWidth: '100%',
+                border: `1.5px solid ${accent}80`,
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-4) var(--space-3)',
                 backgroundImage,
                 backgroundSize,
-                boxShadow: 'var(--shadow-md)',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all var(--motion-fast) var(--ease-standard)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                e.currentTarget.style.borderColor = `${accent}CC`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                e.currentTarget.style.borderColor = `${accent}80`;
               }}
               aria-label={`Select ${family.name} family`}
             >
-              <div className="flex items-center justify-center gap-2" style={{ gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+              <div className="flex items-center justify-center gap-1.5" style={{ gap: 'var(--space-1)', marginBottom: 'var(--space-2)' }}>
                 <span
                   className="inline-block rounded-full"
                   style={{
-                    width: '10px',
-                    height: '10px',
+                    width: '8px',
+                    height: '8px',
                     backgroundColor: accent,
                   }}
                 />
                 <h3
-                  className="font-bold"
                   style={{
-                    fontSize: 'var(--text-xl)',
+                    fontSize: 'var(--text-base)',
                     fontFamily: 'var(--font-display)',
+                    fontWeight: 'var(--weight-bold)',
                     color: titleColor,
+                    letterSpacing: '0.5px',
                   }}
                 >
                   {family.name}
@@ -139,31 +163,29 @@ const FamilySelection = ({ families, onSelectFamily }) => {
                 className="tile-underline mx-auto"
                 style={{
                   backgroundColor: accent,
-                  width: '70%',
-                  height: '3px',
-                  opacity: 0.7,
+                  width: '60%',
+                  height: '2px',
+                  opacity: 0.6,
                   borderRadius: 'var(--radius-full)',
                 }}
               />
-              <div
-                className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-center"
-                style={{
-                  transitionDuration: 'var(--motion-med)',
-                  marginTop: 'var(--space-3)',
-                }}
-                aria-hidden
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 5l7 7-7 7" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5 12h14" stroke={accent} strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
             </button>
             );
           })}
         </div>
+
+        {/* Compact Footer */}
+        <div className="text-center" style={{ marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--glass-border)' }}>
+          <p
+            style={{
+              fontSize: 'var(--text-xs)',
+              color: 'var(--text-muted)',
+            }}
+          >
+            © {new Date().getFullYear()} Alpha Kappa Psi Nu Chapter
+          </p>
+        </div>
       </div>
-      <Footer />
     </div>
   );
 };
