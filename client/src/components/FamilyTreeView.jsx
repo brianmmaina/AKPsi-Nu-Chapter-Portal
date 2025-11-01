@@ -106,24 +106,23 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                 // Determine inactive tab color based on CURRENTLY SELECTED family's background
                 // This ensures proper contrast when light backgrounds (like EMPIRE) are selected
                 let inactiveColor;
-                if (selectedFamily.theme === 'empire') {
-                  // When EMPIRE (light cream) is selected, use dark color for all inactive tabs
-                  inactiveColor = '#4a4a4a'; // Dark gray for good contrast on light background
-                } else if (family.theme === 'empire' && !isActive) {
-                  // When EMPIRE tab is inactive on dark background, use lighter variant
-                  inactiveColor = '#999999'; // Medium gray
-                } else if (family.theme === 'wolfpack' && !isActive) {
-                  // WOLFPACK tab should always be white when inactive
-                  inactiveColor = '#ffffff'; // Full white for WOLFPACK
-                } else if (!isActive) {
-                  // Default: semi-transparent white for dark backgrounds
-                  inactiveColor = 'rgba(255, 255, 255, 0.5)';
-                } else {
-                  // Active tab: for WOLFPACK, always use white; others use accent
-                  inactiveColor = family.theme === 'wolfpack' ? '#ffffff' : familyPrimary;
+                if (!isActive) {
+                  if (selectedFamily.theme === 'empire') {
+                    // When EMPIRE (light cream) is selected, use dark color for all inactive tabs
+                    inactiveColor = '#4a4a4a'; // Dark gray for good contrast on light background
+                  } else if (family.theme === 'empire') {
+                    // When EMPIRE tab is inactive on dark background, use lighter variant
+                    inactiveColor = '#999999'; // Medium gray
+                  } else if (family.theme === 'wolfpack') {
+                    // WOLFPACK tab should always be white when inactive
+                    inactiveColor = '#ffffff'; // Full white for WOLFPACK
+                  } else {
+                    // Default: semi-transparent white for dark backgrounds
+                    inactiveColor = 'rgba(255, 255, 255, 0.5)';
+                  }
                 }
                 
-                // For WOLFPACK active tab, use white text with a subtle dark background for contrast
+                // For active tabs: WOLFPACK always uses white text, others use accent
                 const activeTextColor = family.theme === 'wolfpack' ? '#ffffff' : familyPrimary;
                 const activeBgColor = family.theme === 'wolfpack' 
                   ? hexToRgba('#3d5373', 0.3) // Dark blue-gray background for white text
