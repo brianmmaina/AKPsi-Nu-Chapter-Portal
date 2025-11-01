@@ -2,16 +2,12 @@
  * Main Stylesheet - Token-First Design System
  * 
  * Import order:
- * 1. Tailwind base (reset)
- * 2. Design tokens (base)
- * 3. Theme overrides (AKPsi, Family Tree)
- * 4. Base component primitives
+ * 1. Design tokens (base) - MUST BE FIRST
+ * 2. Theme overrides (AKPsi, Family Tree)
+ * 3. Base component primitives
+ * 4. Tailwind base (reset - may override some base styles)
  * 5. Tailwind components & utilities
  */
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Design Tokens (Must load first) */
 @import './styles/tokens.css';
@@ -23,21 +19,40 @@
 /* Base Component Primitives */
 @import './styles/base.css';
 
+/* Tailwind - Load after tokens so our CSS variables take precedence */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ============================================
-   FONT LOADING (Optimized)
+   OVERRIDE TAILWIND BASE RESET
    ============================================ */
-/* Note: Move to index.html <link> tags for better performance */
 
 @layer base {
+  /* Override Tailwind's reset to use our design tokens */
   body {
     margin: 0;
     padding: 0;
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--text);
+    background-color: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html {
+    background-color: var(--bg);
   }
   
   h1, h2, h3, h4, h5, h6 {
+    margin: 0;
     font-family: var(--font-display);
     font-weight: var(--weight-bold);
     letter-spacing: var(--tracking-tighter);
+    line-height: var(--leading-tight);
+    color: var(--text);
   }
 }
 
