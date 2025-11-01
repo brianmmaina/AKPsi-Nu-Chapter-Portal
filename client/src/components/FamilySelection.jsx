@@ -130,7 +130,6 @@ const FamilySelection = ({ families, onSelectFamily }) => {
           © {new Date().getFullYear()} Alpha Kappa Psi Nu Chapter
         </p>
       </footer>
-      </div>
     </div>
   );
 };
