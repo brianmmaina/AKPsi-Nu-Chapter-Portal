@@ -100,9 +100,18 @@ const validateInteger = (value, fieldName, min = null, max = null) => {
 
 // Initialize PostgreSQL connection
 // Uses DATABASE_URL from Render PostgreSQL or local .env
+if (!process.env.DATABASE_URL) {
+  console.error('ERROR: DATABASE_URL environment variable must be set');
+  console.error('For Render: Make sure PostgreSQL database is created and linked to this service');
+  console.error('For local: Set DATABASE_URL in server/.env file');
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DATABASE_URL?.includes('render.com') || process.env.DATABASE_URL?.includes('supabase') 
+    ? { rejectUnauthorized: false } 
+    : false,
 });
 
 // Test connection
@@ -113,8 +122,16 @@ pool.on('error', (err) => {
 
 // Ensure database is initialized (safe to run multiple times)
 async function initializeDatabase() {
-  try {
-    await pool.query(`
+  let retries = 5;
+  let delay = 2000;
+  
+  while (retries > 0) {
+    try {
+      // Test connection first
+      await pool.query('SELECT NOW()');
+      
+      // Create tables
+      await pool.query(`
       CREATE TABLE IF NOT EXISTS families (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
@@ -123,7 +140,7 @@ async function initializeDatabase() {
       );
     `);
 
-    await pool.query(`
+      await pool.query(`
       CREATE TABLE IF NOT EXISTS brothers (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL,
@@ -141,7 +158,7 @@ async function initializeDatabase() {
       );
     `);
 
-    await pool.query(`
+      await pool.query(`
       CREATE TABLE IF NOT EXISTS relationships (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL,
@@ -155,8 +172,8 @@ async function initializeDatabase() {
       );
     `);
     
-    // Insert families if they don't exist
-    await pool.query(`
+      // Insert families if they don't exist
+      await pool.query(`
       INSERT INTO families (name, theme) 
       VALUES 
         ('WOLFPACK', 'wolfpack'),
@@ -167,17 +184,32 @@ async function initializeDatabase() {
       ON CONFLICT (name) DO NOTHING;
     `);
     
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    throw error;
+      console.log('Database initialized successfully');
+      return; // Success, exit retry loop
+    } catch (error) {
+      retries--;
+      if (retries === 0) {
+        console.error('Database initialization failed after retries:', error);
+        console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'Set (hidden)' : 'NOT SET');
+        throw error;
+      }
+      console.warn(`Database connection failed, retrying in ${delay}ms... (${retries} retries left)`);
+      console.warn('Error:', error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 1.5; // Exponential backoff
+    }
   }
 }
 
-// Initialize on startup
+// Initialize on startup (don't exit on failure - let server start and retry on first request)
 initializeDatabase().catch(err => {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
+  console.error('Failed to initialize database on startup:', err);
+  console.error('The server will start but API requests may fail until database is connected.');
+  console.error('');
+  console.error('To fix this:');
+  console.error('1. Ensure PostgreSQL database is created in Render');
+  console.error('2. Link the database to this web service in Render dashboard');
+  console.error('3. The DATABASE_URL environment variable will be auto-set by Render');
 });
 
 // Root route
