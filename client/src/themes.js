@@ -1,6 +1,7 @@
 export const getThemeStyles = (themeName) => {
   const themes = {
     // WOLFPACK - Slate blue background, white boxes, dark blue lines
+    // From corrected spec: Primary #ffffff (white), Accent #3d5373 (dark blue-gray)
     wolfpack: {
       background: '#364c73',
       backgroundGrid: '#2a3a5c',
@@ -12,7 +13,8 @@ export const getThemeStyles = (themeName) => {
       minimapNode: '#ffffff',
       minimapBg: '#2a3a5c',
       modalBg: 'rgba(54, 76, 115, 0.95)',
-      accent: '#3d5373',
+      accent: '#ffffff', // Primary text color for tabs/headers (was #3d5373)
+      accentSecondary: '#3d5373', // For accent elements like boxes
       titleFont: 'Russo One, sans-serif',
       bodyFont: 'Montserrat, system-ui, sans-serif',
       nodeRadius: 8,
@@ -77,6 +79,7 @@ export const getThemeStyles = (themeName) => {
       backgroundVariant: 'dots',
     },
     // EMPIRE - Cream background, white boxes, tan borders, dark gray lines
+    // From corrected spec: Primary #c9a857 (warm gold), Background #f8f7f3 (cream)
     empire: {
       background: '#f8f7f3',
       backgroundGrid: '#f0efeb',
@@ -89,7 +92,7 @@ export const getThemeStyles = (themeName) => {
       minimapNode: '#c9a857',
       minimapBg: '#f0efeb',
       modalBg: 'rgba(248, 247, 243, 0.95)',
-      accent: '#c9a857',
+      accent: '#c9a857', // Primary gold color
       titleFont: 'Cinzel, serif',
       bodyFont: 'Inter, system-ui, sans-serif',
       nodeRadius: 12,

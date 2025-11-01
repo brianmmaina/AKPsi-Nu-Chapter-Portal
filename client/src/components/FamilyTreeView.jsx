@@ -73,12 +73,19 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               </h1>
             </div>
 
-            {/* Center: Compact Family Tabs */}
+            {/* Center: Compact Family Tabs - Using corrected theme colors */}
             <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
               {families.map((family) => {
                 const isActive = selectedFamily.id === family.id;
                 const familyTheme = getThemeStyles(family.theme);
-                const familyAccent = familyTheme?.accent || '#D3AF37';
+                // Use primary/accent color from corrected theme specs
+                const familyPrimary = familyTheme?.accent || '#D3AF37';
+                // Special handling for inactive tabs to ensure visibility
+                const inactiveColor = family.theme === 'empire' 
+                  ? '#666666' // Gray for cream background
+                  : family.theme === 'wolfpack'
+                  ? 'rgba(255, 255, 255, 0.6)' // Semi-transparent white on blue
+                  : 'rgba(255, 255, 255, 0.5)'; // Semi-transparent white for dark backgrounds
                 
                 return (
                   <button
@@ -88,7 +95,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     style={{
                       padding: 'var(--space-1) var(--space-3)',
                       borderRadius: 'var(--radius-md)',
-                      backgroundColor: isActive ? hexToRgba(familyAccent, 0.15) : 'transparent',
+                      backgroundColor: isActive 
+                        ? hexToRgba(familyPrimary, 0.2) 
+                        : 'transparent',
+                      border: isActive 
+                        ? `1px solid ${hexToRgba(familyPrimary, 0.3)}` 
+                        : '1px solid transparent',
                       transition: 'all var(--motion-fast) var(--ease-standard)',
                     }}
                     aria-label={`Switch to ${family.name} family`}
@@ -99,8 +111,9 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       style={{
                         fontSize: 'var(--text-xs)',
                         fontFamily: 'var(--font-display)',
-                        fontWeight: isActive ? 'var(--weight-bold)' : 'var(--weight-normal)',
-                        color: isActive ? familyAccent : 'var(--text-subtle)',
+                        fontWeight: isActive ? 'var(--weight-bold)' : 'var(--weight-medium)',
+                        color: isActive ? familyPrimary : inactiveColor,
+                        letterSpacing: '0.5px',
                       }}
                     >
                       {family.name}
@@ -113,8 +126,9 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                           left: '50%',
                           transform: 'translateX(-50%)',
                           height: '2px',
-                          width: '20px',
-                          backgroundColor: familyAccent,
+                          width: '60%',
+                          backgroundColor: familyPrimary,
+                          boxShadow: `0 0 4px ${hexToRgba(familyPrimary, 0.5)}`,
                         }}
                       />
                     )}
