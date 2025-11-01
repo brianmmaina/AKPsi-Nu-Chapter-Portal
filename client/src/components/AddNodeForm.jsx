@@ -1,7 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { brothers as brothersApi, relationships as relationshipsApi } from '../api';
 
+/**
+ * AddNodeForm Component
+ * 
+ * Modal form for adding a new brother (Little) to the family tree.
+ * Supports keyboard navigation (Escape to close).
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.parentBrother - Parent brother (Big) object, or null for root
+ * @param {number} props.familyId - Family ID
+ * @param {Function} props.onClose - Close handler
+ * @param {Function} props.onSuccess - Success callback
+ * @param {Object} props.theme - Theme configuration
+ * @param {Function} props.onToast - Toast notification handler
+ * @returns {JSX.Element} Add brother form modal
+ */
 const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToast }) => {
+  // Keyboard shortcuts: Escape to close
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
   const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
     name: '',

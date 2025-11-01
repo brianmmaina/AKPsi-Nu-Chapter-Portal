@@ -39,6 +39,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
     );
   }
 
+  // Memoize theme calculations for performance
   const selectedTheme = getThemeStyles(selectedFamily.theme);
   const themeBackground = selectedTheme?.background || '#003366';
   const themeAccent = selectedTheme?.accent || '#D3AF37';

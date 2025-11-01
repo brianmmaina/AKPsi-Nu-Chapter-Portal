@@ -1,6 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { brothers as brothersApi } from '../api';
 
+/**
+ * BrotherDetailModal Component
+ * 
+ * Modal for viewing and editing brother details.
+ * Supports keyboard navigation (Escape to close).
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.brother - Brother data object
+ * @param {number} props.familyId - Family ID
+ * @param {Function} props.onClose - Close handler
+ * @param {Function} props.onUpdate - Update callback after save
+ * @param {Object} props.theme - Theme configuration
+ * @param {Function} props.onAddLittle - Handler to add a little
+ * @param {Function} props.onToast - Toast notification handler
+ * @returns {JSX.Element} Modal component
+ */
 const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAddLittle, onToast }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [password, setPassword] = useState('');
@@ -15,6 +31,17 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
     is_transfer: brother.is_transfer === 1,
   });
   const [saving, setSaving] = useState(false);
+
+  // Keyboard shortcuts: Escape to close (only when not editing)
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && !isEditing) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose, isEditing]);
 
   const handleSave = async () => {
     if (!password.trim()) {
