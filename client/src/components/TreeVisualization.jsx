@@ -177,9 +177,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.background = '#ffffff';
         nodeStyle.border = `1px solid ${theme.nodeBorder}`; // #d4c9b3 tan border
         nodeStyle.color = '#1f1f1f'; // Very dark gray/black text
-        nodeStyle.borderRadius = '2px'; // From spec: border-radius: 2px (not 12px)
+        nodeStyle.borderRadius = '2px'; // From spec: border-radius: 2px
         nodeStyle.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; // Subtle shadow
-        nodeStyle.padding = '8px 12px'; // From spec: padding: 8px 12px
+        nodeStyle.padding = '10px 12px'; // Slightly more padding for richer content
+        nodeStyle.minHeight = '100px'; // Taller nodes for EMPIRE to fit more info
       }
 
       if (familyKey === 'greed') {
@@ -208,58 +209,146 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.borderRadius = '0px'; // Photo-focused, crisp corners
       }
 
+      // Build node label based on family theme
+      let nodeLabel;
+      
+      if (familyKey === 'empire') {
+        // EMPIRE: Rich node with multiple fields per spec
+        nodeLabel = (
+          <div style={{ 
+            fontFamily: theme.bodyFont,
+            width: '100%',
+            minHeight: nodeHeight,
+          }}>
+            {/* Gold accent bar */}
+            <div style={{ 
+              height: 3, 
+              background: 'linear-gradient(90deg, transparent, #c9a857, transparent)', 
+              marginBottom: 6,
+              marginLeft: '-8px',
+              marginRight: '-8px',
+              borderRadius: 2,
+            }} />
+            
+            {/* Member Name - Title Case, 10-11px, dark text */}
+            <div 
+              style={{ 
+                fontFamily: 'Inter, Arial, sans-serif',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#1f1f1f',
+                textTransform: 'capitalize',
+                marginBottom: 4,
+                lineHeight: '1.3',
+              }}
+            >
+              {brother.name}
+            </div>
+            
+            {/* Pledge Class - Gold, 9-10px */}
+            {brother.pledge_class && (
+              <div 
+                style={{ 
+                  fontSize: '9px',
+                  color: '#c9a857',
+                  fontWeight: 500,
+                  letterSpacing: '0.5px',
+                  marginBottom: 3,
+                }}
+              >
+                {brother.pledge_class.toUpperCase()}
+              </div>
+            )}
+            
+            {/* Graduation Year or Status - Secondary text */}
+            <div 
+              style={{ 
+                fontSize: '9px',
+                color: '#666666',
+                marginBottom: brother.major ? 3 : 0,
+              }}
+            >
+              {brother.graduation_year ? `Class of ${brother.graduation_year}` : 
+               brother.status === 'graduated' ? 'Graduated' : 'Currently Studying'}
+            </div>
+            
+            {/* Major - Smaller, tertiary text */}
+            {brother.major && (
+              <div 
+                style={{ 
+                  fontSize: '8px',
+                  color: '#999999',
+                  fontStyle: 'italic',
+                  marginTop: 2,
+                }}
+              >
+                {brother.major}
+              </div>
+            )}
+            
+            {/* Transfer indicator */}
+            {isTransfer && (
+              <div 
+                style={{ 
+                  fontSize: '8px',
+                  color: '#999999',
+                  fontStyle: 'italic',
+                  marginTop: 4,
+                }}
+              >
+                (Transfer)
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        // Other families: simpler node design
+        nodeLabel = (
+          <div className="text-center" style={{ fontFamily: theme.bodyFont }}>
+            {familyKey === 'wolfpack' && (
+              // WOLFPACK: Dark blue header bar at top of white box
+              <div style={{ 
+                height: 6, 
+                background: '#3d5373', 
+                marginBottom: 6, 
+                borderRadius: 0,
+                marginLeft: '-10px',
+                marginRight: '-10px',
+                marginTop: '-10px',
+              }} />
+            )}
+            <div 
+              className="font-semibold" 
+              style={{ 
+                fontFamily: theme.titleFont,
+                textTransform: familyKey === 'greed' ? 'uppercase' : 'none', // GREED uses UPPERCASE
+                fontSize: familyKey === 'greed' ? '10px' : '12px', // From spec: 10-11px
+                color: theme.nodeText,
+              }}
+            >
+              {brother.name}
+            </div>
+            {isTransfer && (
+              <div 
+                className="text-xs mt-1" 
+                style={{ 
+                  color: familyKey === 'empire' ? '#999999' : 
+                         familyKey === 'power' ? '#999999' :
+                         'rgba(156, 163, 175, 1)',
+                  fontStyle: 'italic', // Transfer labels in italic per spec
+                }}
+              >
+                (Transfer)
+              </div>
+            )}
+          </div>
+        );
+      }
+
       layoutNodes.push({
         id: String(brother.id),
         data: {
-          label: (
-            <div className="text-center" style={{ fontFamily: theme.bodyFont }}>
-              {familyKey === 'wolfpack' && (
-                // WOLFPACK: Dark blue header bar at top of white box
-                <div style={{ 
-                  height: 6, 
-                  background: '#3d5373', 
-                  marginBottom: 6, 
-                  borderRadius: 0,
-                  marginLeft: '-10px',
-                  marginRight: '-10px',
-                  marginTop: '-10px',
-                }} />
-              )}
-              {familyKey === 'empire' && (
-                // EMPIRE: Elegant gold accent bar
-                <div style={{ 
-                  height: 3, 
-                  background: 'linear-gradient(90deg, transparent, #c9a857, transparent)', 
-                  marginBottom: 8, 
-                  borderRadius: 2 
-                }} />
-              )}
-              <div 
-                className="font-semibold" 
-                style={{ 
-                  fontFamily: theme.titleFont,
-                  textTransform: familyKey === 'greed' ? 'uppercase' : 'none', // GREED uses UPPERCASE
-                  fontSize: familyKey === 'greed' ? '10px' : '12px', // From spec: 10-11px
-                  color: theme.nodeText,
-                }}
-              >
-                {brother.name}
-              </div>
-              {isTransfer && (
-                <div 
-                  className="text-xs mt-1" 
-                  style={{ 
-                    color: familyKey === 'empire' ? '#999999' : 
-                           familyKey === 'power' ? '#999999' :
-                           'rgba(156, 163, 175, 1)',
-                    fontStyle: 'italic', // Transfer labels in italic per spec
-                  }}
-                >
-                  (Transfer)
-                </div>
-              )}
-            </div>
-          ),
+          label: nodeLabel,
           brother: brother,
         },
         position: position || { x: 0, y: 0 },
@@ -309,7 +398,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const onPaneClick = useCallback((event) => {
     if (event.target.classList.contains('react-flow__pane')) {
       setSelectedBrother(null);
-      setShowAddForm(false);
+      // Don't close add form on pane click - let user finish adding
     }
   }, []);
 
@@ -447,7 +536,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   return (
     <div
-      className="w-full"
+      className="w-full relative"
       style={{
         minHeight: 'calc(100vh - 60px)', // Account for header height
         backgroundColor: theme.background,
@@ -473,6 +562,44 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
+
+      {/* Floating "Add Root Node" button - for adding brothers with no big brother */}
+      <button
+        onClick={() => {
+          setAddFormParent(null);
+          setShowAddForm(true);
+        }}
+        className="btn"
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 1000,
+          backgroundColor: hexToRgba(theme.accent, 0.95),
+          color: familyKey === 'empire' ? '#1f1f1f' : (familyKey === 'wolfpack' ? '#364c73' : theme.background),
+          borderColor: theme.accent,
+          fontWeight: 'var(--weight-bold)',
+          padding: 'var(--space-2) var(--space-4)',
+          fontSize: 'var(--text-sm)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          borderRadius: 'var(--radius-md)',
+          transition: 'all var(--motion-fast) var(--ease-standard)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.accent;
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = hexToRgba(theme.accent, 0.95);
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        }}
+        aria-label="Add new root node (brother with no big brother)"
+        title="Add a new root node - starts a new branch in the family tree"
+      >
+        + Add Root Node
+      </button>
 
       {selectedBrother && (
         <BrotherDetailModal
