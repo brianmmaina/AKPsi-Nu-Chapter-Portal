@@ -64,9 +64,14 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         }}
       >
         <div className="container">
-          <div className="flex items-center justify-between" style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)' }}>
-            {/* Left: Compact family name */}
-            <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
+          <div className="grid grid-cols-3 items-center" style={{ 
+            paddingTop: 'var(--space-2)', 
+            paddingBottom: 'var(--space-2)',
+            gridTemplateColumns: '1fr auto 1fr',
+            gap: 'var(--space-4)',
+          }}>
+            {/* Left: Compact family name - fixed width to prevent shifting */}
+            <div className="flex items-center" style={{ gap: 'var(--space-2)', minWidth: '200px' }}>
               <div 
                 className="family-crest active"
                 style={{
@@ -76,6 +81,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   borderColor: hexToRgba(themeAccent, 0.4),
                   color: themeAccent,
                   transition: 'all 400ms var(--ease-standard)',
+                  flexShrink: 0,
                 }}
               >
                 {selectedFamily.name.charAt(0)}
@@ -89,14 +95,15 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   letterSpacing: 'var(--tracking-wide)',
                   margin: 0,
                   transition: 'color 400ms var(--ease-standard)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {selectedFamily.name}
               </h1>
             </div>
 
-            {/* Center: Compact Family Tabs - Using corrected theme colors */}
-            <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
+            {/* Center: Compact Family Tabs - Using corrected theme colors with more spacing */}
+            <div className="flex items-center justify-center" style={{ gap: 'var(--space-3)' }}>
               {families.map((family) => {
                 const isActive = selectedFamily.id === family.id;
                 const familyTheme = getThemeStyles(family.theme);
@@ -204,30 +211,33 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               })}
             </div>
 
-            {/* Right: Back button */}
-            <button
-              onClick={onChangeFamily}
-              className="btn"
-              style={{
-                padding: 'var(--space-1) var(--space-3)',
-                fontSize: 'var(--text-xs)',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: hexToRgba(themeAccent, 0.15),
-                borderColor: hexToRgba(themeAccent, 0.3),
-                color: themeAccent,
-                transition: 'all 400ms var(--ease-standard)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.15);
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              Back
-            </button>
+            {/* Right: Back button - aligned to the right */}
+            <div className="flex justify-end" style={{ minWidth: '80px' }}>
+              <button
+                onClick={onChangeFamily}
+                className="btn"
+                style={{
+                  padding: 'var(--space-1) var(--space-3)',
+                  fontSize: 'var(--text-xs)',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: hexToRgba(themeAccent, 0.15),
+                  borderColor: hexToRgba(themeAccent, 0.3),
+                  color: themeAccent,
+                  transition: 'all 400ms var(--ease-standard)',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.15);
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                Back
+              </button>
+            </div>
           </div>
         </div>
       </div>
