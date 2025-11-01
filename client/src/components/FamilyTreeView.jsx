@@ -32,7 +32,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
   const themeAccent = selectedTheme?.accent || '#D3AF37';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeBackground }}>
+    <div 
+      className="min-h-screen" 
+      style={{ 
+        backgroundColor: themeBackground,
+        transition: 'background-color 400ms var(--ease-standard)',
+      }}
+    >
       {/* Minimalist Header - Themed */}
       <div 
         className="sticky top-0 z-sticky border-b"
@@ -41,6 +47,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           backdropFilter: 'blur(12px) saturate(180%)',
           WebkitBackdropFilter: 'blur(12px) saturate(180%)',
           borderBottomColor: hexToRgba(themeAccent, 0.2),
+          transition: 'background-color 400ms var(--ease-standard), border-bottom-color 400ms var(--ease-standard)',
         }}
       >
         <div className="container">
@@ -55,6 +62,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   fontSize: '14px',
                   borderColor: hexToRgba(themeAccent, 0.4),
                   color: themeAccent,
+                  transition: 'all 400ms var(--ease-standard)',
                 }}
               >
                 {selectedFamily.name.charAt(0)}
@@ -67,6 +75,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   color: themeAccent,
                   letterSpacing: 'var(--tracking-wide)',
                   margin: 0,
+                  transition: 'color 400ms var(--ease-standard)',
                 }}
               >
                 {selectedFamily.name}
@@ -91,7 +100,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   <button
                     key={family.id}
                     onClick={() => setSelectedFamily(family)}
-                    className="relative"
+                    className="relative group"
                     style={{
                       padding: 'var(--space-1) var(--space-3)',
                       borderRadius: 'var(--radius-md)',
@@ -102,18 +111,32 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         ? `1px solid ${hexToRgba(familyPrimary, 0.3)}` 
                         : '1px solid transparent',
                       transition: 'all var(--motion-fast) var(--ease-standard)',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = hexToRgba(familyPrimary, 0.1);
+                        e.currentTarget.style.borderColor = hexToRgba(familyPrimary, 0.2);
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      }
                     }}
                     aria-label={`Switch to ${family.name} family`}
                     aria-current={isActive ? 'true' : 'false'}
                   >
                     <span 
-                      className="whitespace-nowrap"
+                      className="whitespace-nowrap relative z-10"
                       style={{
                         fontSize: 'var(--text-xs)',
                         fontFamily: 'var(--font-display)',
                         fontWeight: isActive ? 'var(--weight-bold)' : 'var(--weight-medium)',
                         color: isActive ? familyPrimary : inactiveColor,
                         letterSpacing: '0.5px',
+                        transition: 'color var(--motion-fast) var(--ease-standard)',
                       }}
                     >
                       {family.name}
@@ -129,6 +152,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                           width: '60%',
                           backgroundColor: familyPrimary,
                           boxShadow: `0 0 4px ${hexToRgba(familyPrimary, 0.5)}`,
+                          animation: 'slideIn 200ms var(--ease-standard)',
                         }}
                       />
                     )}
@@ -148,6 +172,15 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                 backgroundColor: hexToRgba(themeAccent, 0.15),
                 borderColor: hexToRgba(themeAccent, 0.3),
                 color: themeAccent,
+                transition: 'all 400ms var(--ease-standard)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.15);
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               Back

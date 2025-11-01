@@ -1,4 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+
+// Helper to convert hex to rgba
+const hexToRgba = (hex, alpha = 1) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -311,12 +319,26 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 setShowAddForm(true);
                 setAddFormParent(null);
               }}
-              className="btn btn-primary"
+              className="btn"
+              style={{
+                backgroundColor: theme.accent,
+                color: theme.theme === 'empire' ? '#1f1f1f' : theme.background,
+                borderColor: theme.accent,
+                fontWeight: 'var(--weight-bold)',
+              }}
             >
               Add First Brother
             </button>
             {onChangeFamily && (
-              <button onClick={onChangeFamily} className="btn btn-secondary">
+              <button 
+                onClick={onChangeFamily} 
+                className="btn"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: theme.accent,
+                  borderColor: hexToRgba(theme.accent, 0.4),
+                }}
+              >
                 Back to Families
               </button>
             )}
