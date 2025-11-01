@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import Database from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
+import pg from 'pg';
+
+const { Pool } = pg;
 
 dotenv.config();
 
@@ -98,6 +98,88 @@ const validateInteger = (value, fieldName, min = null, max = null) => {
   return num;
 };
 
+// Initialize PostgreSQL connection
+// Uses DATABASE_URL from Render PostgreSQL or local .env
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false,
+});
+
+// Test connection
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+// Ensure database is initialized (safe to run multiple times)
+async function initializeDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS families (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        theme TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS brothers (
+        id SERIAL PRIMARY KEY,
+        family_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        pledge_class TEXT,
+        graduation_year INTEGER,
+        major TEXT,
+        career_aspirations TEXT,
+        fun_facts TEXT,
+        status TEXT NOT NULL DEFAULT 'studying' CHECK(status IN ('studying', 'graduated')),
+        is_transfer INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (family_id) REFERENCES families(id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS relationships (
+        id SERIAL PRIMARY KEY,
+        family_id INTEGER NOT NULL,
+        big_id INTEGER,
+        little_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (family_id) REFERENCES families(id),
+        FOREIGN KEY (big_id) REFERENCES brothers(id),
+        FOREIGN KEY (little_id) REFERENCES brothers(id),
+        UNIQUE(family_id, little_id)
+      );
+    `);
+    
+    // Insert families if they don't exist
+    await pool.query(`
+      INSERT INTO families (name, theme) 
+      VALUES 
+        ('WOLFPACK', 'wolfpack'),
+        ('PRIDE', 'pride'),
+        ('POWER', 'power'),
+        ('GREED', 'greed'),
+        ('EMPIRE', 'empire')
+      ON CONFLICT (name) DO NOTHING;
+    `);
+    
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    throw error;
+  }
+}
+
+// Initialize on startup
+initializeDatabase().catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
@@ -110,68 +192,6 @@ app.get('/', (req, res) => {
     }
   });
 });
-
-// Initialize database connection
-// On Render, use persistent disk path if set, otherwise use local path
-const dbPath = process.env.DATABASE_PATH || 'database.sqlite';
-
-// Ensure directory exists for database file (important for Render persistent disk)
-import fs from 'fs';
-import path from 'path';
-const dbDir = path.dirname(dbPath);
-if (dbDir && dbDir !== '.' && !fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
-
-const db = new Database(dbPath);
-
-// Ensure database is initialized (safe to run multiple times)
-try {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS families (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      theme TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS brothers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      family_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      pledge_class TEXT,
-      graduation_year INTEGER,
-      major TEXT,
-      career_aspirations TEXT,
-      fun_facts TEXT,
-      status TEXT NOT NULL DEFAULT 'studying' CHECK(status IN ('studying', 'graduated')),
-      is_transfer INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (family_id) REFERENCES families(id)
-    );
-    CREATE TABLE IF NOT EXISTS relationships (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      family_id INTEGER NOT NULL,
-      big_id INTEGER,
-      little_id INTEGER NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (family_id) REFERENCES families(id),
-      FOREIGN KEY (big_id) REFERENCES brothers(id),
-      FOREIGN KEY (little_id) REFERENCES brothers(id),
-      UNIQUE(family_id, little_id)
-    );
-  `);
-  
-  // Insert families if they don't exist
-  const insertFamily = db.prepare(`INSERT OR IGNORE INTO families (name, theme) VALUES (?, ?)`);
-  insertFamily.run('WOLFPACK', 'wolfpack');
-  insertFamily.run('PRIDE', 'pride');
-  insertFamily.run('POWER', 'power');
-  insertFamily.run('GREED', 'greed');
-  insertFamily.run('EMPIRE', 'empire');
-} catch (error) {
-  console.error('Database initialization error:', error);
-}
 
 // Password check middleware
 const checkPassword = (req, res, next) => {
@@ -197,41 +217,62 @@ app.post('/api/auth', rateLimit, (req, res) => {
 });
 
 // Get all families
-app.get('/api/families', (req, res) => {
-  const families = db.prepare('SELECT * FROM families ORDER BY name').all();
-  res.json(families);
+app.get('/api/families', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM families ORDER BY name');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching families:', error);
+    res.status(500).json({ error: 'Failed to fetch families' });
+  }
 });
 
 // Get family tree data
-app.get('/api/families/:familyId/tree', (req, res) => {
-  const { familyId } = req.params;
-  
-  // Get all brothers in this family
-  const brothers = db.prepare(`
-    SELECT * FROM brothers WHERE family_id = ?
-  `).all(familyId);
-  
-  // Get all relationships in this family
-  const relationships = db.prepare(`
-    SELECT * FROM relationships WHERE family_id = ?
-  `).all(familyId);
-  
-  res.json({ brothers, relationships });
+app.get('/api/families/:familyId/tree', async (req, res) => {
+  try {
+    const { familyId } = req.params;
+    
+    // Get all brothers in this family
+    const brothersResult = await pool.query(
+      'SELECT * FROM brothers WHERE family_id = $1',
+      [familyId]
+    );
+    
+    // Get all relationships in this family
+    const relationshipsResult = await pool.query(
+      'SELECT * FROM relationships WHERE family_id = $1',
+      [familyId]
+    );
+    
+    res.json({ 
+      brothers: brothersResult.rows, 
+      relationships: relationshipsResult.rows 
+    });
+  } catch (error) {
+    console.error('Error fetching family tree:', error);
+    res.status(500).json({ error: 'Failed to fetch family tree' });
+  }
 });
 
 // Get single brother
-app.get('/api/brothers/:id', (req, res) => {
-  const { id } = req.params;
-  const brother = db.prepare('SELECT * FROM brothers WHERE id = ?').get(id);
-  if (brother) {
-    res.json(brother);
-  } else {
-    res.status(404).json({ error: 'Brother not found' });
+app.get('/api/brothers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM brothers WHERE id = $1', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Brother not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching brother:', error);
+    res.status(500).json({ error: 'Failed to fetch brother' });
   }
 });
 
 // Create new brother
-app.post('/api/brothers', checkPassword, (req, res) => {
+app.post('/api/brothers', checkPassword, async (req, res) => {
   try {
     const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
     
@@ -253,12 +294,11 @@ app.post('/api/brothers', checkPassword, (req, res) => {
     const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
     const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
     
-    const insert = db.prepare(`
+    const insertResult = await pool.query(`
       INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    const result = insert.run(
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id
+    `, [
       family_id,
       validatedName,
       validatedPledgeClass,
@@ -268,17 +308,16 @@ app.post('/api/brothers', checkPassword, (req, res) => {
       validatedFunFacts,
       validatedStatus,
       validatedIsTransfer
-    );
+    ]);
     
-    const brotherId = result.lastInsertRowid;
+    const brotherId = insertResult.rows[0].id;
     
     // Create relationship if big_id is provided
     if (big_id && Number.isInteger(big_id) && big_id > 0) {
-      const insertRel = db.prepare(`
+      await pool.query(`
         INSERT INTO relationships (family_id, big_id, little_id)
-        VALUES (?, ?, ?)
-      `);
-      insertRel.run(family_id, big_id, brotherId);
+        VALUES ($1, $2, $3)
+      `, [family_id, big_id, brotherId]);
     }
     
     res.json({ id: brotherId, success: true });
@@ -289,7 +328,7 @@ app.post('/api/brothers', checkPassword, (req, res) => {
 });
 
 // Update brother
-app.put('/api/brothers/:id', checkPassword, (req, res) => {
+app.put('/api/brothers/:id', checkPassword, async (req, res) => {
   try {
     const { id } = req.params;
     const brotherId = parseInt(id, 10);
@@ -314,15 +353,13 @@ app.put('/api/brothers/:id', checkPassword, (req, res) => {
     const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
     const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
     
-    const update = db.prepare(`
+    const result = await pool.query(`
       UPDATE brothers 
-      SET name = ?, pledge_class = ?, graduation_year = ?, major = ?, 
-          career_aspirations = ?, fun_facts = ?, status = ?, is_transfer = ?,
+      SET name = $1, pledge_class = $2, graduation_year = $3, major = $4, 
+          career_aspirations = $5, fun_facts = $6, status = $7, is_transfer = $8,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
-    
-    const result = update.run(
+      WHERE id = $9
+    `, [
       validatedName,
       validatedPledgeClass,
       validatedGraduationYear,
@@ -332,9 +369,9 @@ app.put('/api/brothers/:id', checkPassword, (req, res) => {
       validatedStatus,
       validatedIsTransfer,
       brotherId
-    );
+    ]);
     
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Brother not found' });
     }
     
@@ -346,36 +383,43 @@ app.put('/api/brothers/:id', checkPassword, (req, res) => {
 });
 
 // Update relationship (change Big)
-app.put('/api/relationships/:littleId', checkPassword, (req, res) => {
-  const { littleId } = req.params;
-  const { family_id, big_id } = req.body;
-  
-  const update = db.prepare(`
-    UPDATE relationships 
-    SET big_id = ?
-    WHERE family_id = ? AND little_id = ?
-  `);
-  
-  update.run(big_id || null, family_id, littleId);
-  
-  res.json({ success: true });
+app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
+  try {
+    const { littleId } = req.params;
+    const { family_id, big_id } = req.body;
+    
+    await pool.query(`
+      UPDATE relationships 
+      SET big_id = $1
+      WHERE family_id = $2 AND little_id = $3
+    `, [big_id || null, family_id, littleId]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating relationship:', error);
+    res.status(400).json({ error: error.message || 'Invalid input data' });
+  }
 });
 
 // Create relationship (add Little to existing Big)
-app.post('/api/relationships', checkPassword, (req, res) => {
-  const { family_id, big_id, little_id } = req.body;
-  
-  const insert = db.prepare(`
-    INSERT OR REPLACE INTO relationships (family_id, big_id, little_id)
-    VALUES (?, ?, ?)
-  `);
-  
-  insert.run(family_id, big_id, little_id);
-  
-  res.json({ success: true });
+app.post('/api/relationships', checkPassword, async (req, res) => {
+  try {
+    const { family_id, big_id, little_id } = req.body;
+    
+    await pool.query(`
+      INSERT INTO relationships (family_id, big_id, little_id)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (family_id, little_id) 
+      DO UPDATE SET big_id = EXCLUDED.big_id
+    `, [family_id, big_id, little_id]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error creating relationship:', error);
+    res.status(400).json({ error: error.message || 'Invalid input data' });
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
