@@ -113,14 +113,24 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   // When EMPIRE tab is inactive on dark background, use lighter variant
                   inactiveColor = '#999999'; // Medium gray
                 } else if (family.theme === 'wolfpack' && !isActive) {
-                  // WOLFPACK tab on dark background
-                  inactiveColor = 'rgba(255, 255, 255, 0.6)'; // Semi-transparent white
+                  // WOLFPACK tab should always be white when inactive
+                  inactiveColor = '#ffffff'; // Full white for WOLFPACK
                 } else if (!isActive) {
                   // Default: semi-transparent white for dark backgrounds
                   inactiveColor = 'rgba(255, 255, 255, 0.5)';
                 } else {
-                  inactiveColor = familyPrimary; // Active tab uses accent color
+                  // Active tab: for WOLFPACK, always use white; others use accent
+                  inactiveColor = family.theme === 'wolfpack' ? '#ffffff' : familyPrimary;
                 }
+                
+                // For WOLFPACK active tab, use white text with a subtle dark background for contrast
+                const activeTextColor = family.theme === 'wolfpack' ? '#ffffff' : familyPrimary;
+                const activeBgColor = family.theme === 'wolfpack' 
+                  ? hexToRgba('#3d5373', 0.3) // Dark blue-gray background for white text
+                  : hexToRgba(familyPrimary, 0.2);
+                const activeBorderColor = family.theme === 'wolfpack'
+                  ? hexToRgba('#3d5373', 0.4)
+                  : hexToRgba(familyPrimary, 0.3);
                 
                 return (
                   <button
@@ -130,14 +140,14 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     style={{
                       padding: 'var(--space-1) var(--space-3)',
                       borderRadius: 'var(--radius-md)',
-                      backgroundColor: isActive 
-                        ? hexToRgba(familyPrimary, 0.2) 
-                        : 'transparent',
-                      border: isActive 
-                        ? `1px solid ${hexToRgba(familyPrimary, 0.3)}` 
-                        : '1px solid transparent',
-                      transition: 'all var(--motion-fast) var(--ease-standard)',
+                      // Always reserve space for border to prevent shifting
+                      border: '1px solid',
+                      borderColor: isActive ? activeBorderColor : 'transparent',
+                      backgroundColor: isActive ? activeBgColor : 'transparent',
+                      transition: 'background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
                       cursor: 'pointer',
+                      // Reserve space for underline to prevent shifting
+                      paddingBottom: isActive ? 'calc(var(--space-1) + 6px)' : 'var(--space-1)',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
@@ -165,9 +175,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         fontSize: 'var(--text-xs)',
                         fontFamily: 'var(--font-display)',
                         fontWeight: isActive ? 'var(--weight-bold)' : 'var(--weight-medium)',
-                        color: isActive ? familyPrimary : inactiveColor,
+                        color: isActive ? activeTextColor : inactiveColor,
                         letterSpacing: '0.5px',
-                        transition: 'color var(--motion-fast) var(--ease-standard)',
+                        transition: 'color var(--motion-fast) var(--ease-standard), font-weight var(--motion-fast) var(--ease-standard)',
+                        // Prevent font-weight from causing shift by using consistent width
+                        display: 'inline-block',
+                        minWidth: 'fit-content',
                       }}
                     >
                       {family.name}
@@ -181,8 +194,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                           transform: 'translateX(-50%)',
                           height: '2px',
                           width: '60%',
-                          backgroundColor: familyPrimary,
-                          boxShadow: `0 0 4px ${hexToRgba(familyPrimary, 0.5)}`,
+                          backgroundColor: activeTextColor,
+                          boxShadow: `0 0 4px ${hexToRgba(activeTextColor, 0.5)}`,
                           animation: 'slideIn 200ms var(--ease-standard)',
                         }}
                       />

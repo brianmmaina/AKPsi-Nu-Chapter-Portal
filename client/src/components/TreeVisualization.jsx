@@ -295,7 +295,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             style={{
               fontSize: 'var(--text-3xl)',
               fontFamily: 'var(--font-display)',
-              color: theme.accent || 'var(--primary)',
+              // WOLFPACK text should always be white
+              color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
               marginBottom: 'var(--space-4)',
             }}
           >
@@ -336,7 +337,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             style={{
               fontSize: 'var(--text-3xl)',
               fontFamily: 'var(--font-display)',
-              color: theme.accent || 'var(--primary)',
+              // WOLFPACK text should always be white
+              color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
               marginBottom: 'var(--space-4)',
             }}
           >
