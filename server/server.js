@@ -272,13 +272,25 @@ const getSSLConfig = () => {
 };
 
 // Create connection pool with IPv4 preference and better error handling
+// Fix IPv6 connection issues by using connection pooler if available
+let dbUrl = process.env.DATABASE_URL || '';
+
+// If using Supabase, try to use connection pooler port (6543) for better compatibility
+if (dbUrl.includes('supabase') && dbUrl.includes(':5432')) {
+  // Replace direct connection port with pooler port (better for Railway)
+  dbUrl = dbUrl.replace(':5432', ':6543');
+  logger.info('Using Supabase connection pooler for better compatibility');
+}
+
 const poolConfig = {
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   ssl: getSSLConfig(),
   // Force IPv4 connection (Railway/Supabase IPv6 can be unreliable)
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 15000,
   idleTimeoutMillis: 30000,
   max: 10, // Maximum number of clients in the pool
+  // Additional options to help with connection
+  keepAlive: true,
 };
 
 const pool = new Pool(poolConfig);
