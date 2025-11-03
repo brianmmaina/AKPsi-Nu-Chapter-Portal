@@ -75,19 +75,17 @@ if (NODE_ENV === 'production') {
   });
 }
 
-// Request size limits
-app.use(express.json({ limit: REQUEST_SIZE_LIMIT }));
-
-// CORS configuration
+// CORS configuration - MUST be before express.json() for OPTIONS requests
 if (FRONTEND_URL && FRONTEND_URL !== '*') {
-  app.use(cors({
+  // Handle OPTIONS preflight requests FIRST, before any other middleware
+  app.options('*', cors({
     origin: FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
-  // Handle preflight requests explicitly
-  app.options('*', cors({
+  
+  app.use(cors({
     origin: FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -95,12 +93,15 @@ if (FRONTEND_URL && FRONTEND_URL !== '*') {
   }));
 } else if (NODE_ENV === 'production') {
   logger.warn('FRONTEND_URL not set in production - CORS allows all origins');
-  app.use(cors());
   app.options('*', cors());
+  app.use(cors());
 } else {
-  app.use(cors());
   app.options('*', cors());
+  app.use(cors());
 }
+
+// Request size limits
+app.use(express.json({ limit: REQUEST_SIZE_LIMIT }));
 
 // Trust proxy for proper IP extraction (important for rate limiting)
 app.set('trust proxy', 1);
