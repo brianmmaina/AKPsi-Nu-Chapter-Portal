@@ -350,18 +350,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         );
       }
 
-      // Only add node if position was calculated
-      if (position) {
-        layoutNodes.push({
-          id: String(brother.id),
-          data: {
-            label: nodeLabel,
-            brother: brother,
-          },
-          position: position,
-          style: nodeStyle,
-        });
-      }
+      // Add node with position (fallback to 0,0 if not calculated)
+      layoutNodes.push({
+        id: String(brother.id),
+        data: {
+          label: nodeLabel,
+          brother: brother,
+        },
+        position: position || { x: 0, y: 0 },
+        style: nodeStyle,
+      });
     });
 
     // Create edges - only if both nodes exist
@@ -388,7 +386,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
-  }, [brothers, relationships, theme]);
+    
+    // Auto-fit view after nodes are set (with small delay to ensure React Flow is ready)
+    if (layoutNodes.length > 0) {
+      setTimeout(() => {
+        setCenter(0, 0, { zoom: 1, duration: 0 });
+      }, 100);
+    }
+  }, [brothers, relationships, theme, setCenter]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
