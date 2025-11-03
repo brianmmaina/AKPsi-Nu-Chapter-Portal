@@ -64,20 +64,9 @@ const logger = {
 // SECURITY MIDDLEWARE
 // ============================================================================
 
-// HTTPS enforcement in production
-if (NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https') {
-      res.redirect(`https://${req.header('host')}${req.url}`);
-    } else {
-      next();
-    }
-  });
-}
-
-// CORS configuration - MUST be before express.json() for OPTIONS requests
+// CORS configuration - MUST be FIRST, before everything else
+// Handle OPTIONS preflight requests IMMEDIATELY
 if (FRONTEND_URL && FRONTEND_URL !== '*') {
-  // Handle OPTIONS preflight requests FIRST, before any other middleware
   app.options('*', cors({
     origin: FRONTEND_URL,
     credentials: true,
@@ -98,6 +87,21 @@ if (FRONTEND_URL && FRONTEND_URL !== '*') {
 } else {
   app.options('*', cors());
   app.use(cors());
+}
+
+// HTTPS enforcement in production (after CORS so preflight works)
+if (NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    // Skip redirect for OPTIONS requests (CORS preflight)
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
 }
 
 // Request size limits
