@@ -384,6 +384,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
     });
 
+    console.log('Tree layout calculated:', { 
+      nodes: layoutNodes.length, 
+      edges: layoutEdges.length, 
+      brothers: brothers.length,
+      relationships: relationships.length 
+    });
+    
     setNodes(layoutNodes);
     setEdges(layoutEdges);
     
