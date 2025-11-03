@@ -185,11 +185,11 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
                 fontWeight: '500',
               }}
             >
-              <option value="">👑 None (Root Node - starts new branch)</option>
+              <option value="">None (Root Node - starts new branch)</option>
               {existingBrothers.length > 0 ? (
                 existingBrothers.map((brother) => (
                   <option key={brother.id} value={brother.id}>
-                    👤 {brother.name} {brother.pledge_class ? `(${brother.pledge_class})` : ''}
+                    {brother.name} {brother.pledge_class ? `(${brother.pledge_class})` : ''}
                   </option>
                 ))
               ) : (
