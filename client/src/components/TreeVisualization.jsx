@@ -501,7 +501,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           </p>
           <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Add First Brother button clicked'); // Debug log
                 setShowAddForm(true);
                 setAddFormParent(null);
               }}
@@ -511,6 +515,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 color: theme.theme === 'empire' ? '#1f1f1f' : theme.background,
                 borderColor: theme.accent,
                 fontWeight: 'var(--weight-bold)',
+                cursor: 'pointer',
               }}
             >
               Add First Brother
@@ -545,27 +550,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         backgroundPosition: 'center',
       }}
     >
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        fitView
-        style={{ background: theme.background, fontFamily: theme.bodyFont }}
-      >
-        <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
-        <Controls />
-        <MiniMap 
-          nodeColor={theme.minimapNode}
-          style={{ backgroundColor: theme.minimapBg }}
-        />
-      </ReactFlow>
-
-      {/* Floating "Add Root Node" button - for adding brothers with no big brother */}
+      {/* Floating "Add Root Node" button - positioned outside React Flow to avoid click issues */}
       <button
-        onClick={() => {
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Add Root Node button clicked'); // Debug log
           setAddFormParent(null);
           setShowAddForm(true);
         }}
@@ -574,7 +565,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           position: 'absolute',
           top: '20px',
           right: '20px',
-          zIndex: 1000,
+          zIndex: 9999,
+          pointerEvents: 'auto',
           backgroundColor: hexToRgba(theme.accent, 0.95),
           color: familyKey === 'empire' ? '#1f1f1f' : (familyKey === 'wolfpack' ? '#364c73' : theme.background),
           borderColor: theme.accent,
@@ -584,22 +576,47 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           borderRadius: 'var(--radius-md)',
           transition: 'all var(--motion-fast) var(--ease-standard)',
+          cursor: 'pointer',
         }}
         onMouseEnter={(e) => {
+          e.stopPropagation();
           e.currentTarget.style.backgroundColor = theme.accent;
           e.currentTarget.style.transform = 'translateY(-2px)';
           e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
         }}
         onMouseLeave={(e) => {
+          e.stopPropagation();
           e.currentTarget.style.backgroundColor = hexToRgba(theme.accent, 0.95);
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
         }}
+        onMouseDown={(e) => e.stopPropagation()}
         aria-label="Add new root node (brother with no big brother)"
         title="Add a new root node - starts a new branch in the family tree"
       >
         + Add Root Node
       </button>
+
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        fitView
+        style={{ background: theme.background, fontFamily: theme.bodyFont }}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+      >
+        <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
+        <Controls />
+        <MiniMap 
+          nodeColor={theme.minimapNode}
+          style={{ backgroundColor: theme.minimapBg }}
+        />
+      </ReactFlow>
 
       {selectedBrother && (
         <BrotherDetailModal

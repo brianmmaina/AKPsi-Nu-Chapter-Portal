@@ -345,8 +345,9 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
     
     console.log('Creating brother with data:', { family_id, name, big_id, hasPassword: !!req.body.password });
     
-    // Validate inputs
-    if (!family_id || !Number.isInteger(family_id) || family_id < 1) {
+    // Validate and convert family_id (may come as string from frontend)
+    const familyIdNum = parseInt(family_id, 10);
+    if (!family_id || isNaN(familyIdNum) || familyIdNum < 1) {
       return res.status(400).json({ error: 'Invalid family_id' });
     }
     
@@ -375,7 +376,7 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id
     `, [
-      family_id,
+      familyIdNum,
       validatedName,
       validatedPledgeClass,
       validatedGraduationYear,
@@ -389,14 +390,15 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
     const brotherId = insertResult.rows[0].id;
     console.log('Brother created with ID:', brotherId);
     
-    // Create relationship if big_id is provided
-    if (big_id && Number.isInteger(big_id) && big_id > 0) {
+    // Create relationship if big_id is provided (may come as string or number)
+    const bigIdNum = big_id ? parseInt(big_id, 10) : null;
+    if (bigIdNum && !isNaN(bigIdNum) && bigIdNum > 0) {
       try {
         await pool.query(`
           INSERT INTO relationships (family_id, big_id, little_id)
           VALUES ($1, $2, $3)
-        `, [family_id, big_id, brotherId]);
-        console.log('Relationship created:', { family_id, big_id, little_id: brotherId });
+        `, [familyIdNum, bigIdNum, brotherId]);
+        console.log('Relationship created:', { family_id: familyIdNum, big_id: bigIdNum, little_id: brotherId });
       } catch (relError) {
         console.error('Error creating relationship (brother still created):', relError);
         // Don't fail the whole request if relationship creation fails
@@ -475,11 +477,20 @@ app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
     const { littleId } = req.params;
     const { family_id, big_id } = req.body;
     
+    // Parse IDs (may come as strings)
+    const littleIdNum = parseInt(littleId, 10);
+    const familyIdNum = parseInt(family_id, 10);
+    const bigIdNum = big_id ? parseInt(big_id, 10) : null;
+    
+    if (isNaN(littleIdNum) || littleIdNum < 1 || isNaN(familyIdNum) || familyIdNum < 1) {
+      return res.status(400).json({ error: 'Invalid relationship IDs' });
+    }
+    
     await pool.query(`
       UPDATE relationships 
       SET big_id = $1
       WHERE family_id = $2 AND little_id = $3
-    `, [big_id || null, family_id, littleId]);
+    `, [bigIdNum, familyIdNum, littleIdNum]);
     
     res.json({ success: true });
   } catch (error) {
@@ -493,12 +504,21 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
   try {
     const { family_id, big_id, little_id } = req.body;
     
+    // Parse IDs (may come as strings)
+    const familyIdNum = parseInt(family_id, 10);
+    const bigIdNum = big_id ? parseInt(big_id, 10) : null;
+    const littleIdNum = parseInt(little_id, 10);
+    
+    if (isNaN(familyIdNum) || familyIdNum < 1 || isNaN(littleIdNum) || littleIdNum < 1) {
+      return res.status(400).json({ error: 'Invalid relationship IDs' });
+    }
+    
     await pool.query(`
       INSERT INTO relationships (family_id, big_id, little_id)
       VALUES ($1, $2, $3)
       ON CONFLICT (family_id, little_id) 
       DO UPDATE SET big_id = EXCLUDED.big_id
-    `, [family_id, big_id, little_id]);
+    `, [familyIdNum, bigIdNum, littleIdNum]);
     
     res.json({ success: true });
   } catch (error) {
