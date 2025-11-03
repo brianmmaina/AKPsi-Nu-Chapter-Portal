@@ -372,20 +372,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     // Create edges - only if both nodes exist
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
-        // Verify both nodes exist in the brothers array and have positions
+        // Verify both nodes exist in the brothers array
         const bigExists = brothers.some(b => b.id === rel.big_id);
         const littleExists = brothers.some(b => b.id === rel.little_id);
-        const bigHasPosition = nodePositions.has(rel.big_id);
-        const littleHasPosition = nodePositions.has(rel.little_id);
         
-        if (bigExists && littleExists && bigHasPosition && littleHasPosition) {
+        // Only check if nodes exist - positions are guaranteed if they're in brothers array
+        if (bigExists && littleExists) {
           layoutEdges.push({
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
             target: String(rel.little_id),
             type: theme.edgeType || 'smoothstep',
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : true,
-            style: { stroke: theme.edgeColor, strokeWidth: 2 },
+            style: { 
+              stroke: theme.edgeColor || theme.accent || '#666', 
+              strokeWidth: 2 
+            },
           });
         }
       }
