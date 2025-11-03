@@ -31,12 +31,13 @@ if (FRONTEND_URL && FRONTEND_URL !== '*') {
 app.use(express.json());
 
 // Rate limiting middleware (simple in-memory store)
+// Only tracks FAILED login attempts, not successful ones
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const MAX_ATTEMPTS = 5;
 
-const rateLimit = (req, res, next) => {
-  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+// Rate limit check - returns true if rate limited, false otherwise
+const checkRateLimit = (ip) => {
   const key = `rate_limit_${ip}`;
   const now = Date.now();
   
@@ -46,12 +47,21 @@ const rateLimit = (req, res, next) => {
     const recentAttempts = record.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
     
     if (recentAttempts.length >= MAX_ATTEMPTS) {
-      const timeLeft = Math.ceil((RATE_LIMIT_WINDOW - (now - recentAttempts[0])) / 1000 / 60);
-      return res.status(429).json({ 
-        error: `Too many attempts. Please try again in ${timeLeft} minute(s).` 
-      });
+      return { rateLimited: true, timeLeft: Math.ceil((RATE_LIMIT_WINDOW - (now - recentAttempts[0])) / 1000 / 60) };
     }
-    
+  }
+  
+  return { rateLimited: false };
+};
+
+// Record a failed attempt
+const recordFailedAttempt = (ip) => {
+  const key = `rate_limit_${ip}`;
+  const now = Date.now();
+  
+  const record = rateLimitStore.get(key);
+  if (record) {
+    const recentAttempts = record.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
     recentAttempts.push(now);
     rateLimitStore.set(key, { attempts: recentAttempts });
   } else {
@@ -67,8 +77,12 @@ const rateLimit = (req, res, next) => {
       }
     }
   }
-  
-  next();
+};
+
+// Clear rate limit for an IP (on successful login)
+const clearRateLimit = (ip) => {
+  const key = `rate_limit_${ip}`;
+  rateLimitStore.delete(key);
 };
 
 // Input validation helpers
@@ -228,7 +242,9 @@ app.get('/', (req, res) => {
 // Password check middleware
 const checkPassword = (req, res, next) => {
   const { password } = req.body;
-  if (password === PASSWORD) {
+  // Trim password to handle whitespace issues
+  const trimmedPassword = password && typeof password === 'string' ? password.trim() : '';
+  if (trimmedPassword === PASSWORD) {
     next();
   } else {
     res.status(401).json({ error: 'Invalid password' });
@@ -236,14 +252,33 @@ const checkPassword = (req, res, next) => {
 };
 
 // Auth endpoint (with rate limiting)
-app.post('/api/auth', rateLimit, (req, res) => {
+app.post('/api/auth', (req, res) => {
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  
+  // Check rate limit first
+  const rateLimitCheck = checkRateLimit(ip);
+  if (rateLimitCheck.rateLimited) {
+    return res.status(429).json({ 
+      error: `Too many failed attempts. Please try again in ${rateLimitCheck.timeLeft} minute(s).` 
+    });
+  }
+  
   const { password } = req.body;
   if (!password || typeof password !== 'string') {
+    recordFailedAttempt(ip);
     return res.status(400).json({ error: 'Password required' });
   }
-  if (password === PASSWORD) {
+  
+  // Trim password to handle whitespace issues
+  const trimmedPassword = password.trim();
+  
+  if (trimmedPassword === PASSWORD) {
+    // Clear rate limit on successful login
+    clearRateLimit(ip);
     res.json({ success: true });
   } else {
+    // Record failed attempt
+    recordFailedAttempt(ip);
     res.status(401).json({ error: 'Invalid password' });
   }
 });
