@@ -58,7 +58,17 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
     setSaving(true);
     try {
       // Use selectedBigId from dropdown (or null for root)
-      const bigIdToUse = selectedBigId === '' || selectedBigId === null ? null : parseInt(selectedBigId, 10);
+      // Handle both string and number types
+      const bigIdToUse = (selectedBigId === '' || selectedBigId === null || selectedBigId === undefined) 
+        ? null 
+        : (typeof selectedBigId === 'number' ? selectedBigId : parseInt(selectedBigId, 10));
+      
+      console.log('Submitting form with:', { 
+        family_id: familyId, 
+        big_id: bigIdToUse, 
+        name: formData.name,
+        hasPassword: !!password 
+      });
       
       // Create the brother
       const response = await brothersApi.create(
@@ -73,26 +83,53 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
       );
 
       const newBrotherId = response.data.id;
+      console.log('Brother created successfully with ID:', newBrotherId);
 
       // Create relationship if there's a parent selected
-      if (bigIdToUse && !isNaN(bigIdToUse)) {
-        await relationshipsApi.create(
-          {
-            family_id: familyId,
-            big_id: bigIdToUse,
-            little_id: newBrotherId,
-          },
-          password
-        );
+      if (bigIdToUse && !isNaN(bigIdToUse) && bigIdToUse > 0) {
+        try {
+          await relationshipsApi.create(
+            {
+              family_id: familyId,
+              big_id: bigIdToUse,
+              little_id: newBrotherId,
+            },
+            password
+          );
+          console.log('Relationship created successfully');
+        } catch (relError) {
+          console.error('Relationship creation failed (brother still created):', relError);
+          // Don't fail the whole request if relationship creation fails
+        }
       }
 
-      onSuccess();
+      // Close modal first, then refresh
       onClose();
       onToast?.({ message: 'Brother added successfully!', type: 'success' });
+      
+      // Call onSuccess after closing to refresh the tree (with delay to ensure modal closes)
+      if (onSuccess) {
+        setTimeout(() => {
+          try {
+            onSuccess();
+          } catch (refreshError) {
+            console.error('Error refreshing tree:', refreshError);
+            // Don't show error to user - they already got success message
+          }
+        }, 100);
+      }
     } catch (error) {
       console.error('Error adding brother:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please check your password and try again.';
-      onToast?.({ message: errorMessage, type: 'error' });
+      onToast?.({ 
+        message: `Error: ${errorMessage}`, 
+        type: 'error' 
+      });
     } finally {
       setSaving(false);
     }
