@@ -350,28 +350,39 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         );
       }
 
-      layoutNodes.push({
-        id: String(brother.id),
-        data: {
-          label: nodeLabel,
-          brother: brother,
-        },
-        position: position || { x: 0, y: 0 },
-        style: nodeStyle,
-      });
+      // Only add node if position was calculated
+      if (position) {
+        layoutNodes.push({
+          id: String(brother.id),
+          data: {
+            label: nodeLabel,
+            brother: brother,
+          },
+          position: position,
+          style: nodeStyle,
+        });
+      }
     });
 
-    // Create edges
+    // Create edges - only if both nodes exist
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
-        layoutEdges.push({
-          id: `e${rel.big_id}-${rel.little_id}`,
-          source: String(rel.big_id),
-          target: String(rel.little_id),
-          type: theme.edgeType || 'smoothstep',
-          animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : true,
-          style: { stroke: theme.edgeColor, strokeWidth: 2 },
-        });
+        // Verify both nodes exist in the brothers array and have positions
+        const bigExists = brothers.some(b => b.id === rel.big_id);
+        const littleExists = brothers.some(b => b.id === rel.little_id);
+        const bigHasPosition = nodePositions.has(rel.big_id);
+        const littleHasPosition = nodePositions.has(rel.little_id);
+        
+        if (bigExists && littleExists && bigHasPosition && littleHasPosition) {
+          layoutEdges.push({
+            id: `e${rel.big_id}-${rel.little_id}`,
+            source: String(rel.big_id),
+            target: String(rel.little_id),
+            type: theme.edgeType || 'smoothstep',
+            animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : true,
+            style: { stroke: theme.edgeColor, strokeWidth: 2 },
+          });
+        }
       }
     });
 
