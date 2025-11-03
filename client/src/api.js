@@ -8,7 +8,8 @@ const getBaseURL = () => {
     return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
   }
   // Default to production backend if no env var set
-  return 'https://akpsi-family-trees-api.fly.dev/api';
+  // Will be updated once Railway URL is available
+  return '/api';
 };
 
 const api = axios.create({
