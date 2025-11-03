@@ -475,67 +475,84 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // Empty state - no brothers yet
   if (brothers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
-          <h2
-            className="font-bold mb-4"
-            style={{
-              fontSize: 'var(--text-3xl)',
-              fontFamily: 'var(--font-display)',
-              // WOLFPACK text should always be white
-              color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
-              marginBottom: 'var(--space-4)',
-            }}
-          >
-            {family.name} Family Tree
-          </h2>
-          <p
-            className="mb-6"
-            style={{
-              fontSize: 'var(--text-lg)',
-              color: theme.nodeText || 'var(--text-on-dark)',
-              marginBottom: 'var(--space-6)',
-            }}
-          >
-            This family tree is empty. Add the first brother to get started!
-          </p>
-          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Add First Brother button clicked'); // Debug log
-                setShowAddForm(true);
-                setAddFormParent(null);
-              }}
-              className="btn"
+      <>
+        <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
+          <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+            <h2
+              className="font-bold mb-4"
               style={{
-                backgroundColor: theme.accent,
-                color: theme.theme === 'empire' ? '#1f1f1f' : theme.background,
-                borderColor: theme.accent,
-                fontWeight: 'var(--weight-bold)',
-                cursor: 'pointer',
+                fontSize: 'var(--text-3xl)',
+                fontFamily: 'var(--font-display)',
+                // WOLFPACK text should always be white
+                color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
+                marginBottom: 'var(--space-4)',
               }}
             >
-              Add First Brother
-            </button>
-            {onChangeFamily && (
-              <button 
-                onClick={onChangeFamily} 
+              {family.name} Family Tree
+            </h2>
+            <p
+              className="mb-6"
+              style={{
+                fontSize: 'var(--text-lg)',
+                color: theme.nodeText || 'var(--text-on-dark)',
+                marginBottom: 'var(--space-6)',
+              }}
+            >
+              This family tree is empty. Add the first brother to get started!
+            </p>
+            <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Add First Brother button clicked'); // Debug log
+                  setShowAddForm(true);
+                  setAddFormParent(null);
+                }}
                 className="btn"
                 style={{
-                  backgroundColor: 'transparent',
-                  color: theme.accent,
-                  borderColor: hexToRgba(theme.accent, 0.4),
+                  backgroundColor: theme.accent,
+                  color: theme.theme === 'empire' ? '#1f1f1f' : theme.background,
+                  borderColor: theme.accent,
+                  fontWeight: 'var(--weight-bold)',
+                  cursor: 'pointer',
                 }}
               >
-                Back to Families
+                Add First Brother
               </button>
-            )}
+              {onChangeFamily && (
+                <button 
+                  onClick={onChangeFamily} 
+                  className="btn"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: theme.accent,
+                    borderColor: hexToRgba(theme.accent, 0.4),
+                  }}
+                >
+                  Back to Families
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+        
+        {/* Render AddNodeForm modal when showAddForm is true - even in empty state */}
+        {showAddForm && (
+          <AddNodeForm
+            parentBrother={addFormParent}
+            familyId={family.id}
+            onClose={() => {
+              setShowAddForm(false);
+              setAddFormParent(null);
+            }}
+            onSuccess={handleNodeUpdate}
+            theme={theme}
+            onToast={onToast}
+          />
+        )}
+      </>
     );
   }
 
