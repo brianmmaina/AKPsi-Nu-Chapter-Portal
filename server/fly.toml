@@ -17,30 +17,11 @@ primary_region = "iad"
   processes = ["app"]
 
   [[http_service.checks]]
-    interval = "10s"
-    timeout = "10s"
-    grace_period = "30s"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "10s"
     method = "GET"
     path = "/health"
-
-[[services]]
-  internal_port = 3001
-  protocol = "tcp"
-  processes = ["app"]
-
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-    force_https = true
-
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
-
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 25
-    soft_limit = 20
 
 [[vm]]
   cpu_kind = "shared"
