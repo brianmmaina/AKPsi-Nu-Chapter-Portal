@@ -33,6 +33,14 @@ FRONTEND_URL=https://akpsi-family-tree.vercel.app
 PORT=3001
 ```
 
+**Important**: Make sure your `DATABASE_URL` uses the correct password. The format should be:
+`postgresql://postgres:YOUR_PASSWORD@db.rooqchdttrsvzjcumgtk.supabase.co:5432/postgres`
+
+If you see database connection errors, double-check:
+1. The password is correct in the DATABASE_URL
+2. No extra spaces or quotes around the URL
+3. Supabase database is running and accessible
+
 ## Step 5: Get Your Railway URL
 1. Click on your service → Settings
 2. Copy the "Public Domain" (e.g., `your-app.up.railway.app`)
