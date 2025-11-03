@@ -386,14 +386,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
-    
-    // Auto-fit view after nodes are set (with small delay to ensure React Flow is ready)
-    if (layoutNodes.length > 0) {
-      setTimeout(() => {
+  }, [brothers, relationships, theme]);
+  
+  // Auto-fit view after nodes are set (separate effect to avoid infinite loop)
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const timer = setTimeout(() => {
         fitView({ padding: 0.2, duration: 0 });
       }, 200);
+      return () => clearTimeout(timer);
     }
-  }, [brothers, relationships, theme, fitView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length]); // Only depend on node count, not fitView
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
