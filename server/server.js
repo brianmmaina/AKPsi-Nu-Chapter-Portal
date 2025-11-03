@@ -245,18 +245,17 @@ const validateInteger = (value, fieldName, min = null, max = null) => {
 // ============================================================================
 // DATABASE CONNECTION
 // ============================================================================
-// Improved SSL configuration - only use rejectUnauthorized: false if absolutely necessary
-// Render's PostgreSQL uses valid SSL certificates, so we should verify them
+// Improved SSL configuration - verify certificates when possible
 const getSSLConfig = () => {
   const dbUrl = process.env.DATABASE_URL || '';
   
-  if (dbUrl.includes('render.com') || dbUrl.includes('supabase')) {
-    // For cloud providers, try to verify certificates first
-    // If that fails, we can fall back to rejectUnauthorized: false
-    // But ideally, certificates should be verified
+  // Supabase and Render use valid SSL certificates
+  if (dbUrl.includes('supabase') || dbUrl.includes('render.com')) {
+    // For cloud providers, verify certificates
     return { rejectUnauthorized: true };
   }
   
+  // Local development - no SSL needed
   return false;
 };
 
