@@ -272,23 +272,24 @@ const getSSLConfig = () => {
 };
 
 // Create connection pool with better error handling
-// Handle Supabase connection issues with multiple strategies
+// Handle Supabase connection issues - Railway needs Session Pooler (IPv4 compatible)
 let dbUrl = process.env.DATABASE_URL || '';
 
-// For Supabase, try multiple connection strategies
-if (dbUrl.includes('supabase')) {
-  // Strategy 1: Use transaction pooler (port 6543) - better for Railway
-  if (dbUrl.includes(':5432')) {
-    dbUrl = dbUrl.replace(':5432', ':6543');
-    logger.info('Using Supabase transaction pooler (port 6543)');
-  }
-  
-  // Strategy 2: Add connection parameters for better compatibility
-  // Use pooler mode with transaction mode
-  if (!dbUrl.includes('?')) {
-    dbUrl += '?pgbouncer=true';
-  } else if (!dbUrl.includes('pgbouncer')) {
-    dbUrl += '&pgbouncer=true';
+// For Supabase on Railway, must use Session Pooler (IPv4 compatible)
+// Direct connection is IPv6-only, convert to Session Pooler format
+if (dbUrl.includes('supabase') && dbUrl.includes('@db.') && dbUrl.includes('.supabase.co:5432')) {
+  // Extract project ref from direct connection URL
+  // Format: postgresql://postgres:PASSWORD@db.PROJECTREF.supabase.co:5432/postgres
+  const directMatch = dbUrl.match(/@db\.([^.]+)\.supabase\.co:5432/);
+  if (directMatch) {
+    const projectRef = directMatch[1].toUpperCase();
+    // Convert to Session Pooler format:
+    // postgresql://postgres.PROJECTREF:PASSWORD@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+    dbUrl = dbUrl
+      .replace(/postgres@db\./, `postgres.${projectRef}@`)
+      .replace(/\.supabase\.co:5432/, '.pooler.supabase.com:5432')
+      .replace(/@db\./, '@aws-1-us-east-1.');
+    logger.info('Converted to Supabase Session Pooler (IPv4 compatible)');
   }
 }
 
