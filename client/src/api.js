@@ -7,7 +7,8 @@ const getBaseURL = () => {
     const cleanURL = envURL.replace(/\/$/, '');
     return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
   }
-  return '/api';
+  // Default to production backend if no env var set
+  return 'https://akpsi-family-trees-api.fly.dev/api';
 };
 
 const api = axios.create({

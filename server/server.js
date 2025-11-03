@@ -64,30 +64,21 @@ const logger = {
 // SECURITY MIDDLEWARE
 // ============================================================================
 
-// CORS configuration - MUST be FIRST, before everything else
-// Handle OPTIONS preflight requests IMMEDIATELY
-if (FRONTEND_URL && FRONTEND_URL !== '*') {
-  app.options('*', cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
-  
-  app.use(cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
-} else if (NODE_ENV === 'production') {
-  logger.warn('FRONTEND_URL not set in production - CORS allows all origins');
-  app.options('*', cors());
-  app.use(cors());
-} else {
-  app.options('*', cors());
-  app.use(cors());
-}
+// CORS configuration - SIMPLIFIED: Allow all origins for now
+// This makes it work immediately without complex config
+app.options('*', cors({
+  origin: true, // Allow any origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(cors({
+  origin: true, // Allow any origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // HTTPS enforcement in production (after CORS so preflight works)
 if (NODE_ENV === 'production') {
