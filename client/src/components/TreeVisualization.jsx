@@ -109,14 +109,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
      * 
      * @param {number} brotherId - ID of the brother to calculate level for
      * @param {Set<number>} visited - Set of visited IDs to prevent cycles
+     * @param {number} depth - Current recursion depth to prevent infinite loops
      * @returns {number} Level (0 = root, 1+ = nested)
      */
-    const getLevel = (brotherId, visited = new Set()) => {
-      if (visited.has(brotherId)) return 0;
+    const getLevel = (brotherId, visited = new Set(), depth = 0) => {
+      // Prevent infinite loops and cycles
+      if (visited.has(brotherId) || depth > 100) return 0;
       visited.add(brotherId);
       const bigId = relationshipsMap.get(brotherId);
       if (!bigId) return 0; // Root node
-      return 1 + getLevel(bigId, visited);
+      // Verify the big brother exists in the brothers array
+      const bigExists = brothers.some(b => b.id === bigId);
+      if (!bigExists) return 0; // Orphaned relationship, treat as root
+      return 1 + getLevel(bigId, visited, depth + 1);
     };
 
     const levelMap = new Map();
