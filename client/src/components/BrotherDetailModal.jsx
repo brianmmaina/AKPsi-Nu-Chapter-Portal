@@ -19,7 +19,7 @@ import { brothers as brothersApi } from '../api';
  */
 const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToast }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [password, setPassword] = useState('');
+  // Password no longer needed - using JWT tokens for authentication
   const [formData, setFormData] = useState({
     name: brother.name,
     pledge_class: brother.pledge_class || '',
@@ -44,20 +44,16 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
   }, [onClose, isEditing]);
 
   const handleSave = async () => {
-    if (!password.trim()) {
-      onToast?.({ message: 'Password is required to save changes', type: 'error' });
-      return;
-    }
-
     setSaving(true);
     try {
-      await brothersApi.update(brother.id, { ...formData, is_transfer: formData.is_transfer ? 1 : 0 }, password);
+      // Token is added automatically via interceptor
+      await brothersApi.update(brother.id, { ...formData, is_transfer: formData.is_transfer ? 1 : 0 });
       setIsEditing(false);
-      setPassword('');
       onUpdate();
       onToast?.({ message: 'Brother updated successfully!', type: 'success' });
     } catch (error) {
-      onToast?.({ message: 'Failed to update. Please check your password.', type: 'error' });
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update. Please try again.';
+      onToast?.({ message: errorMessage, type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -268,21 +264,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
             </div>
           )}
 
-          {isEditing && (
-            <div>
-              <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
-                Password (required to save)
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="Enter password"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
-              />
-            </div>
-          )}
+          {/* Password no longer needed - using JWT tokens for authentication */}
         </div>
 
         <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
@@ -307,7 +289,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
               <button
                 onClick={() => {
                   setIsEditing(false);
-                  setPassword('');
+                  // Password field removed - using JWT tokens
                   setFormData({
                     name: brother.name,
                     pledge_class: brother.pledge_class || '',

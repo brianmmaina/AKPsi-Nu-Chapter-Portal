@@ -4,19 +4,40 @@ import axios from 'axios';
 const getBaseURL = () => {
   const envURL = import.meta.env.VITE_API_URL;
   if (envURL) {
-    // Remove trailing slash if present
     const cleanURL = envURL.replace(/\/$/, '');
-    // If URL already ends with /api, use as-is; otherwise append /api
     return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
   }
   return '/api';
 };
 
-// BaseURL configured (debug logging removed for production)
-
 const api = axios.create({
   baseURL: getBaseURL(),
 });
+
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && error.response?.data?.error?.includes('expired')) {
+      // Token expired, clear session
+      sessionStorage.removeItem('authenticated');
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('selectedFamily');
+      // Redirect to login on next render
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const auth = {
   login: (password) => api.post('/auth', { password }),
@@ -29,14 +50,13 @@ export const families = {
 
 export const brothers = {
   get: (id) => api.get(`/brothers/${id}`),
-  create: (data, password) => api.post('/brothers', { ...data, password }),
-  update: (id, data, password) => api.put(`/brothers/${id}`, { ...data, password }),
+  create: (data) => api.post('/brothers', data), // Token is added via interceptor
+  update: (id, data) => api.put(`/brothers/${id}`, data), // Token is added via interceptor
 };
 
 export const relationships = {
-  update: (littleId, data, password) => api.put(`/relationships/${littleId}`, { ...data, password }),
-  create: (data, password) => api.post('/relationships', { ...data, password }),
+  update: (littleId, data) => api.put(`/relationships/${littleId}`, data), // Token is added via interceptor
+  create: (data) => api.post('/relationships', data), // Token is added via interceptor
 };
 
 export default api;
-

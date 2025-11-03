@@ -28,7 +28,6 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
-  const [password, setPassword] = useState('');
   const [selectedBigId, setSelectedBigId] = useState(parentBrother?.id || null);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,11 +44,6 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!password.trim()) {
-      onToast?.({ message: 'Password is required to add a brother', type: 'error' });
-      return;
-    }
-
     if (!formData.name.trim()) {
       onToast?.({ message: 'Please enter a name', type: 'error' });
       return;
@@ -63,43 +57,28 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
         ? null 
         : (typeof selectedBigId === 'number' ? selectedBigId : parseInt(selectedBigId, 10));
       
-      console.log('Submitting form with:', { 
-        family_id: familyId, 
-        big_id: bigIdToUse, 
-        name: formData.name,
-        hasPassword: !!password 
+      // Create the brother (token is added automatically via interceptor)
+      const response = await brothersApi.create({
+        family_id: familyId,
+        big_id: bigIdToUse,
+        ...formData,
+        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
+        is_transfer: formData.is_transfer ? 1 : 0,
       });
-      
-      // Create the brother
-      const response = await brothersApi.create(
-        {
-          family_id: familyId,
-          big_id: bigIdToUse,
-          ...formData,
-          graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
-          is_transfer: formData.is_transfer ? 1 : 0,
-        },
-        password
-      );
 
       const newBrotherId = response.data.id;
-      console.log('Brother created successfully with ID:', newBrotherId);
 
-      // Create relationship if there's a parent selected
+      // Create relationship if there's a parent selected (token is added automatically)
       if (bigIdToUse && !isNaN(bigIdToUse) && bigIdToUse > 0) {
         try {
-          await relationshipsApi.create(
-            {
-              family_id: familyId,
-              big_id: bigIdToUse,
-              little_id: newBrotherId,
-            },
-            password
-          );
-          console.log('Relationship created successfully');
+          await relationshipsApi.create({
+            family_id: familyId,
+            big_id: bigIdToUse,
+            little_id: newBrotherId,
+          });
         } catch (relError) {
-          console.error('Relationship creation failed (brother still created):', relError);
-          // Don't fail the whole request if relationship creation fails
+          // Relationship creation failed, but brother was created
+          // This is okay - relationship can be added later
         }
       }
 
@@ -113,19 +92,19 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
           try {
             onSuccess();
           } catch (refreshError) {
-            console.error('Error refreshing tree:', refreshError);
-            // Don't show error to user - they already got success message
+            // Silent error - user already got success message
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Error refreshing tree:', refreshError);
+            }
           }
         }, 100);
       }
     } catch (error) {
-      console.error('Error adding brother:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please check your password and try again.';
+      // Log error in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error adding brother:', error);
+      }
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please try again.';
       onToast?.({ 
         message: `Error: ${errorMessage}`, 
         type: 'error' 
@@ -367,24 +346,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
             </div>
           </div>
 
-          <div>
-            <label className="label label-required" style={{ color: theme?.nodeText || 'var(--text)' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
-              placeholder="Enter password"
-              required
-              style={{ 
-                color: '#1f1f1f',
-                backgroundColor: '#ffffff',
-                borderColor: '#d0d0d0',
-              }}
-            />
-          </div>
+          {/* Password no longer needed - using JWT tokens for authentication */}
 
           <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
             <button

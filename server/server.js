@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import jwt from 'jsonwebtoken';
 
 const { Pool } = pg;
 
@@ -9,41 +10,113 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Security: Require password to be set (no default fallback)
-const PASSWORD = process.env.PASSWORD;
-if (!PASSWORD) {
-  console.error('ERROR: PASSWORD environment variable must be set');
-  process.exit(1);
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = 5;
+const SESSION_EXPIRY_HOURS = 24;
+const JWT_EXPIRY_HOURS = 24;
+const REQUEST_SIZE_LIMIT = '10mb';
+const INIT_DB_RETRIES = 5;
+const INIT_DB_INITIAL_DELAY = 2000;
+
+// ============================================================================
+// ENVIRONMENT VARIABLE VALIDATION
+// ============================================================================
+const requiredEnvVars = {
+  PASSWORD: 'Password for API authentication',
+  DATABASE_URL: 'PostgreSQL connection string',
+};
+
+for (const [key, description] of Object.entries(requiredEnvVars)) {
+  if (!process.env[key]) {
+    console.error(`ERROR: ${key} environment variable must be set`);
+    console.error(`Description: ${description}`);
+    process.exit(1);
+  }
 }
 
-// CORS: Restrict to frontend domain in production, allow all in dev
-const FRONTEND_URL = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? undefined : '*');
+const PASSWORD = process.env.PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.PASSWORD; // Fallback to password if not set
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+// ============================================================================
+// LOGGING UTILITY (replaces console.log)
+// ============================================================================
+const logger = {
+  info: (message, ...args) => {
+    if (NODE_ENV === 'development') {
+      console.log(`[INFO] ${message}`, ...args);
+    }
+  },
+  error: (message, ...args) => {
+    console.error(`[ERROR] ${message}`, ...args);
+  },
+  warn: (message, ...args) => {
+    console.warn(`[WARN] ${message}`, ...args);
+  },
+};
+
+// ============================================================================
+// SECURITY MIDDLEWARE
+// ============================================================================
+
+// HTTPS enforcement in production
+if (NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+
+// Request size limits
+app.use(express.json({ limit: REQUEST_SIZE_LIMIT }));
+
+// CORS configuration
 if (FRONTEND_URL && FRONTEND_URL !== '*') {
   app.use(cors({
     origin: FRONTEND_URL,
     credentials: true,
   }));
+} else if (NODE_ENV === 'production') {
+  logger.warn('FRONTEND_URL not set in production - CORS allows all origins');
+  app.use(cors());
 } else {
   app.use(cors());
 }
 
-app.use(express.json());
+// Trust proxy for proper IP extraction (important for rate limiting)
+app.set('trust proxy', 1);
 
-// Rate limiting middleware (simple in-memory store)
-// Only tracks FAILED login attempts, not successful ones
+// ============================================================================
+// RATE LIMITING
+// ============================================================================
 const rateLimitStore = new Map();
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 5;
 
-// Rate limit check - returns true if rate limited, false otherwise
+// Improved IP extraction (handles proxy headers correctly)
+const getClientIP = (req) => {
+  // Trust proxy is set, so req.ip should work correctly
+  // But also check x-forwarded-for and parse it properly
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // X-Forwarded-For can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.connection.remoteAddress || 'unknown';
+};
+
 const checkRateLimit = (ip) => {
   const key = `rate_limit_${ip}`;
   const now = Date.now();
   
   const record = rateLimitStore.get(key);
   if (record) {
-    // Clean old attempts
     const recentAttempts = record.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
     
     if (recentAttempts.length >= MAX_ATTEMPTS) {
@@ -54,7 +127,6 @@ const checkRateLimit = (ip) => {
   return { rateLimited: false };
 };
 
-// Record a failed attempt
 const recordFailedAttempt = (ip) => {
   const key = `rate_limit_${ip}`;
   const now = Date.now();
@@ -68,7 +140,7 @@ const recordFailedAttempt = (ip) => {
     rateLimitStore.set(key, { attempts: [now] });
   }
   
-  // Cleanup old entries (every 100 requests)
+  // Cleanup old entries (1% chance per request)
   if (Math.random() < 0.01) {
     for (const [k, v] of rateLimitStore.entries()) {
       const filtered = v.attempts.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
@@ -79,13 +151,71 @@ const recordFailedAttempt = (ip) => {
   }
 };
 
-// Clear rate limit for an IP (on successful login)
 const clearRateLimit = (ip) => {
   const key = `rate_limit_${ip}`;
   rateLimitStore.delete(key);
 };
 
-// Input validation helpers
+// ============================================================================
+// JWT AUTHENTICATION
+// ============================================================================
+
+// Generate JWT token
+const generateToken = (ip) => {
+  return jwt.sign(
+    { 
+      authenticated: true,
+      ip: ip,
+      timestamp: Date.now()
+    },
+    JWT_SECRET,
+    { expiresIn: `${JWT_EXPIRY_HOURS}h` }
+  );
+};
+
+// Verify JWT token middleware
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired. Please login again.' });
+    }
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Legacy password check middleware (for backward compatibility with admin.html)
+const checkPassword = (req, res, next) => {
+  // First try JWT token
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return verifyToken(req, res, next);
+  }
+  
+  // Fallback to password in body (for admin.html compatibility)
+  const { password } = req.body;
+  const trimmedPassword = password && typeof password === 'string' ? password.trim() : '';
+  if (trimmedPassword === PASSWORD) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+};
+
+// ============================================================================
+// INPUT VALIDATION
+// ============================================================================
 const validateString = (value, fieldName, maxLength = 500) => {
   if (value === undefined || value === null) return null;
   if (typeof value !== 'string') {
@@ -112,118 +242,184 @@ const validateInteger = (value, fieldName, min = null, max = null) => {
   return num;
 };
 
-// Initialize PostgreSQL connection
-// Uses DATABASE_URL from Render PostgreSQL or local .env
-if (!process.env.DATABASE_URL) {
-  console.error('ERROR: DATABASE_URL environment variable must be set');
-  console.error('For Render: Make sure PostgreSQL database is created and linked to this service');
-  console.error('For local: Set DATABASE_URL in server/.env file');
-  process.exit(1);
-}
+// ============================================================================
+// DATABASE CONNECTION
+// ============================================================================
+// Improved SSL configuration - only use rejectUnauthorized: false if absolutely necessary
+// Render's PostgreSQL uses valid SSL certificates, so we should verify them
+const getSSLConfig = () => {
+  const dbUrl = process.env.DATABASE_URL || '';
+  
+  if (dbUrl.includes('render.com') || dbUrl.includes('supabase')) {
+    // For cloud providers, try to verify certificates first
+    // If that fails, we can fall back to rejectUnauthorized: false
+    // But ideally, certificates should be verified
+    return { rejectUnauthorized: true };
+  }
+  
+  return false;
+};
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('render.com') || process.env.DATABASE_URL?.includes('supabase') 
-    ? { rejectUnauthorized: false } 
-    : false,
+  ssl: getSSLConfig(),
 });
 
-// Test connection
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
+  logger.error('Unexpected error on idle client', err);
   process.exit(-1);
 });
 
-// Ensure database is initialized (safe to run multiple times)
+// ============================================================================
+// DATABASE INITIALIZATION
+// ============================================================================
 async function initializeDatabase() {
-  let retries = 5;
-  let delay = 2000;
+  let retries = INIT_DB_RETRIES;
+  let delay = INIT_DB_INITIAL_DELAY;
   
   while (retries > 0) {
     try {
-      // Test connection first
       await pool.query('SELECT NOW()');
       
       // Create tables
       await pool.query(`
-      CREATE TABLE IF NOT EXISTS families (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        theme TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+        CREATE TABLE IF NOT EXISTS families (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          theme TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
 
       await pool.query(`
-      CREATE TABLE IF NOT EXISTS brothers (
-        id SERIAL PRIMARY KEY,
-        family_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        pledge_class TEXT,
-        graduation_year INTEGER,
-        major TEXT,
-        career_aspirations TEXT,
-        fun_facts TEXT,
-        status TEXT NOT NULL DEFAULT 'studying' CHECK(status IN ('studying', 'graduated')),
-        is_transfer INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (family_id) REFERENCES families(id)
-      );
-    `);
+        CREATE TABLE IF NOT EXISTS brothers (
+          id SERIAL PRIMARY KEY,
+          family_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          pledge_class TEXT,
+          graduation_year INTEGER,
+          major TEXT,
+          career_aspirations TEXT,
+          fun_facts TEXT,
+          status TEXT NOT NULL DEFAULT 'studying' CHECK(status IN ('studying', 'graduated')),
+          is_transfer INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (family_id) REFERENCES families(id)
+        );
+      `);
 
+      // Add updated_at to relationships table (migration)
       await pool.query(`
-      CREATE TABLE IF NOT EXISTS relationships (
-        id SERIAL PRIMARY KEY,
-        family_id INTEGER NOT NULL,
-        big_id INTEGER,
-        little_id INTEGER NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (family_id) REFERENCES families(id),
-        FOREIGN KEY (big_id) REFERENCES brothers(id),
-        FOREIGN KEY (little_id) REFERENCES brothers(id),
-        UNIQUE(family_id, little_id)
-      );
-    `);
-    
-      // Insert families if they don't exist
+        CREATE TABLE IF NOT EXISTS relationships (
+          id SERIAL PRIMARY KEY,
+          family_id INTEGER NOT NULL,
+          big_id INTEGER,
+          little_id INTEGER NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (family_id) REFERENCES families(id),
+          FOREIGN KEY (big_id) REFERENCES brothers(id),
+          FOREIGN KEY (little_id) REFERENCES brothers(id),
+          UNIQUE(family_id, little_id)
+        );
+      `);
+      
+      // Add updated_at column if it doesn't exist (migration)
       await pool.query(`
-      INSERT INTO families (name, theme) 
-      VALUES 
-        ('WOLFPACK', 'wolfpack'),
-        ('PRIDE', 'pride'),
-        ('POWER', 'power'),
-        ('GREED', 'greed'),
-        ('EMPIRE', 'empire')
-      ON CONFLICT (name) DO NOTHING;
-    `);
-    
-      console.log('Database initialized successfully');
-      return; // Success, exit retry loop
+        ALTER TABLE relationships 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      `);
+      
+      // Create indexes for performance
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_brothers_family_id ON brothers(family_id);
+      `);
+      
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_relationships_family_id ON relationships(family_id);
+      `);
+      
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_relationships_little_id ON relationships(little_id);
+      `);
+      
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_relationships_big_id ON relationships(big_id);
+      `);
+      
+      // Insert families
+      await pool.query(`
+        INSERT INTO families (name, theme) 
+        VALUES 
+          ('WOLFPACK', 'wolfpack'),
+          ('PRIDE', 'pride'),
+          ('POWER', 'power'),
+          ('GREED', 'greed'),
+          ('EMPIRE', 'empire')
+        ON CONFLICT (name) DO NOTHING;
+      `);
+      
+      logger.info('Database initialized successfully');
+      return;
     } catch (error) {
       retries--;
       if (retries === 0) {
-        console.error('Database initialization failed after retries:', error);
-        console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'Set (hidden)' : 'NOT SET');
+        logger.error('Database initialization failed after retries:', error.message);
         throw error;
       }
-      console.warn(`Database connection failed, retrying in ${delay}ms... (${retries} retries left)`);
-      console.warn('Error:', error.message);
+      logger.warn(`Database connection failed, retrying in ${delay}ms... (${retries} retries left)`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      delay *= 1.5; // Exponential backoff
+      delay *= 1.5;
     }
   }
 }
 
-// Initialize on startup (don't exit on failure - let server start and retry on first request)
 initializeDatabase().catch(err => {
-  console.error('Failed to initialize database on startup:', err);
-  console.error('The server will start but API requests may fail until database is connected.');
-  console.error('');
-  console.error('To fix this:');
-  console.error('1. Ensure PostgreSQL database is created in Render');
-  console.error('2. Link the database to this web service in Render dashboard');
-  console.error('3. The DATABASE_URL environment variable will be auto-set by Render');
+  logger.error('Failed to initialize database on startup:', err.message);
+  logger.error('The server will start but API requests may fail until database is connected.');
+});
+
+// ============================================================================
+// ERROR HANDLING MIDDLEWARE
+// ============================================================================
+const sanitizeError = (error, req) => {
+  if (NODE_ENV === 'development') {
+    return {
+      error: error.message || 'An error occurred',
+      stack: error.stack,
+    };
+  }
+  
+  // Production: generic error messages only
+  if (error.code && error.code.startsWith('23')) {
+    // PostgreSQL constraint violations
+    return { error: 'Invalid data provided' };
+  }
+  
+  return { error: 'An error occurred. Please try again later.' };
+};
+
+// ============================================================================
+// ROUTES
+// ============================================================================
+
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT NOW()');
+    res.json({ 
+      status: 'healthy',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'unhealthy',
+      database: 'disconnected',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Root route
@@ -232,6 +428,7 @@ app.get('/', (req, res) => {
     message: 'Alpha Kappa Psi Family Trees API',
     status: 'running',
     endpoints: {
+      health: '/health',
       families: '/api/families',
       familyTree: '/api/families/:familyId/tree',
       auth: '/api/auth'
@@ -239,23 +436,10 @@ app.get('/', (req, res) => {
   });
 });
 
-// Password check middleware
-const checkPassword = (req, res, next) => {
-  const { password } = req.body;
-  // Trim password to handle whitespace issues
-  const trimmedPassword = password && typeof password === 'string' ? password.trim() : '';
-  if (trimmedPassword === PASSWORD) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Invalid password' });
-  }
-};
-
-// Auth endpoint (with rate limiting)
+// Auth endpoint (with rate limiting and JWT token generation)
 app.post('/api/auth', (req, res) => {
-  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const ip = getClientIP(req);
   
-  // Check rate limit first
   const rateLimitCheck = checkRateLimit(ip);
   if (rateLimitCheck.rateLimited) {
     return res.status(429).json({ 
@@ -269,15 +453,17 @@ app.post('/api/auth', (req, res) => {
     return res.status(400).json({ error: 'Password required' });
   }
   
-  // Trim password to handle whitespace issues
   const trimmedPassword = password.trim();
   
   if (trimmedPassword === PASSWORD) {
-    // Clear rate limit on successful login
     clearRateLimit(ip);
-    res.json({ success: true });
+    const token = generateToken(ip);
+    res.json({ 
+      success: true,
+      token: token,
+      expiresIn: `${JWT_EXPIRY_HOURS}h`
+    });
   } else {
-    // Record failed attempt
     recordFailedAttempt(ip);
     res.status(401).json({ error: 'Invalid password' });
   }
@@ -289,8 +475,9 @@ app.get('/api/families', async (req, res) => {
     const result = await pool.query('SELECT * FROM families ORDER BY name');
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching families:', error);
-    res.status(500).json({ error: 'Failed to fetch families' });
+    logger.error('Error fetching families:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(500).json(sanitized);
   }
 });
 
@@ -299,13 +486,11 @@ app.get('/api/families/:familyId/tree', async (req, res) => {
   try {
     const { familyId } = req.params;
     
-    // Get all brothers in this family
     const brothersResult = await pool.query(
       'SELECT * FROM brothers WHERE family_id = $1',
       [familyId]
     );
     
-    // Get all relationships in this family
     const relationshipsResult = await pool.query(
       'SELECT * FROM relationships WHERE family_id = $1',
       [familyId]
@@ -316,8 +501,9 @@ app.get('/api/families/:familyId/tree', async (req, res) => {
       relationships: relationshipsResult.rows 
     });
   } catch (error) {
-    console.error('Error fetching family tree:', error);
-    res.status(500).json({ error: 'Failed to fetch family tree' });
+    logger.error('Error fetching family tree:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(500).json(sanitized);
   }
 });
 
@@ -333,22 +519,45 @@ app.get('/api/brothers/:id', async (req, res) => {
     
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error fetching brother:', error);
-    res.status(500).json({ error: 'Failed to fetch brother' });
+    logger.error('Error fetching brother:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(500).json(sanitized);
   }
 });
+
+// Validate that big_id belongs to the same family
+async function validateBigIdInFamily(familyId, bigId) {
+  if (!bigId) return true; // null is valid (root node)
+  
+  const result = await pool.query(
+    'SELECT family_id FROM brothers WHERE id = $1',
+    [bigId]
+  );
+  
+  if (result.rows.length === 0) {
+    throw new Error('Big brother not found');
+  }
+  
+  if (result.rows[0].family_id !== familyId) {
+    throw new Error('Big brother must belong to the same family');
+  }
+  
+  return true;
+}
 
 // Create new brother
 app.post('/api/brothers', checkPassword, async (req, res) => {
   try {
     const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
     
-    console.log('Creating brother with data:', { family_id, name, big_id, hasPassword: !!req.body.password });
-    
-    // Validate and convert family_id (may come as string from frontend)
     const familyIdNum = parseInt(family_id, 10);
     if (!family_id || isNaN(familyIdNum) || familyIdNum < 1) {
       return res.status(400).json({ error: 'Invalid family_id' });
+    }
+    
+    // Validate big_id belongs to same family
+    if (big_id) {
+      await validateBigIdInFamily(familyIdNum, parseInt(big_id, 10));
     }
     
     let validatedName, validatedPledgeClass, validatedMajor, validatedCareerAspirations, validatedFunFacts, validatedGraduationYear, validatedStatus, validatedIsTransfer;
@@ -367,7 +576,6 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
       validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
     } catch (validationError) {
-      console.error('Validation error:', validationError);
       return res.status(400).json({ error: validationError.message });
     }
     
@@ -388,9 +596,7 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
     ]);
     
     const brotherId = insertResult.rows[0].id;
-    console.log('Brother created with ID:', brotherId);
     
-    // Create relationship if big_id is provided (may come as string or number)
     const bigIdNum = big_id ? parseInt(big_id, 10) : null;
     if (bigIdNum && !isNaN(bigIdNum) && bigIdNum > 0) {
       try {
@@ -398,21 +604,17 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
           INSERT INTO relationships (family_id, big_id, little_id)
           VALUES ($1, $2, $3)
         `, [familyIdNum, bigIdNum, brotherId]);
-        console.log('Relationship created:', { family_id: familyIdNum, big_id: bigIdNum, little_id: brotherId });
       } catch (relError) {
-        console.error('Error creating relationship (brother still created):', relError);
+        logger.error('Error creating relationship (brother still created):', relError.message);
         // Don't fail the whole request if relationship creation fails
       }
     }
     
     res.json({ id: brotherId, success: true });
   } catch (error) {
-    console.error('Error creating brother:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      error: error.message || 'Failed to create brother',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    logger.error('Error creating brother:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(error.message && error.message.includes('Big brother') ? 400 : 500).json(sanitized);
   }
 });
 
@@ -428,7 +630,6 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
     
     const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer } = req.body;
     
-    // Validate inputs
     const validatedName = validateString(name, 'Name', 100);
     if (!validatedName) {
       return res.status(400).json({ error: 'Name is required and cannot be empty' });
@@ -466,8 +667,9 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Error updating brother:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
+    logger.error('Error updating brother:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(400).json(sanitized);
   }
 });
 
@@ -477,7 +679,6 @@ app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
     const { littleId } = req.params;
     const { family_id, big_id } = req.body;
     
-    // Parse IDs (may come as strings)
     const littleIdNum = parseInt(littleId, 10);
     const familyIdNum = parseInt(family_id, 10);
     const bigIdNum = big_id ? parseInt(big_id, 10) : null;
@@ -486,16 +687,22 @@ app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
       return res.status(400).json({ error: 'Invalid relationship IDs' });
     }
     
+    // Validate big_id belongs to same family
+    if (bigIdNum) {
+      await validateBigIdInFamily(familyIdNum, bigIdNum);
+    }
+    
     await pool.query(`
       UPDATE relationships 
-      SET big_id = $1
+      SET big_id = $1, updated_at = CURRENT_TIMESTAMP
       WHERE family_id = $2 AND little_id = $3
     `, [bigIdNum, familyIdNum, littleIdNum]);
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Error updating relationship:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
+    logger.error('Error updating relationship:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(error.message && error.message.includes('Big brother') ? 400 : 400).json(sanitized);
   }
 });
 
@@ -504,7 +711,6 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
   try {
     const { family_id, big_id, little_id } = req.body;
     
-    // Parse IDs (may come as strings)
     const familyIdNum = parseInt(family_id, 10);
     const bigIdNum = big_id ? parseInt(big_id, 10) : null;
     const littleIdNum = parseInt(little_id, 10);
@@ -513,20 +719,27 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
       return res.status(400).json({ error: 'Invalid relationship IDs' });
     }
     
+    // Validate big_id belongs to same family
+    if (bigIdNum) {
+      await validateBigIdInFamily(familyIdNum, bigIdNum);
+    }
+    
     await pool.query(`
       INSERT INTO relationships (family_id, big_id, little_id)
       VALUES ($1, $2, $3)
       ON CONFLICT (family_id, little_id) 
-      DO UPDATE SET big_id = EXCLUDED.big_id
+      DO UPDATE SET big_id = EXCLUDED.big_id, updated_at = CURRENT_TIMESTAMP
     `, [familyIdNum, bigIdNum, littleIdNum]);
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Error creating relationship:', error);
-    res.status(400).json({ error: error.message || 'Invalid input data' });
+    logger.error('Error creating relationship:', error.message);
+    const sanitized = sanitizeError(error, req);
+    res.status(error.message && error.message.includes('Big brother') ? 400 : 400).json(sanitized);
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  logger.info(`Server running on http://localhost:${PORT}`);
+  logger.info(`Environment: ${NODE_ENV}`);
 });

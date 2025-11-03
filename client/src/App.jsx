@@ -4,7 +4,35 @@ import FamilySelection from './components/FamilySelection';
 import FamilyTreeView from './components/FamilyTreeView';
 import Toast from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import SkipToContent from './components/SkipToContent';
 import { auth, families } from './api';
+
+// Session expiration time: 24 hours in milliseconds
+const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+// Check if session has expired
+const isSessionValid = () => {
+  const token = sessionStorage.getItem('authToken');
+  const loginTime = sessionStorage.getItem('loginTime');
+  
+  if (!token || !loginTime) {
+    return false;
+  }
+  
+  const now = Date.now();
+  const loginTimestamp = parseInt(loginTime, 10);
+  
+  if (now - loginTimestamp > SESSION_EXPIRY_MS) {
+    // Session expired, clear storage
+    sessionStorage.removeItem('authenticated');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('selectedFamily');
+    sessionStorage.removeItem('loginTime');
+    return false;
+  }
+  
+  return true;
+};
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,10 +58,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check if already authenticated (stored in sessionStorage)
-    const stored = sessionStorage.getItem('authenticated');
-    const storedFamilyId = sessionStorage.getItem('selectedFamily');
-    if (stored === 'true') {
+    // Check if already authenticated (with session expiration check)
+    if (isSessionValid()) {
+      const storedFamilyId = sessionStorage.getItem('selectedFamily');
       setIsAuthenticated(true);
       loadFamilies()
         .then((familiesData) => {
@@ -53,12 +80,19 @@ function App() {
         .catch((error) => {
           // Show error toast if loading fails
           setToast({ 
-            message: 'Failed to load families. Please refresh the page.', 
+            message: 'Session expired or failed to load families. Please login again.', 
             type: 'error' 
           });
+          // Clear invalid session
+          sessionStorage.removeItem('authenticated');
+          sessionStorage.removeItem('authToken');
+          sessionStorage.removeItem('selectedFamily');
+          sessionStorage.removeItem('loginTime');
+          setIsAuthenticated(false);
           setLoading(false);
         });
     } else {
+      // Session expired or doesn't exist
       setLoading(false);
     }
   }, [loadFamilies]);
@@ -73,10 +107,15 @@ function App() {
     try {
       const response = await auth.login(password);
       
-      // Check for success - handle both response.data.success and direct success
-      if (response?.data?.success === true || response?.data?.success === 'true') {
+      // Check for success and token
+      if (response?.data?.success === true && response?.data?.token) {
+        const token = response.data.token;
+        const now = Date.now();
+        
         setIsAuthenticated(true);
         sessionStorage.setItem('authenticated', 'true');
+        sessionStorage.setItem('authToken', token);
+        sessionStorage.setItem('loginTime', now.toString());
         
         // Load families before showing selection
         try {
@@ -153,38 +192,7 @@ function App() {
   if (!isAuthenticated) {
   return (
     <ErrorBoundary>
-      {/* Skip to main content link for accessibility */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-toast focus:p-4 focus:bg-primary focus:text-primary-contrast focus:rounded-lg focus:shadow-lg"
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0,
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.position = 'absolute';
-          e.currentTarget.style.width = 'auto';
-          e.currentTarget.style.height = 'auto';
-          e.currentTarget.style.padding = 'var(--space-4)';
-          e.currentTarget.style.margin = 'var(--space-4)';
-          e.currentTarget.style.overflow = 'visible';
-          e.currentTarget.style.clip = 'auto';
-          e.currentTarget.style.whiteSpace = 'normal';
-          e.currentTarget.style.backgroundColor = 'var(--primary)';
-          e.currentTarget.style.color = 'var(--primary-contrast)';
-          e.currentTarget.style.borderRadius = 'var(--radius-lg)';
-          e.currentTarget.style.zIndex = 'var(--z-toast)';
-        }}
-      >
-        Skip to main content
-      </a>
+      <SkipToContent />
       {toast && (
         <Toast
           message={toast.message}
@@ -202,38 +210,7 @@ function App() {
   if (showFamilySelection) {
     return (
       <ErrorBoundary>
-        {/* Skip to main content link for accessibility */}
-        <a 
-          href="#main-content" 
-          className="sr-only focus:not-sr-only"
-          style={{
-            position: 'absolute',
-            width: '1px',
-            height: '1px',
-            padding: 0,
-            margin: '-1px',
-            overflow: 'hidden',
-            clip: 'rect(0, 0, 0, 0)',
-            whiteSpace: 'nowrap',
-            borderWidth: 0,
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.position = 'absolute';
-            e.currentTarget.style.width = 'auto';
-            e.currentTarget.style.height = 'auto';
-            e.currentTarget.style.padding = 'var(--space-4)';
-            e.currentTarget.style.margin = 'var(--space-4)';
-            e.currentTarget.style.overflow = 'visible';
-            e.currentTarget.style.clip = 'auto';
-            e.currentTarget.style.whiteSpace = 'normal';
-            e.currentTarget.style.backgroundColor = 'var(--primary)';
-            e.currentTarget.style.color = 'var(--primary-contrast)';
-            e.currentTarget.style.borderRadius = 'var(--radius-lg)';
-            e.currentTarget.style.zIndex = 'var(--z-toast)';
-          }}
-        >
-          Skip to main content
-        </a>
+        <SkipToContent />
         {toast && (
           <Toast
             message={toast.message}
@@ -251,38 +228,7 @@ function App() {
   if (selectedFamily) {
     return (
       <ErrorBoundary>
-        {/* Skip to main content link for accessibility */}
-        <a 
-          href="#main-content" 
-          className="sr-only focus:not-sr-only"
-          style={{
-            position: 'absolute',
-            width: '1px',
-            height: '1px',
-            padding: 0,
-            margin: '-1px',
-            overflow: 'hidden',
-            clip: 'rect(0, 0, 0, 0)',
-            whiteSpace: 'nowrap',
-            borderWidth: 0,
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.position = 'absolute';
-            e.currentTarget.style.width = 'auto';
-            e.currentTarget.style.height = 'auto';
-            e.currentTarget.style.padding = 'var(--space-4)';
-            e.currentTarget.style.margin = 'var(--space-4)';
-            e.currentTarget.style.overflow = 'visible';
-            e.currentTarget.style.clip = 'auto';
-            e.currentTarget.style.whiteSpace = 'normal';
-            e.currentTarget.style.backgroundColor = 'var(--primary)';
-            e.currentTarget.style.color = 'var(--primary-contrast)';
-            e.currentTarget.style.borderRadius = 'var(--radius-lg)';
-            e.currentTarget.style.zIndex = 'var(--z-toast)';
-          }}
-        >
-          Skip to main content
-        </a>
+        <SkipToContent />
         {toast && (
           <Toast
             message={toast.message}
@@ -304,38 +250,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      {/* Skip to main content link for accessibility */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only"
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0,
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.position = 'absolute';
-          e.currentTarget.style.width = 'auto';
-          e.currentTarget.style.height = 'auto';
-          e.currentTarget.style.padding = 'var(--space-4)';
-          e.currentTarget.style.margin = 'var(--space-4)';
-          e.currentTarget.style.overflow = 'visible';
-          e.currentTarget.style.clip = 'auto';
-          e.currentTarget.style.whiteSpace = 'normal';
-          e.currentTarget.style.backgroundColor = 'var(--primary)';
-          e.currentTarget.style.color = 'var(--primary-contrast)';
-          e.currentTarget.style.borderRadius = 'var(--radius-lg)';
-          e.currentTarget.style.zIndex = 'var(--z-toast)';
-        }}
-      >
-        Skip to main content
-      </a>
+      <SkipToContent />
       {toast && (
         <Toast
           message={toast.message}
