@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -38,7 +38,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const theme = getThemeStyles(family.theme);
+  // Memoize theme to prevent infinite re-renders
+  const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
   const { setCenter } = useReactFlow();
 
