@@ -14,8 +14,12 @@ Railway is much simpler than Fly.io - no Docker, no sleep issues, just works!
 4. Railway will auto-detect it's Node.js
 
 ## Step 3: Configure the Service
-1. Railway will detect the `server/` folder automatically
-2. If not, click on the service → Settings → Change Root Directory to `server`
+1. **IMPORTANT**: After Railway creates the service, you MUST set the root directory:
+   - Click on the service
+   - Go to Settings tab
+   - Under "Root Directory", change it to: `server`
+   - This tells Railway to only use the server folder, not the whole repo
+2. Railway will then install dependencies from `server/package.json` and run `node server.js`
 
 ## Step 4: Set Environment Variables
 Click on your service → Variables tab → Add these:
