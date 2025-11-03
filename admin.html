@@ -196,10 +196,10 @@
     <p class="subtitle">Add brothers to the family tree database</p>
 
     <div class="api-url-input">
-      <label>API URL</label>
-      <input type="text" id="apiUrl" value="https://akpsi-family-tree.onrender.com/api" placeholder="https://akpsi-family-tree.onrender.com/api">
+      <label>Backend URL (base URL, will auto-add /api)</label>
+      <input type="text" id="apiUrl" value="https://akpsi-family-tree.onrender.com" placeholder="https://akpsi-family-tree.onrender.com">
       <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
-        Default is set to production backend. Change if your backend is on a different URL.
+        Enter your backend URL (without /api) - it will automatically add /api. Default is set to production.
       </small>
     </div>
 
@@ -287,14 +287,23 @@
   </div>
 
   <script>
-    // Default API URL - set to your production backend
-    const API_BASE = 'https://akpsi-family-tree.onrender.com/api';
+    // Default API URL - set to your production backend (without /api, will be added)
+    const API_BASE = 'https://akpsi-family-tree.onrender.com';
     let currentFamilyBrothers = [];
 
-    // Get API URL
+    // Get API URL - ensure it ends with /api
     function getApiUrl() {
-      const apiUrlInput = document.getElementById('apiUrl').value.trim();
-      return apiUrlInput || API_BASE;
+      let apiUrlInput = document.getElementById('apiUrl').value.trim();
+      if (!apiUrlInput) {
+        apiUrlInput = API_BASE;
+      }
+      // Remove trailing slash
+      apiUrlInput = apiUrlInput.replace(/\/$/, '');
+      // Ensure it ends with /api
+      if (!apiUrlInput.endsWith('/api')) {
+        apiUrlInput = apiUrlInput + '/api';
+      }
+      return apiUrlInput;
     }
 
     // Show message
