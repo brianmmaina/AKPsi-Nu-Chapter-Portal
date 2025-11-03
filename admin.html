@@ -196,8 +196,11 @@
     <p class="subtitle">Add brothers to the family tree database</p>
 
     <div class="api-url-input">
-      <label>API URL (leave default if hosted together)</label>
-      <input type="text" id="apiUrl" value="/api" placeholder="/api or https://your-server.com/api">
+      <label>API URL</label>
+      <input type="text" id="apiUrl" value="https://akpsi-family-tree.onrender.com/api" placeholder="https://akpsi-family-tree.onrender.com/api">
+      <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+        Default is set to production backend. Change if your backend is on a different URL.
+      </small>
     </div>
 
     <div id="message"></div>
@@ -284,7 +287,8 @@
   </div>
 
   <script>
-    const API_BASE = '/api';
+    // Default API URL - set to your production backend
+    const API_BASE = 'https://akpsi-family-tree.onrender.com/api';
     let currentFamilyBrothers = [];
 
     // Get API URL
