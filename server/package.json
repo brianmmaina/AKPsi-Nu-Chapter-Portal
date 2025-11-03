@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "node --watch server.js",
+    "start": "node server.js",
     "init-db": "node init-db.js",
     "check-db": "node check-db.js"
   },
