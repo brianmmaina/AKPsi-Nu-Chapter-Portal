@@ -66,7 +66,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     } finally {
       setLoading(false);
     }
-  }, [family.id, family.name, onToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [family.id]); // Only depend on family.id to prevent infinite loops
 
   useEffect(() => {
     loadTreeData();
