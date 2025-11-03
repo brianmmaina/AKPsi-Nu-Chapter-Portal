@@ -40,7 +40,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   const theme = getThemeStyles(family.theme);
   const familyKey = family.theme;
-  const { setCenter } = useReactFlow();
+  const { setCenter, fitView } = useReactFlow();
 
   /**
    * Loads family tree data (brothers and relationships) from the API
@@ -390,10 +390,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     // Auto-fit view after nodes are set (with small delay to ensure React Flow is ready)
     if (layoutNodes.length > 0) {
       setTimeout(() => {
-        setCenter(0, 0, { zoom: 1, duration: 0 });
-      }, 100);
+        fitView({ padding: 0.2, duration: 0 });
+      }, 200);
     }
-  }, [brothers, relationships, theme, setCenter]);
+  }, [brothers, relationships, theme, fitView]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -563,7 +563,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        fitView
         style={{ background: theme.background, fontFamily: theme.bodyFont }}
         nodesDraggable={true}
         nodesConnectable={false}
