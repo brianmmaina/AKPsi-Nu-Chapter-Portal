@@ -542,6 +542,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         {showAddForm && (
           <AddNodeForm
             parentBrother={addFormParent}
+            existingBrothers={brothers}
             familyId={family.id}
             onClose={() => {
               setShowAddForm(false);
@@ -656,6 +657,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       {showAddForm && (
         <AddNodeForm
           parentBrother={addFormParent}
+          existingBrothers={brothers}
           familyId={family.id}
           onClose={() => {
             setShowAddForm(false);

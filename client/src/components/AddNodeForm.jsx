@@ -8,7 +8,8 @@ import { brothers as brothersApi, relationships as relationshipsApi } from '../a
  * Supports keyboard navigation (Escape to close).
  * 
  * @param {Object} props - Component props
- * @param {Object} props.parentBrother - Parent brother (Big) object, or null for root
+ * @param {Object} props.parentBrother - Initial parent brother (Big) object, or null for root (can be changed)
+ * @param {Array<Object>} props.existingBrothers - List of existing brothers to choose from as Big
  * @param {number} props.familyId - Family ID
  * @param {Function} props.onClose - Close handler
  * @param {Function} props.onSuccess - Success callback
@@ -16,7 +17,7 @@ import { brothers as brothersApi, relationships as relationshipsApi } from '../a
  * @param {Function} props.onToast - Toast notification handler
  * @returns {JSX.Element} Add brother form modal
  */
-const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToast }) => {
+const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, onSuccess, theme, onToast }) => {
   // Keyboard shortcuts: Escape to close
   useEffect(() => {
     const handleEscape = (e) => {
@@ -28,6 +29,7 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
   const [password, setPassword] = useState('');
+  const [selectedBigId, setSelectedBigId] = useState(parentBrother?.id || null);
   const [formData, setFormData] = useState({
     name: '',
     pledge_class: '',
@@ -55,11 +57,14 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
 
     setSaving(true);
     try {
+      // Use selectedBigId from dropdown (or null for root)
+      const bigIdToUse = selectedBigId === '' || selectedBigId === null ? null : parseInt(selectedBigId, 10);
+      
       // Create the brother
       const response = await brothersApi.create(
         {
           family_id: familyId,
-          big_id: parentBrother ? parentBrother.id : null,
+          big_id: bigIdToUse,
           ...formData,
           graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
           is_transfer: formData.is_transfer ? 1 : 0,
@@ -69,12 +74,12 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
 
       const newBrotherId = response.data.id;
 
-      // Create relationship if there's a parent
-      if (parentBrother) {
+      // Create relationship if there's a parent selected
+      if (bigIdToUse && !isNaN(bigIdToUse)) {
         await relationshipsApi.create(
           {
             family_id: familyId,
-            big_id: parentBrother.id,
+            big_id: bigIdToUse,
             little_id: newBrotherId,
           },
           password
@@ -145,21 +150,6 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
           </button>
         </div>
 
-        {parentBrother && (
-          <div
-            className="mb-4 p-3 rounded"
-            style={{
-              marginBottom: 'var(--space-4)',
-              padding: 'var(--space-3)',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--primary-light)',
-            }}
-          >
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>Adding as Little of:</p>
-            <p style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', color: theme?.nodeText || 'var(--text)' }}>{parentBrother.name}</p>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
             <label className="label label-required" style={{ color: theme?.nodeText || 'var(--text)' }}>
@@ -172,8 +162,50 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               className="input"
               required
               autoFocus
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             />
+          </div>
+
+          <div>
+            <label className="label label-required" style={{ color: theme?.nodeText || '#1f1f1f', fontWeight: '600', fontSize: 'var(--text-base)' }}>
+              Big Brother (Parent) - Choose relationship
+            </label>
+            <select
+              value={selectedBigId || ''}
+              onChange={(e) => setSelectedBigId(e.target.value === '' ? null : parseInt(e.target.value, 10))}
+              className="input"
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+                fontWeight: '500',
+              }}
+            >
+              <option value="">👑 None (Root Node - starts new branch)</option>
+              {existingBrothers.length > 0 ? (
+                existingBrothers.map((brother) => (
+                  <option key={brother.id} value={brother.id}>
+                    👤 {brother.name} {brother.pledge_class ? `(${brother.pledge_class})` : ''}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No brothers available yet</option>
+              )}
+            </select>
+            {selectedBigId && (
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+                This brother will be added as a Little of the selected Big Brother
+              </p>
+            )}
+            {!selectedBigId && (
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+                Root node - this brother will start a new branch in the family tree
+              </p>
+            )}
           </div>
 
           <div>
@@ -185,7 +217,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               value={formData.pledge_class}
               onChange={(e) => setFormData({ ...formData, pledge_class: e.target.value })}
               className="input"
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             />
           </div>
 
@@ -198,7 +234,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               value={formData.graduation_year}
               onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value })}
               className="input"
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             />
           </div>
 
@@ -211,7 +251,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               value={formData.major}
               onChange={(e) => setFormData({ ...formData, major: e.target.value })}
               className="input"
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             />
           </div>
 
@@ -224,7 +268,13 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               onChange={(e) => setFormData({ ...formData, career_aspirations: e.target.value })}
               className="input"
               rows="3"
-              style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+                minHeight: '80px', 
+                resize: 'vertical',
+              }}
             />
           </div>
 
@@ -237,7 +287,13 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               onChange={(e) => setFormData({ ...formData, fun_facts: e.target.value })}
               className="input"
               rows="3"
-              style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+                minHeight: '80px', 
+                resize: 'vertical',
+              }}
             />
           </div>
 
@@ -249,7 +305,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               className="input"
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             >
               <option value="studying">Currently Studying</option>
               <option value="graduated">Graduated</option>
@@ -281,7 +341,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               className="input"
               placeholder="Enter password"
               required
-              style={{ color: theme?.nodeText || 'var(--text)' }}
+              style={{ 
+                color: '#1f1f1f',
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d0d0',
+              }}
             />
           </div>
 
@@ -291,7 +355,11 @@ const AddNodeForm = ({ parentBrother, familyId, onClose, onSuccess, theme, onToa
               disabled={saving}
               className="btn btn-primary flex-1"
             >
-              {saving ? 'Adding...' : 'Add Brother'}
+              {saving 
+                ? 'Adding...' 
+                : selectedBigId 
+                  ? 'Add Little Brother' 
+                  : 'Add Root Brother'}
             </button>
             <button
               type="button"
