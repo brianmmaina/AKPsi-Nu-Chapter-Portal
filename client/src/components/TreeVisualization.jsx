@@ -65,7 +65,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     } finally {
       setLoading(false);
     }
-  }, [family.id, onToast]);
+  }, [family.id, family.name, onToast]);
 
   useEffect(() => {
     loadTreeData();
@@ -384,13 +384,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
     });
 
-    console.log('Tree layout calculated:', { 
-      nodes: layoutNodes.length, 
-      edges: layoutEdges.length, 
-      brothers: brothers.length,
-      relationships: relationships.length 
-    });
-    
     setNodes(layoutNodes);
     setEdges(layoutEdges);
     
