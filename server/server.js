@@ -83,12 +83,23 @@ if (FRONTEND_URL && FRONTEND_URL !== '*') {
   app.use(cors({
     origin: FRONTEND_URL,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+  // Handle preflight requests explicitly
+  app.options('*', cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }));
 } else if (NODE_ENV === 'production') {
   logger.warn('FRONTEND_URL not set in production - CORS allows all origins');
   app.use(cors());
+  app.options('*', cors());
 } else {
   app.use(cors());
+  app.options('*', cors());
 }
 
 // Trust proxy for proper IP extraction (important for rate limiting)
