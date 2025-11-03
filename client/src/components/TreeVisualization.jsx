@@ -69,6 +69,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [family.id, family.name, onToast]);
 
   useEffect(() => {
+    hasFittedRef.current = false; // Reset fit flag when family changes
     loadTreeData();
   }, [loadTreeData]);
 
