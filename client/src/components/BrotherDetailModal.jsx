@@ -13,11 +13,11 @@ import { brothers as brothersApi } from '../api';
  * @param {Function} props.onClose - Close handler
  * @param {Function} props.onUpdate - Update callback after save
  * @param {Object} props.theme - Theme configuration
- * @param {Function} props.onAddLittle - Handler to add a little
+ * @param {Function} props.onAddLittle - Removed - site is read-only
  * @param {Function} props.onToast - Toast notification handler
  * @returns {JSX.Element} Modal component
  */
-const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAddLittle, onToast }) => {
+const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToast }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [password, setPassword] = useState('');
   const [formData, setFormData] = useState({
@@ -63,11 +63,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
     }
   };
 
-  const handleAddLittleClick = () => {
-    onClose();
-    // The parent will be set in TreeVisualization
-    onAddLittle();
-  };
+  // Add Little functionality removed - site is read-only
 
   return (
     <div
@@ -297,12 +293,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onAdd
                 className="btn btn-primary flex-1"
               >
                 Edit
-              </button>
-              <button
-                onClick={handleAddLittleClick}
-                className="btn btn-primary flex-1"
-              >
-                Add Little
               </button>
             </>
           ) : (

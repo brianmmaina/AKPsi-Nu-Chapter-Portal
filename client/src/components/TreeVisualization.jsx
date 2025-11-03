@@ -498,29 +498,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 marginBottom: 'var(--space-6)',
               }}
             >
-              This family tree is empty. Add the first brother to get started!
+              This family tree is empty. Contact an administrator to add brothers to this family.
             </p>
             <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Add First Brother button clicked'); // Debug log
-                  setShowAddForm(true);
-                  setAddFormParent(null);
-                }}
-                className="btn"
-                style={{
-                  backgroundColor: theme.accent,
-                  color: theme.theme === 'empire' ? '#1f1f1f' : theme.background,
-                  borderColor: theme.accent,
-                  fontWeight: 'var(--weight-bold)',
-                  cursor: 'pointer',
-                }}
-              >
-                Add First Brother
-              </button>
               {onChangeFamily && (
                 <button 
                   onClick={onChangeFamily} 
@@ -537,22 +517,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             </div>
           </div>
         </div>
-        
-        {/* Render AddNodeForm modal when showAddForm is true - even in empty state */}
-        {showAddForm && (
-          <AddNodeForm
-            parentBrother={addFormParent}
-            existingBrothers={brothers}
-            familyId={family.id}
-            onClose={() => {
-              setShowAddForm(false);
-              setAddFormParent(null);
-            }}
-            onSuccess={handleNodeUpdate}
-            theme={theme}
-            onToast={onToast}
-          />
-        )}
+        {/* Add functionality removed - site is read-only */}
       </>
     );
   }
@@ -568,52 +533,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         backgroundPosition: 'center',
       }}
     >
-      {/* Floating "Add Root Node" button - positioned outside React Flow to avoid click issues */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('Add Root Node button clicked'); // Debug log
-          setAddFormParent(null);
-          setShowAddForm(true);
-        }}
-        className="btn"
-        style={{
-          position: 'absolute',
-          top: '20px',
-          right: '20px',
-          zIndex: 9999,
-          pointerEvents: 'auto',
-          backgroundColor: hexToRgba(theme.accent, 0.95),
-          color: familyKey === 'empire' ? '#1f1f1f' : (familyKey === 'wolfpack' ? '#364c73' : theme.background),
-          borderColor: theme.accent,
-          fontWeight: 'var(--weight-bold)',
-          padding: 'var(--space-2) var(--space-4)',
-          fontSize: 'var(--text-sm)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          borderRadius: 'var(--radius-md)',
-          transition: 'all var(--motion-fast) var(--ease-standard)',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          e.stopPropagation();
-          e.currentTarget.style.backgroundColor = theme.accent;
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.stopPropagation();
-          e.currentTarget.style.backgroundColor = hexToRgba(theme.accent, 0.95);
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-        }}
-        onMouseDown={(e) => e.stopPropagation()}
-        aria-label="Add new root node (brother with no big brother)"
-        title="Add a new root node - starts a new branch in the family tree"
-      >
-        + Add Root Node
-      </button>
+      {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
 
       <ReactFlow
         nodes={nodes}
@@ -642,28 +562,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           familyId={family.id}
           onClose={() => setSelectedBrother(null)}
           onUpdate={handleNodeUpdate}
-          theme={theme}
-          onAddLittle={(e, node) => {
-            if (selectedBrother) {
-              setSelectedBrother(null);
-              setAddFormParent(selectedBrother);
-              setShowAddForm(true);
-            }
-          }}
-          onToast={onToast}
-        />
-      )}
-
-      {showAddForm && (
-        <AddNodeForm
-          parentBrother={addFormParent}
-          existingBrothers={brothers}
-          familyId={family.id}
-          onClose={() => {
-            setShowAddForm(false);
-            setAddFormParent(null);
-          }}
-          onSuccess={handleNodeUpdate}
           theme={theme}
           onToast={onToast}
         />

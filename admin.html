@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpha Kappa Psi - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    label.required::after {
+      content: ' *';
+      color: #e74c3c;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #1e3c72;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+
+    button.primary {
+      background: #1e3c72;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #2a5298;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+    }
+
+    button.secondary {
+      background: #ecf0f1;
+      color: #333;
+    }
+
+    button.secondary:hover {
+      background: #bdc3c7;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .api-url-input {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .api-url-input label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .api-url-input input {
+      font-size: 12px;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Alpha Kappa Psi Family Tree Admin</h1>
+    <p class="subtitle">Add brothers to the family tree database</p>
+
+    <div class="api-url-input">
+      <label>API URL (leave default if hosted together)</label>
+      <input type="text" id="apiUrl" value="/api" placeholder="/api or https://your-server.com/api">
+    </div>
+
+    <div id="message"></div>
+    <div class="loading" id="loading">Submitting...</div>
+
+    <form id="brotherForm">
+      <div class="form-group">
+        <label for="family" class="required">Family</label>
+        <select id="family" required>
+          <option value="">Select a family...</option>
+          <option value="1">EMPIRE</option>
+          <option value="2">PRIDE</option>
+          <option value="3">POWER</option>
+          <option value="4">GREED</option>
+          <option value="5">WOLFPACK</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="bigBrother">Big Brother (Parent)</label>
+        <select id="bigBrother">
+          <option value="">None (Root Node - starts new branch)</option>
+        </select>
+        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+          Select a parent brother, or leave as "None" to create a root node
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="name" class="required">Name</label>
+        <input type="text" id="name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="pledgeClass">Pledge Class</label>
+        <input type="text" id="pledgeClass" placeholder="e.g., Alpha, Beta">
+      </div>
+
+      <div class="form-group">
+        <label for="graduationYear">Graduation Year (Class of)</label>
+        <input type="number" id="graduationYear" min="1950" max="2100" placeholder="e.g., 2024">
+      </div>
+
+      <div class="form-group">
+        <label for="major">Major</label>
+        <input type="text" id="major">
+      </div>
+
+      <div class="form-group">
+        <label for="careerAspirations">Career Aspirations</label>
+        <textarea id="careerAspirations"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="funFacts">Fun Facts</label>
+        <textarea id="funFacts"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status">
+          <option value="studying">Currently Studying</option>
+          <option value="graduated">Graduated</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="isTransfer">
+          <label for="isTransfer">Transfer?</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="required">Admin Password</label>
+        <input type="password" id="password" required placeholder="Enter admin password">
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="secondary" onclick="resetForm()">Clear Form</button>
+        <button type="submit" class="primary">Add Brother</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+    let currentFamilyBrothers = [];
+
+    // Get API URL
+    function getApiUrl() {
+      const apiUrlInput = document.getElementById('apiUrl').value.trim();
+      return apiUrlInput || API_BASE;
+    }
+
+    // Show message
+    function showMessage(text, type = 'info') {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = `message ${type}`;
+      messageDiv.textContent = text;
+      messageDiv.style.display = 'block';
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          messageDiv.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    // Hide message
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
+    }
+
+    // Load brothers for selected family
+    async function loadBrothers(familyId) {
+      if (!familyId) {
+        document.getElementById('bigBrother').innerHTML = '<option value="">None (Root Node - starts new branch)</option>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${getApiUrl()}/families/${familyId}/tree`);
+        const data = await response.json();
+        currentFamilyBrothers = data.brothers || [];
+
+        const bigBrotherSelect = document.getElementById('bigBrother');
+        bigBrotherSelect.innerHTML = '<option value="">None (Root Node - starts new branch)</option>';
+        
+        currentFamilyBrothers.forEach(brother => {
+          const option = document.createElement('option');
+          option.value = brother.id;
+          option.textContent = `${brother.name}${brother.pledge_class ? ` (${brother.pledge_class})` : ''}`;
+          bigBrotherSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading brothers:', error);
+        showMessage('Could not load existing brothers. You can still add a root node.', 'info');
+      }
+    }
+
+    // Handle family selection change
+    document.getElementById('family').addEventListener('change', (e) => {
+      const familyId = e.target.value;
+      loadBrothers(familyId);
+    });
+
+    // Form submission
+    document.getElementById('brotherForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMessage();
+
+      const loading = document.getElementById('loading');
+      loading.classList.add('active');
+
+      const formData = {
+        family_id: parseInt(document.getElementById('family').value),
+        name: document.getElementById('name').value.trim(),
+        pledge_class: document.getElementById('pledgeClass').value.trim() || null,
+        graduation_year: document.getElementById('graduationYear').value ? parseInt(document.getElementById('graduationYear').value) : null,
+        major: document.getElementById('major').value.trim() || null,
+        career_aspirations: document.getElementById('careerAspirations').value.trim() || null,
+        fun_facts: document.getElementById('funFacts').value.trim() || null,
+        status: document.getElementById('status').value,
+        is_transfer: document.getElementById('isTransfer').checked ? 1 : 0,
+        big_id: document.getElementById('bigBrother').value ? parseInt(document.getElementById('bigBrother').value) : null,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        // Create the brother
+        const response = await fetch(`${getApiUrl()}/brothers`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create brother');
+        }
+
+        const newBrotherId = result.id;
+
+        // Create relationship if big_id is provided
+        if (formData.big_id) {
+          try {
+            await fetch(`${getApiUrl()}/relationships`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                family_id: formData.family_id,
+                big_id: formData.big_id,
+                little_id: newBrotherId,
+                password: formData.password
+              })
+            });
+          } catch (relError) {
+            console.error('Relationship creation failed:', relError);
+            // Don't fail - brother was created
+          }
+        }
+
+        showMessage(`Success! Brother "${formData.name}" added with ID: ${newBrotherId}`, 'success');
+        resetForm();
+        
+        // Reload brothers list
+        loadBrothers(formData.family_id);
+
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage(`Error: ${error.message}`, 'error');
+      } finally {
+        loading.classList.remove('active');
+      }
+    });
+
+    // Reset form
+    function resetForm() {
+      document.getElementById('brotherForm').reset();
+      document.getElementById('bigBrother').innerHTML = '<option value="">None (Root Node - starts new branch)</option>';
+      hideMessage();
+    }
+  </script>
+</body>
+</html>
+
