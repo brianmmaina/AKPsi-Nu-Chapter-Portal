@@ -249,9 +249,14 @@ const validateInteger = (value, fieldName, min = null, max = null) => {
 const getSSLConfig = () => {
   const dbUrl = process.env.DATABASE_URL || '';
   
-  // Supabase and Render use valid SSL certificates
-  if (dbUrl.includes('supabase') || dbUrl.includes('render.com')) {
-    // For cloud providers, verify certificates
+  // Supabase requires SSL but may have certificate chain issues
+  if (dbUrl.includes('supabase')) {
+    // Supabase connection - allow self-signed certificates in chain
+    return { rejectUnauthorized: false };
+  }
+  
+  // Render uses valid SSL certificates
+  if (dbUrl.includes('render.com')) {
     return { rejectUnauthorized: true };
   }
   
