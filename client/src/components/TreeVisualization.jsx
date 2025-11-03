@@ -88,10 +88,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
    * @dependencies {Object} theme - Theme configuration for styling
    */
   useEffect(() => {
-    if (brothers.length === 0) {
+    // Don't clear nodes/edges if loading - wait for data
+    if (!loading && brothers.length === 0) {
       setNodes([]);
       setEdges([]);
       return;
+    }
+    
+    if (brothers.length === 0) {
+      return; // Still loading, don't process yet
     }
 
     const relationshipsMap = new Map();
@@ -542,7 +547,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     <div
       className="w-full relative"
       style={{
-        minHeight: 'calc(100vh - 60px)', // Account for header height
+        width: '100%',
+        height: '100vh',
         backgroundColor: theme.background,
         backgroundImage: theme.backgroundTexture,
         backgroundSize: '280px 280px',
@@ -558,7 +564,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        style={{ background: theme.background, fontFamily: theme.bodyFont }}
+        style={{ width: '100%', height: '100%', background: theme.background, fontFamily: theme.bodyFont }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
