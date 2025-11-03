@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -40,8 +40,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   const theme = getThemeStyles(family.theme);
   const familyKey = family.theme;
-  const { setCenter, fitView } = useReactFlow();
-  const hasFittedRef = useRef(false);
+  const { setCenter } = useReactFlow();
 
   /**
    * Loads family tree data (brothers and relationships) from the API
@@ -69,7 +68,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [family.id, family.name, onToast]);
 
   useEffect(() => {
-    hasFittedRef.current = false; // Reset fit flag when family changes
     loadTreeData();
   }, [loadTreeData]);
 
@@ -389,26 +387,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     setNodes(layoutNodes);
     setEdges(layoutEdges);
   }, [brothers, relationships, theme]);
-  
-  // Auto-fit view after nodes are set (only once per family change)
-  useEffect(() => {
-    if (nodes.length > 0 && !hasFittedRef.current) {
-      const timer = setTimeout(() => {
-        try {
-          fitView({ padding: 0.2, duration: 0 });
-          hasFittedRef.current = true;
-        } catch (e) {
-          // Ignore fitView errors
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-    // Reset when family changes
-    if (nodes.length === 0) {
-      hasFittedRef.current = false;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, family.id]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -582,6 +560,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />
