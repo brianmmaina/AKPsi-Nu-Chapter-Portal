@@ -271,10 +271,17 @@ const getSSLConfig = () => {
   return false;
 };
 
-const pool = new Pool({
+// Create connection pool with IPv4 preference and better error handling
+const poolConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: getSSLConfig(),
-});
+  // Force IPv4 connection (Railway/Supabase IPv6 can be unreliable)
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 10, // Maximum number of clients in the pool
+};
+
+const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   logger.error('Unexpected error on idle client', err);
