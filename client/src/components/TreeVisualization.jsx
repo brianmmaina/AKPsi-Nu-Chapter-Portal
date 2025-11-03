@@ -493,8 +493,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
-  // Empty state - no brothers yet
-  if (brothers.length === 0) {
+  // Empty state - no brothers yet (only show if not loading and actually empty)
+  if (!loading && brothers.length === 0) {
     return (
       <>
         <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
