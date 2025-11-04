@@ -395,7 +395,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
-  }, [brothers, relationships, theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brothers, relationships, familyKey]); // Use familyKey instead of theme object to prevent loops
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
