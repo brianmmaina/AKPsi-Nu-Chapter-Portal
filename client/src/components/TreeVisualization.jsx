@@ -100,59 +100,112 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return; // Still loading, don't process yet
     }
 
-    const relationshipsMap = new Map();
+    // Build relationship structure: parent -> children
+    const relationshipsMap = new Map(); // little_id -> big_id
+    const childrenMap = new Map(); // big_id -> [little_ids]
     
-    // Build relationship structure
     relationships.forEach(rel => {
-      relationshipsMap.set(rel.little_id, rel.big_id);
+      if (rel.big_id && rel.little_id) {
+        relationshipsMap.set(rel.little_id, rel.big_id);
+        if (!childrenMap.has(rel.big_id)) {
+          childrenMap.set(rel.big_id, []);
+        }
+        childrenMap.get(rel.big_id).push(rel.little_id);
+      }
     });
 
-    // Layout algorithm: hierarchical with multiple roots
+    // Layout algorithm: Binary tree vertical layout
     const layoutNodes = [];
     const layoutEdges = [];
     const nodePositions = new Map();
+    
+    // Node dimensions
+    const nodeWidth = 180;
+    const nodeHeight = 100;
+    const horizontalSpacing = 280; // Space between siblings
+    const verticalSpacing = 200; // Space between generations
 
     /**
-     * Recursively calculates the level (depth from root) of a brother in the tree
-     * 
-     * @param {number} brotherId - ID of the brother to calculate level for
-     * @param {Set<number>} visited - Set of visited IDs to prevent cycles
-     * @param {number} depth - Current recursion depth to prevent infinite loops
-     * @returns {number} Level (0 = root, 1+ = nested)
+     * Recursively calculates the width needed for a subtree
+     * @param {number} rootId - Root of the subtree
+     * @returns {number} Width needed for this subtree
      */
-    const getLevel = (brotherId, visited = new Set(), depth = 0) => {
-      // Prevent infinite loops and cycles
-      if (visited.has(brotherId) || depth > 100) return 0;
-      visited.add(brotherId);
-      const bigId = relationshipsMap.get(brotherId);
-      if (!bigId) return 0; // Root node
-      // Verify the big brother exists in the brothers array
-      const bigExists = brothers.some(b => b.id === bigId);
-      if (!bigExists) return 0; // Orphaned relationship, treat as root
-      return 1 + getLevel(bigId, visited, depth + 1);
+    const getSubtreeWidth = (rootId) => {
+      const children = childrenMap.get(rootId) || [];
+      if (children.length === 0) {
+        return horizontalSpacing;
+      }
+      return children.reduce((sum, childId) => sum + getSubtreeWidth(childId), 0);
     };
 
-    const levelMap = new Map();
-    brothers.forEach(b => {
-      const level = getLevel(b.id);
-      if (!levelMap.has(level)) levelMap.set(level, []);
-      levelMap.get(level).push(b.id);
-    });
+    /**
+     * Recursively positions nodes in a binary tree layout
+     * @param {number} nodeId - ID of the node to position
+     * @param {number} x - X position (center of subtree)
+     * @param {number} y - Y position (generation level)
+     */
+    const positionNode = (nodeId, x, y) => {
+      nodePositions.set(nodeId, { x, y });
+      
+      const children = childrenMap.get(nodeId) || [];
+      if (children.length === 0) {
+        return;
+      }
 
-    // Calculate positions for each level
-    const nodeWidth = 180;
-    const nodeHeight = 80;
-    const horizontalSpacing = 250;
-    const verticalSpacing = 150;
+      // Calculate positions for children
+      let currentX = x;
+      const totalWidth = children.reduce((sum, childId) => sum + getSubtreeWidth(childId), 0);
+      const startX = x - totalWidth / 2;
 
-    levelMap.forEach((brotherIds, level) => {
-      const startX = -((brotherIds.length - 1) * horizontalSpacing) / 2;
-      brotherIds.forEach((brotherId, index) => {
-        const x = startX + index * horizontalSpacing;
-        const y = level * verticalSpacing;
-        nodePositions.set(brotherId, { x, y });
+      children.forEach((childId, index) => {
+        const childWidth = getSubtreeWidth(childId);
+        const childX = startX + (childWidth / 2) + children.slice(0, index).reduce((sum, cid) => sum + getSubtreeWidth(cid), 0);
+        positionNode(childId, childX, y + verticalSpacing);
       });
+    };
+
+    // Find root nodes (nodes with no big_id)
+    const rootNodes = brothers.filter(b => {
+      const bigId = relationshipsMap.get(b.id);
+      return !bigId || !brothers.some(br => br.id === bigId);
     });
+
+    // Position root nodes at the top
+    if (rootNodes.length > 0) {
+      const totalWidth = rootNodes.reduce((sum, root) => {
+        const rootId = root.id;
+        const children = childrenMap.get(rootId) || [];
+        return sum + (children.length > 0 ? getSubtreeWidth(rootId) : horizontalSpacing);
+      }, 0);
+      
+      let currentX = -totalWidth / 2;
+      
+      rootNodes.forEach((root) => {
+        const rootId = root.id;
+        const children = childrenMap.get(rootId) || [];
+        const subtreeWidth = children.length > 0 ? getSubtreeWidth(rootId) : horizontalSpacing;
+        const rootX = currentX + subtreeWidth / 2;
+        positionNode(rootId, rootX, 0);
+        currentX += subtreeWidth;
+      });
+    } else {
+      // No roots found, just position all nodes in a simple grid
+      const levelMap = new Map();
+      brothers.forEach(b => {
+        const bigId = relationshipsMap.get(b.id);
+        const level = bigId ? 1 : 0;
+        if (!levelMap.has(level)) levelMap.set(level, []);
+        levelMap.get(level).push(b.id);
+      });
+      
+      levelMap.forEach((nodeIds, level) => {
+        const spacing = horizontalSpacing;
+        const startX = -((nodeIds.length - 1) * spacing) / 2;
+        nodeIds.forEach((nodeId, index) => {
+          nodePositions.set(nodeId, { x: startX + index * spacing, y: level * verticalSpacing });
+        });
+      });
+    }
 
     // Create React Flow nodes
     brothers.forEach(brother => {
@@ -583,7 +636,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />
