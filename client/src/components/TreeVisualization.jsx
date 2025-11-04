@@ -633,7 +633,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         style={{ width: '100%', height: '100%', background: theme.background, fontFamily: theme.bodyFont }}
-        nodesDraggable={true}
+        nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
         defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
