@@ -332,23 +332,44 @@
         return;
       }
 
+      const bigBrotherSelect = document.getElementById('bigBrother');
+      bigBrotherSelect.innerHTML = '<option value="">Loading brothers...</option>';
+      bigBrotherSelect.disabled = true;
+
       try {
-        const response = await fetch(`${getApiUrl()}/families/${familyId}/tree`);
+        const apiUrl = `${getApiUrl()}/families/${familyId}/tree`;
+        console.log('Loading brothers from:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('Brothers data received:', data);
+        
         currentFamilyBrothers = data.brothers || [];
 
-        const bigBrotherSelect = document.getElementById('bigBrother');
         bigBrotherSelect.innerHTML = '<option value="">None (Root Node - starts new branch)</option>';
         
-        currentFamilyBrothers.forEach(brother => {
-          const option = document.createElement('option');
-          option.value = brother.id;
-          option.textContent = `${brother.name}${brother.pledge_class ? ` (${brother.pledge_class})` : ''}`;
-          bigBrotherSelect.appendChild(option);
-        });
+        if (currentFamilyBrothers.length === 0) {
+          bigBrotherSelect.innerHTML = '<option value="">None (Root Node - starts new branch) - No brothers yet in this family</option>';
+        } else {
+          currentFamilyBrothers.forEach(brother => {
+            const option = document.createElement('option');
+            option.value = brother.id;
+            option.textContent = `${brother.name}${brother.pledge_class ? ` (${brother.pledge_class})` : ''}`;
+            bigBrotherSelect.appendChild(option);
+          });
+          showMessage(`Loaded ${currentFamilyBrothers.length} brother(s) for Big Brother selection`, 'success');
+        }
       } catch (error) {
         console.error('Error loading brothers:', error);
-        showMessage('Could not load existing brothers. You can still add a root node.', 'info');
+        bigBrotherSelect.innerHTML = '<option value="">Error loading brothers - You can still add a root node</option>';
+        showMessage(`Error loading brothers: ${error.message}. You can still add a root node (select "None").`, 'error');
+      } finally {
+        bigBrotherSelect.disabled = false;
       }
     }
 
@@ -356,6 +377,14 @@
     document.getElementById('family').addEventListener('change', (e) => {
       const familyId = e.target.value;
       loadBrothers(familyId);
+    });
+
+    // Load brothers on page load if a family is already selected
+    document.addEventListener('DOMContentLoaded', () => {
+      const familySelect = document.getElementById('family');
+      if (familySelect.value) {
+        loadBrothers(familySelect.value);
+      }
     });
 
     // Form submission
