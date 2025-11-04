@@ -7,6 +7,7 @@ import ReactFlow, {
   useEdgesState,
   useReactFlow,
   ReactFlowProvider,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { families as familiesApi } from '../api';
@@ -370,12 +371,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     });
 
     // Create edges - only if both nodes exist
-    console.log('Creating edges:', {
-      relationshipsCount: relationships.length,
-      relationships: relationships,
-      brothersCount: brothers.length,
-      brotherIds: brothers.map(b => b.id)
-    });
+    const edgeColor = theme.edgeColor || theme.accent || '#666666';
     
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
@@ -383,16 +379,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         const bigExists = brothers.some(b => b.id === rel.big_id);
         const littleExists = brothers.some(b => b.id === rel.little_id);
         
-        console.log(`Relationship ${rel.big_id} -> ${rel.little_id}:`, {
-          bigExists,
-          littleExists,
-          bigId: rel.big_id,
-          littleId: rel.little_id
-        });
-        
         // Only check if nodes exist - positions are guaranteed if they're in brothers array
         if (bigExists && littleExists) {
-          const edgeColor = theme.edgeColor || theme.accent || '#666666';
           const edge = {
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
@@ -401,22 +389,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: { 
               stroke: edgeColor, 
-              strokeWidth: 3,  // Increased from 2 for better visibility
-              opacity: 1,  // Ensure full opacity
+              strokeWidth: 3,
+              opacity: 1,
             },
-            markerEnd: 'arrowclosed',  // Arrow pointing to little brother
+            markerEnd: MarkerType.ArrowClosed,
           };
-          console.log('Creating edge:', edge);
           layoutEdges.push(edge);
-        } else {
-          console.warn(`Skipping edge: ${rel.big_id} -> ${rel.little_id} (bigExists: ${bigExists}, littleExists: ${littleExists})`);
         }
-      } else {
-        console.warn('Relationship missing big_id or little_id:', rel);
       }
     });
-    
-    console.log('Final edges array:', layoutEdges);
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
@@ -605,6 +586,31 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
+
+      {/* Show helpful message if no relationships exist */}
+      {!loading && brothers.length > 0 && relationships.length === 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '16px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          maxWidth: '500px',
+          textAlign: 'center',
+          border: `2px solid ${theme.accent || '#c9a857'}`,
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: '8px', color: '#333' }}>
+            No Relationships Found
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Brothers are displayed but not connected. Use the admin panel to set "Big Brother" relationships.
+          </div>
+        </div>
+      )}
 
       {selectedBrother && (
         <BrotherDetailModal
