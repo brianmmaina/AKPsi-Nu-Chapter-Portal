@@ -430,7 +430,7 @@
         // Create relationship if big_id is provided
         if (formData.big_id) {
           try {
-            await fetch(`${getApiUrl()}/relationships`, {
+            const relResponse = await fetch(`${getApiUrl()}/relationships`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -442,13 +442,24 @@
                 password: formData.password
               })
             });
+
+            const relResult = await relResponse.json();
+            
+            if (!relResponse.ok) {
+              throw new Error(relResult.error || 'Failed to create relationship');
+            }
+            
+            const bigBrotherName = currentFamilyBrothers.find(b => b.id === formData.big_id)?.name || 'Unknown';
+            showMessage(`Success! Brother "${formData.name}" added with ID: ${newBrotherId} and linked to Big Brother "${bigBrotherName}"`, 'success');
           } catch (relError) {
             console.error('Relationship creation failed:', relError);
-            // Don't fail - brother was created
+            showMessage(`Brother "${formData.name}" was created (ID: ${newBrotherId}), but relationship creation failed: ${relError.message}. You can update the relationship later.`, 'error');
           }
+        } else {
+          showMessage(`Success! Brother "${formData.name}" added with ID: ${newBrotherId} (root node - no Big Brother)`, 'success');
         }
 
-        showMessage(`Success! Brother "${formData.name}" added with ID: ${newBrotherId}`, 'success');
+        // Don't show success message here - it's handled in the relationship creation block
         resetForm();
         
         // Reload brothers list
