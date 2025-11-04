@@ -370,28 +370,53 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     });
 
     // Create edges - only if both nodes exist
+    console.log('Creating edges:', {
+      relationshipsCount: relationships.length,
+      relationships: relationships,
+      brothersCount: brothers.length,
+      brotherIds: brothers.map(b => b.id)
+    });
+    
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
         // Verify both nodes exist in the brothers array
         const bigExists = brothers.some(b => b.id === rel.big_id);
         const littleExists = brothers.some(b => b.id === rel.little_id);
         
+        console.log(`Relationship ${rel.big_id} -> ${rel.little_id}:`, {
+          bigExists,
+          littleExists,
+          bigId: rel.big_id,
+          littleId: rel.little_id
+        });
+        
         // Only check if nodes exist - positions are guaranteed if they're in brothers array
         if (bigExists && littleExists) {
-          layoutEdges.push({
+          const edgeColor = theme.edgeColor || theme.accent || '#666666';
+          const edge = {
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
             target: String(rel.little_id),
             type: theme.edgeType || 'smoothstep',
-            animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : true,
+            animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: { 
-              stroke: theme.edgeColor || theme.accent || '#666', 
-              strokeWidth: 2 
+              stroke: edgeColor, 
+              strokeWidth: 3,  // Increased from 2 for better visibility
+              opacity: 1,  // Ensure full opacity
             },
-          });
+            markerEnd: 'arrowclosed',  // Arrow pointing to little brother
+          };
+          console.log('Creating edge:', edge);
+          layoutEdges.push(edge);
+        } else {
+          console.warn(`Skipping edge: ${rel.big_id} -> ${rel.little_id} (bigExists: ${bigExists}, littleExists: ${littleExists})`);
         }
+      } else {
+        console.warn('Relationship missing big_id or little_id:', rel);
       }
     });
+    
+    console.log('Final edges array:', layoutEdges);
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
