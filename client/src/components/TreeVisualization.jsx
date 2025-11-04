@@ -371,7 +371,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     });
 
     // Create edges - only if both nodes exist
+    // Use a more visible edge color for lineage
     const edgeColor = theme.edgeColor || theme.accent || '#666666';
+    // Make edges thicker and more visible for clear lineage
+    const edgeStrokeWidth = 4;
     
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
@@ -381,15 +384,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         
         // Only check if nodes exist - positions are guaranteed if they're in brothers array
         if (bigExists && littleExists) {
+          // Use smoothstep for better lineage visualization, or respect theme
+          const edgeType = theme.edgeType || 'smoothstep';
+          
           const edge = {
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
             target: String(rel.little_id),
-            type: theme.edgeType || 'smoothstep',
+            type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: { 
               stroke: edgeColor, 
-              strokeWidth: 3,
+              strokeWidth: edgeStrokeWidth,
               opacity: 1,
             },
             markerEnd: MarkerType.ArrowClosed,

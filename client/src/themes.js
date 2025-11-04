@@ -10,7 +10,7 @@ export const getThemeStyles = (themeName) => {
       nodeGraduated: '#ffffff',
       nodeBorder: '#d4c9b3', // Tan border #d4c9b3
       nodeText: '#1f1f1f', // Very dark gray/black for member names
-      edgeColor: '#4a4a4a', // Dark gray connecting lines
+      edgeColor: '#2a2a2a', // Darker gray for better visibility on cream background
       minimapNode: '#c9a857',
       minimapBg: '#f0efeb',
       modalBg: 'rgba(248, 247, 243, 0.95)',
