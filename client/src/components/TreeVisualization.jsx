@@ -38,6 +38,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTreeReady, setIsTreeReady] = useState(false);
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
@@ -55,6 +56,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsTreeReady(false); // Reset fade-in state when loading new family
       const response = await familiesApi.getTree(family.id);
       setBrothers(response.data.brothers || []);
       setRelationships(response.data.relationships || []);
@@ -66,6 +68,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
     } finally {
       setLoading(false);
+      // Trigger fade-in animation after data is loaded
+      setTimeout(() => {
+        setIsTreeReady(true);
+      }, 50);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family.id]); // Only depend on family.id to prevent infinite loops
@@ -503,21 +509,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     setSelectedBrother(null);
   }, [loadTreeData]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div
-          style={{
-            fontSize: 'var(--text-xl)',
-            fontFamily: 'var(--font-display)',
-            color: theme.accent || 'var(--primary)',
-          }}
-        >
-          Loading family tree...
-        </div>
-      </div>
-    );
-  }
+  // Remove loading state - tree will fade in instead
 
   // Error state
   if (error) {
@@ -622,6 +614,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         backgroundSize: '280px 280px',
         backgroundPosition: 'center',
         pointerEvents: 'auto',
+        opacity: isTreeReady ? 1 : 0,
+        transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
       }}
     >
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
