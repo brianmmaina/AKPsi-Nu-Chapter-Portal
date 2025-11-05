@@ -309,23 +309,22 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
               {(brother.linkedin_url || brother.instagram_url) && (
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
-                  padding: 'var(--space-5)',
+                  padding: '16px 20px',
                   backgroundColor: theme?.background || '#f8f7f3',
                   border: `2px solid ${theme?.accent || '#c9a857'}`,
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
-                    fontSize: '18px', 
+                    fontSize: '12px', 
                     fontWeight: '700', 
                     color: theme?.nodeText || 'var(--text)',
-                    marginBottom: 'var(--space-4)',
+                    marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
-                    fontSize: '12px',
                   }}>
                     Connect
                   </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
                     {brother.linkedin_url && (
                       <a
                         href={brother.linkedin_url}
