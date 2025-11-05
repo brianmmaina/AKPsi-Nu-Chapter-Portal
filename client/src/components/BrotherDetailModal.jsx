@@ -413,7 +413,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
             /* Edit Mode - Form Layout */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Name
             </label>
             {isEditing ? (
@@ -422,7 +422,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                }}
               />
             ) : (
               <p style={{ color: theme?.nodeText || 'var(--text)', fontWeight: 'var(--weight-semibold)' }}>{brother.name}</p>
@@ -430,7 +436,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Pledge Class
             </label>
             {isEditing ? (
@@ -439,7 +445,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.pledge_class}
                 onChange={(e) => setFormData({ ...formData, pledge_class: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                }}
               />
             ) : (
               <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.pledge_class || 'N/A'}</p>
@@ -447,7 +459,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Graduation Year (Class of)
             </label>
             {isEditing ? (
@@ -456,7 +468,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.graduation_year}
                 onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value ? parseInt(e.target.value) : '' })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                }}
               />
             ) : (
               <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.graduation_year ? `Class of ${brother.graduation_year}` : 'N/A'}</p>
@@ -464,7 +482,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Major
             </label>
             {isEditing ? (
@@ -473,7 +491,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.major}
                 onChange={(e) => setFormData({ ...formData, major: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                }}
               />
             ) : (
               <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.major || 'N/A'}</p>
@@ -481,7 +505,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Career Aspirations
             </label>
             {isEditing ? (
@@ -489,7 +513,15 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.career_aspirations}
                 onChange={(e) => setFormData({ ...formData, career_aspirations: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                  minHeight: '80px', 
+                  resize: 'vertical' 
+                }}
                 rows="3"
               />
             ) : (
@@ -498,7 +530,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Fun Facts
             </label>
             {isEditing ? (
@@ -506,7 +538,15 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.fun_facts}
                 onChange={(e) => setFormData({ ...formData, fun_facts: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)', minHeight: '80px', resize: 'vertical' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                  minHeight: '80px', 
+                  resize: 'vertical' 
+                }}
                 rows="3"
               />
             ) : (
@@ -515,7 +555,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
           </div>
 
           <div>
-            <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Status
             </label>
             {isEditing ? (
@@ -523,7 +563,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="input"
-                style={{ color: theme?.nodeText || 'var(--text)' }}
+                style={{ 
+                  color: '#1f1f1f',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #d4c9b3',
+                  borderRadius: '0px',
+                  padding: '10px 12px',
+                }}
               >
                 <option value="studying">Currently Studying</option>
                 <option value="graduated">Graduated</option>
@@ -553,7 +599,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 borderRadius: '0px',
                 marginBottom: 'var(--space-4)',
               }}>
-                <label className="label" style={{ color: theme?.nodeText || 'var(--text)', fontWeight: '600', fontSize: 'var(--text-base)' }}>
+                <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', fontSize: 'var(--text-base)', marginBottom: '8px', display: 'block' }}>
                   Profile Image URL
                 </label>
                 <input
@@ -563,10 +609,11 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   className="input"
                   placeholder="https://example.com/image.jpg"
                   style={{ 
-                    color: theme?.nodeText || 'var(--text)',
-                    border: `2px solid ${theme?.accent || '#c9a857'}`,
+                    color: '#1f1f1f',
+                    backgroundColor: '#ffffff',
+                    border: '2px solid #d4c9b3',
                     borderRadius: '0px',
-                    padding: 'var(--space-3)',
+                    padding: '10px 12px',
                     fontSize: 'var(--text-base)',
                   }}
                 />
@@ -594,7 +641,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                   <div>
-                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
                       LinkedIn URL
                     </label>
                     <input
@@ -604,14 +651,17 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                       className="input"
                       placeholder="https://linkedin.com/in/username"
                       style={{ 
-                        color: theme?.nodeText || 'var(--text)',
+                        color: '#1f1f1f',
+                        backgroundColor: '#ffffff',
+                        border: '2px solid #d4c9b3',
                         borderRadius: '0px',
+                        padding: '10px 12px',
                       }}
                     />
                   </div>
 
                   <div>
-                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
                       Instagram URL
                     </label>
                     <input
@@ -621,8 +671,11 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                       className="input"
                       placeholder="https://instagram.com/username"
                       style={{ 
-                        color: theme?.nodeText || 'var(--text)',
+                        color: '#1f1f1f',
+                        backgroundColor: '#ffffff',
+                        border: '2px solid #d4c9b3',
                         borderRadius: '0px',
+                        padding: '10px 12px',
                       }}
                     />
                   </div>
@@ -631,7 +684,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
               {isEditing && (
                 <div>
-                  <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                  <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
                     Transfer?
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
