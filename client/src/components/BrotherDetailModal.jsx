@@ -72,6 +72,13 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
   if (!brother) return null;
 
+  const handleBackdropClick = (e) => {
+    // Only close if clicking the backdrop itself, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-modal"
@@ -81,7 +88,11 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
         WebkitBackdropFilter: 'blur(8px)',
         pointerEvents: 'auto',
       }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // Prevent ReactFlow from capturing the mousedown event
+        e.stopPropagation();
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"

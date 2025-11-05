@@ -39,6 +39,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTreeReady, setIsTreeReady] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
@@ -628,14 +629,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        style={{ width: '100%', height: '100%', background: theme.background, fontFamily: theme.bodyFont, pointerEvents: 'auto' }}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          background: theme.background, 
+          fontFamily: theme.bodyFont, 
+          pointerEvents: isModalOpen ? 'none' : 'auto',
+          zIndex: 1,
+        }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
         defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
-        panOnDrag={true}
-        zoomOnScroll={true}
-        zoomOnPinch={true}
+        panOnDrag={!isModalOpen}
+        zoomOnScroll={!isModalOpen}
+        zoomOnPinch={!isModalOpen}
+        proOptions={{ hideAttribution: true }}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />
@@ -674,7 +683,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         <BrotherDetailModal
           brother={selectedBrother}
           familyId={family.id}
-          onClose={() => setSelectedBrother(null)}
+          onClose={() => {
+            setSelectedBrother(null);
+            setIsModalOpen(false);
+            // Force ReactFlow to regain focus after modal closes
+            setTimeout(() => {
+              // Ensure ReactFlow container is interactive
+              const reactFlowWrapper = document.querySelector('.react-flow');
+              if (reactFlowWrapper) {
+                reactFlowWrapper.style.pointerEvents = 'auto';
+              }
+            }, 0);
+          }}
           onUpdate={handleNodeUpdate}
           theme={theme}
           onToast={onToast}
