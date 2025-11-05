@@ -480,6 +480,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
    */
   const onNodeClick = useCallback((event, node) => {
     setSelectedBrother(node.data.brother);
+    setIsModalOpen(true);
     // Smoothly center and zoom to the clicked node
     const { x, y } = node.position;
     const width = node.style?.width || 180;
