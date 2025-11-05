@@ -40,12 +40,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [error, setError] = useState(null);
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
   const reactFlowInstance = useReactFlow();
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
-  const { setCenter } = reactFlowInstance;
+  const { setCenter, getViewport } = reactFlowInstance;
 
   /**
    * Loads family tree data (brothers and relationships) from the API
@@ -480,6 +481,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
    * @param {Object} node.position - Node position {x, y}
    */
   const onNodeClick = useCallback((event, node) => {
+    // Save current viewport before opening modal
+    try {
+      const currentViewport = getViewport();
+      setViewportBeforeModal(currentViewport);
+    } catch (e) {
+      // If viewport not available, that's okay
+    }
+    
     setSelectedBrother(node.data.brother);
     setIsModalOpen(true);
     // Smoothly center and zoom to the clicked node
@@ -491,7 +500,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       zoom,
       duration: 500,
     });
-  }, [setCenter]);
+  }, [setCenter, getViewport]);
 
   const onPaneClick = useCallback((event) => {
     if (event.target.classList.contains('react-flow__pane')) {
@@ -504,41 +513,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // Effect to restore ReactFlow interactions after modal closes
   useEffect(() => {
     if (!isModalOpen && !selectedBrother) {
-      // Modal is closed, restore ReactFlow interactions
+      // Modal is closed, ensure ReactFlow is interactive
+      // The viewport restoration in onClose should handle most cases,
+      // but we'll ensure pointer events are correct as a fallback
       const restoreInteractions = () => {
-        // Find all ReactFlow elements and ensure they're interactive
         const reactFlowWrapper = document.querySelector('.react-flow');
-        const reactFlowPane = document.querySelector('.react-flow__pane');
-        const reactFlowViewport = document.querySelector('.react-flow__viewport');
-        
         if (reactFlowWrapper) {
           reactFlowWrapper.style.pointerEvents = 'auto';
-          reactFlowWrapper.style.zIndex = '1';
-        }
-        if (reactFlowPane) {
-          reactFlowPane.style.pointerEvents = 'auto';
-        }
-        if (reactFlowViewport) {
-          reactFlowViewport.style.pointerEvents = 'auto';
-        }
-        
-        // Force ReactFlow to re-enable interactions by triggering a small viewport change
-        if (reactFlowInstance) {
-          try {
-            const viewport = reactFlowInstance.getViewport();
-            reactFlowInstance.setViewport(viewport, { duration: 0 });
-          } catch (e) {
-            // Ignore errors
-          }
         }
       };
       
-      // Use requestAnimationFrame to ensure DOM is updated
-      requestAnimationFrame(() => {
-        setTimeout(restoreInteractions, 50);
-      });
+      // Small delay to ensure modal is fully unmounted
+      setTimeout(restoreInteractions, 100);
     }
-  }, [isModalOpen, selectedBrother, reactFlowInstance]);
+  }, [isModalOpen, selectedBrother]);
 
   const handleAddNodeClick = useCallback((event, node) => {
     if (event) event.stopPropagation();
@@ -726,8 +714,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           brother={selectedBrother}
           familyId={family.id}
           onClose={() => {
+            // Restore viewport to state before opening modal
+            if (viewportBeforeModal) {
+              try {
+                reactFlowInstance.setViewport(viewportBeforeModal, { duration: 300 });
+              } catch (e) {
+                // If viewport restore fails, continue anyway
+              }
+            }
             setSelectedBrother(null);
             setIsModalOpen(false);
+            setViewportBeforeModal(null);
           }}
           onUpdate={handleNodeUpdate}
           theme={theme}
