@@ -267,13 +267,12 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
-                    fontSize: '18px', 
+                    fontSize: '12px', 
                     fontWeight: '700', 
                     color: theme?.nodeText || 'var(--text)',
                     marginBottom: 'var(--space-3)',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
-                    fontSize: '12px',
                   }}>
                     Career Aspirations
                   </h3>
@@ -298,13 +297,12 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
-                    fontSize: '18px', 
+                    fontSize: '12px', 
                     fontWeight: '700', 
                     color: theme?.nodeText || 'var(--text)',
                     marginBottom: 'var(--space-3)',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
-                    fontSize: '12px',
                   }}>
                     About
                   </h3>
