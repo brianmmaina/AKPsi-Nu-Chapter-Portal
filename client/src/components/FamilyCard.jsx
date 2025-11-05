@@ -11,9 +11,10 @@ import { getThemeStyles } from '../themes';
  * @param {number} props.index - Index of the family (for animation)
  * @param {boolean} props.isClicked - Whether this card was recently clicked
  * @param {Function} props.onClick - Click handler function
+ * @param {boolean} props.isLoaded - Whether families have loaded (for fade-in animation)
  * @returns {JSX.Element} Family selection card
  */
-const FamilyCard = ({ family, index, isClicked, onClick }) => {
+const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => {
   const { accent, titleColor, backgroundImage, backgroundSize } = useMemo(() => {
     const theme = getThemeStyles(family.theme);
     const accent = theme?.accent || '#D3AF37';
@@ -50,6 +51,10 @@ const FamilyCard = ({ family, index, isClicked, onClick }) => {
     return { accent, titleColor, backgroundImage, backgroundSize };
   }, [family.theme]);
 
+  // Calculate animation delay based on index (staggered fade-in)
+  const animationDelay = isLoaded ? index * 100 : 0; // 100ms delay per card
+  const opacity = isLoaded ? 1 : 0;
+
   return (
     <button
       onClick={() => onClick(family, index)}
@@ -60,7 +65,7 @@ const FamilyCard = ({ family, index, isClicked, onClick }) => {
         }
       }}
       tabIndex={0}
-      className={`tile text-center group fade-zoom ${isClicked ? 'click-zoom' : ''}`}
+      className={`tile text-center group ${isClicked ? 'click-zoom' : ''}`}
       style={{
         backgroundColor: 'var(--akpsi-navy-subtle)',
         border: `1.5px solid ${accent}80`,
@@ -70,15 +75,22 @@ const FamilyCard = ({ family, index, isClicked, onClick }) => {
         backgroundImage,
         backgroundSize,
         boxShadow: 'var(--shadow-sm)',
-        transition: 'all var(--motion-fast) var(--ease-standard)',
+        transition: 'all var(--motion-fast) var(--ease-standard), opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
+        opacity,
+        transform: isLoaded ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
+        transitionDelay: isLoaded ? `${animationDelay}ms` : '0ms',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
+        if (isLoaded) {
+          e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+        }
         e.currentTarget.style.boxShadow = 'var(--shadow-md)';
         e.currentTarget.style.borderColor = `${accent}CC`;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
+        if (isLoaded) {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+        }
         e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
         e.currentTarget.style.borderColor = `${accent}80`;
       }}

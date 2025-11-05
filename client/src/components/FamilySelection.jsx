@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import FamilyCard from './FamilyCard';
 
 /**
@@ -13,6 +13,18 @@ import FamilyCard from './FamilyCard';
  */
 const FamilySelection = ({ families, onSelectFamily }) => {
   const [clickedIndex, setClickedIndex] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Trigger fade-in animation after a brief delay when families are loaded
+  useEffect(() => {
+    if (families && families.length > 0) {
+      // Small delay to ensure smooth transition from login
+      const timer = setTimeout(() => {
+        setIsLoaded(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [families]);
 
   const handleClick = useCallback((family, idx) => {
     setClickedIndex(idx);
@@ -90,6 +102,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
                 index={idx}
                 isClicked={clickedIndex === idx}
                 onClick={handleClick}
+                isLoaded={isLoaded}
               />
             ))}
           </div>
@@ -106,6 +119,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
                     index={actualIdx}
                     isClicked={clickedIndex === actualIdx}
                     onClick={handleClick}
+                    isLoaded={isLoaded}
                   />
                 );
               })}
