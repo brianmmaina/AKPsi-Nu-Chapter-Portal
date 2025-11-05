@@ -621,6 +621,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         backgroundImage: theme.backgroundTexture,
         backgroundSize: '280px 280px',
         backgroundPosition: 'center',
+        pointerEvents: 'auto',
       }}
     >
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
@@ -632,11 +633,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        style={{ width: '100%', height: '100%', background: theme.background, fontFamily: theme.bodyFont }}
+        style={{ width: '100%', height: '100%', background: theme.background, fontFamily: theme.bodyFont, pointerEvents: 'auto' }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
         defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
+        panOnDrag={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />

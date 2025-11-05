@@ -70,6 +70,8 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
   // Add Little functionality removed - site is read-only
 
+  if (!brother) return null;
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-modal"
@@ -77,6 +79,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
+        pointerEvents: 'auto',
       }}
       onClick={onClose}
       role="dialog"
