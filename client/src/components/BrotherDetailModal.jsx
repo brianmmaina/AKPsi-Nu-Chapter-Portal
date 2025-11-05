@@ -30,6 +30,10 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
     status: brother.status,
     is_transfer: brother.is_transfer === 1,
     profile_image_url: brother.profile_image_url || '',
+    linkedin_url: brother.linkedin_url || '',
+    instagram_url: brother.instagram_url || '',
+    personal_website_url: brother.personal_website_url || '',
+    email: brother.email || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -48,7 +52,15 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
     setSaving(true);
     try {
       // Token is added automatically via interceptor
-      await brothersApi.update(brother.id, { ...formData, is_transfer: formData.is_transfer ? 1 : 0, profile_image_url: formData.profile_image_url });
+      await brothersApi.update(brother.id, { 
+        ...formData, 
+        is_transfer: formData.is_transfer ? 1 : 0, 
+        profile_image_url: formData.profile_image_url,
+        linkedin_url: formData.linkedin_url,
+        instagram_url: formData.instagram_url,
+        personal_website_url: formData.personal_website_url,
+        email: formData.email,
+      });
       setIsEditing(false);
       onUpdate();
       onToast?.({ message: 'Brother updated successfully!', type: 'success' });
@@ -168,13 +180,15 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 {brother.pledge_class && (
                   <span
                     style={{
-                      padding: 'var(--space-2) var(--space-4)',
+                      padding: '8px 16px',
                       backgroundColor: theme?.accent || '#c9a857',
                       color: 'white',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: '600',
+                      borderRadius: '0px',
+                      fontSize: '12px',
+                      fontWeight: '700',
                       textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      border: `2px solid ${theme?.accent || '#c9a857'}`,
                     }}
                   >
                     {brother.pledge_class}
@@ -183,13 +197,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 {brother.graduation_year && (
                   <span
                     style={{
-                      padding: 'var(--space-2) var(--space-4)',
+                      padding: '8px 16px',
                       backgroundColor: theme?.background || '#f8f7f3',
                       color: theme?.nodeText || 'var(--text)',
                       border: `2px solid ${theme?.accent || '#c9a857'}`,
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: '600',
+                      borderRadius: '0px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      letterSpacing: '0.5px',
                     }}
                   >
                     Class of {brother.graduation_year}
@@ -197,12 +212,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 )}
                 <span
                   style={{
-                    padding: 'var(--space-2) var(--space-4)',
+                    padding: '8px 16px',
                     backgroundColor: brother.status === 'studying' ? '#10b981' : '#6b7280',
                     color: 'white',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: '600',
+                    borderRadius: '0px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.5px',
+                    border: `2px solid ${brother.status === 'studying' ? '#10b981' : '#6b7280'}`,
                   }}
                 >
                   {brother.status === 'studying' ? 'Currently Studying' : 'Graduated'}
@@ -211,8 +228,20 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
               {/* Major */}
               {brother.major && (
-                <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                  <p style={{ color: theme?.nodeText || 'var(--text)', fontSize: 'var(--text-lg)', fontWeight: '500' }}>
+                <div style={{ 
+                  textAlign: 'center', 
+                  marginBottom: 'var(--space-6)',
+                  padding: 'var(--space-4)',
+                  backgroundColor: theme?.background || '#f8f7f3',
+                  border: `1px solid ${theme?.nodeBorder || '#d4c9b3'}`,
+                  borderRadius: '0px',
+                }}>
+                  <p style={{ 
+                    color: theme?.nodeText || 'var(--text)', 
+                    fontSize: 'var(--text-base)', 
+                    fontWeight: '500',
+                    margin: 0,
+                  }}>
                     {brother.major}
                   </p>
                 </div>
@@ -220,19 +249,29 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
               {/* Career Aspirations */}
               {brother.career_aspirations && (
-                <div style={{ marginBottom: 'var(--space-6)' }}>
+                <div style={{ 
+                  marginBottom: 'var(--space-6)',
+                  padding: 'var(--space-5)',
+                  backgroundColor: theme?.background || '#f8f7f3',
+                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  borderRadius: '0px',
+                }}>
                   <h3 style={{ 
-                    fontSize: 'var(--text-lg)', 
-                    fontWeight: '600', 
+                    fontSize: '18px', 
+                    fontWeight: '700', 
                     color: theme?.nodeText || 'var(--text)',
-                    marginBottom: 'var(--space-2)',
+                    marginBottom: 'var(--space-3)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    fontSize: '12px',
                   }}>
                     Career Aspirations
                   </h3>
                   <p style={{ 
-                    color: theme?.nodeText || 'var(--text-muted)', 
-                    lineHeight: '1.6',
-                    fontSize: 'var(--text-base)',
+                    color: theme?.nodeText || 'var(--text)', 
+                    lineHeight: '1.7',
+                    fontSize: '15px',
+                    margin: 0,
                   }}>
                     {brother.career_aspirations}
                   </p>
@@ -241,22 +280,175 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
               {/* Description (Fun Facts) */}
               {brother.fun_facts && (
-                <div style={{ marginBottom: 'var(--space-6)' }}>
+                <div style={{ 
+                  marginBottom: 'var(--space-6)',
+                  padding: 'var(--space-5)',
+                  backgroundColor: theme?.background || '#f8f7f3',
+                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  borderRadius: '0px',
+                }}>
                   <h3 style={{ 
-                    fontSize: 'var(--text-lg)', 
-                    fontWeight: '600', 
+                    fontSize: '18px', 
+                    fontWeight: '700', 
                     color: theme?.nodeText || 'var(--text)',
-                    marginBottom: 'var(--space-2)',
+                    marginBottom: 'var(--space-3)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    fontSize: '12px',
                   }}>
                     About
                   </h3>
                   <p style={{ 
-                    color: theme?.nodeText || 'var(--text-muted)', 
-                    lineHeight: '1.6',
-                    fontSize: 'var(--text-base)',
+                    color: theme?.nodeText || 'var(--text)', 
+                    lineHeight: '1.7',
+                    fontSize: '15px',
+                    margin: 0,
                   }}>
                     {brother.fun_facts}
                   </p>
+                </div>
+              )}
+
+              {/* Links Section */}
+              {(brother.linkedin_url || brother.instagram_url || brother.personal_website_url || brother.email) && (
+                <div style={{ 
+                  marginBottom: 'var(--space-6)',
+                  padding: 'var(--space-5)',
+                  backgroundColor: theme?.background || '#f8f7f3',
+                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  borderRadius: '0px',
+                }}>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '700', 
+                    color: theme?.nodeText || 'var(--text)',
+                    marginBottom: 'var(--space-4)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    fontSize: '12px',
+                  }}>
+                    Connect
+                  </h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', justifyContent: 'center' }}>
+                    {brother.linkedin_url && (
+                      <a
+                        href={brother.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          backgroundColor: '#0077b5',
+                          color: 'white',
+                          borderRadius: '0px',
+                          textDecoration: 'none',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,119,181,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <span>🔗</span> LinkedIn
+                      </a>
+                    )}
+                    {brother.instagram_url && (
+                      <a
+                        href={brother.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
+                          color: 'white',
+                          borderRadius: '0px',
+                          textDecoration: 'none',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(225,48,108,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <span>📷</span> Instagram
+                      </a>
+                    )}
+                    {brother.personal_website_url && (
+                      <a
+                        href={brother.personal_website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          backgroundColor: theme?.accent || '#c9a857',
+                          color: 'white',
+                          borderRadius: '0px',
+                          textDecoration: 'none',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${theme?.accent || '#c9a857'}40`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <span>🌐</span> Website
+                      </a>
+                    )}
+                    {brother.email && (
+                      <a
+                        href={`mailto:${brother.email}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 16px',
+                          backgroundColor: '#6b7280',
+                          color: 'white',
+                          borderRadius: '0px',
+                          textDecoration: 'none',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(107,114,128,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <span>✉️</span> Email
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -410,8 +602,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
             )}
           </div>
 
-              <div>
-                <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+              <div style={{ 
+                padding: 'var(--space-4)', 
+                backgroundColor: theme?.background || '#f8f7f3',
+                border: `2px solid ${theme?.accent || '#c9a857'}`,
+                borderRadius: '0px',
+                marginBottom: 'var(--space-4)',
+              }}>
+                <label className="label" style={{ color: theme?.nodeText || 'var(--text)', fontWeight: '600', fontSize: 'var(--text-base)' }}>
                   Profile Image URL
                 </label>
                 <input
@@ -420,11 +618,105 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   onChange={(e) => setFormData({ ...formData, profile_image_url: e.target.value })}
                   className="input"
                   placeholder="https://example.com/image.jpg"
-                  style={{ color: theme?.nodeText || 'var(--text)' }}
+                  style={{ 
+                    color: theme?.nodeText || 'var(--text)',
+                    border: `2px solid ${theme?.accent || '#c9a857'}`,
+                    borderRadius: '0px',
+                    padding: 'var(--space-3)',
+                    fontSize: 'var(--text-base)',
+                  }}
                 />
-                <small style={{ color: theme?.nodeText || 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>
-                  Enter a URL to an image for the profile headshot
+                <small style={{ color: theme?.nodeText || 'var(--text-muted)', fontSize: 'var(--text-sm)', display: 'block', marginTop: 'var(--space-2)' }}>
+                  Enter a URL to an image for the profile headshot (e.g., from Imgur, Google Drive, or any image hosting service)
                 </small>
+              </div>
+
+              {/* Links Section */}
+              <div style={{ 
+                padding: 'var(--space-4)', 
+                backgroundColor: theme?.background || '#f8f7f3',
+                border: `2px solid ${theme?.accent || '#c9a857'}`,
+                borderRadius: '0px',
+                marginBottom: 'var(--space-4)',
+              }}>
+                <h3 style={{ 
+                  fontSize: 'var(--text-lg)', 
+                  fontWeight: '600', 
+                  color: theme?.nodeText || 'var(--text)',
+                  marginBottom: 'var(--space-3)',
+                }}>
+                  Links & Contact
+                </h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  <div>
+                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                      LinkedIn URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.linkedin_url}
+                      onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
+                      className="input"
+                      placeholder="https://linkedin.com/in/username"
+                      style={{ 
+                        color: theme?.nodeText || 'var(--text)',
+                        borderRadius: '0px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                      Instagram URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.instagram_url}
+                      onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                      className="input"
+                      placeholder="https://instagram.com/username"
+                      style={{ 
+                        color: theme?.nodeText || 'var(--text)',
+                        borderRadius: '0px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                      Personal Website URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.personal_website_url}
+                      onChange={(e) => setFormData({ ...formData, personal_website_url: e.target.value })}
+                      className="input"
+                      placeholder="https://yourwebsite.com"
+                      style={{ 
+                        color: theme?.nodeText || 'var(--text)',
+                        borderRadius: '0px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="input"
+                      placeholder="example@email.com"
+                      style={{ 
+                        color: theme?.nodeText || 'var(--text)',
+                        borderRadius: '0px',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {isEditing && (
@@ -468,6 +760,10 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                     status: brother.status,
                     is_transfer: brother.is_transfer === 1,
                     profile_image_url: brother.profile_image_url || '',
+                    linkedin_url: brother.linkedin_url || '',
+                    instagram_url: brother.instagram_url || '',
+                    personal_website_url: brother.personal_website_url || '',
+                    email: brother.email || '',
                   });
                 }}
                 className="btn btn-secondary flex-1"

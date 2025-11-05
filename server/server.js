@@ -382,6 +382,15 @@ async function initializeDatabase() {
         ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
       `);
       
+      // Add links/social media columns if they don't exist (migration)
+      await pool.query(`
+        ALTER TABLE brothers 
+        ADD COLUMN IF NOT EXISTS linkedin_url TEXT,
+        ADD COLUMN IF NOT EXISTS instagram_url TEXT,
+        ADD COLUMN IF NOT EXISTS personal_website_url TEXT,
+        ADD COLUMN IF NOT EXISTS email TEXT;
+      `);
+      
       // Create indexes for performance
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_brothers_family_id ON brothers(family_id);
@@ -672,7 +681,7 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
       return res.status(400).json({ error: 'Invalid brother ID' });
     }
     
-    const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, profile_image_url } = req.body;
+    const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, profile_image_url, linkedin_url, instagram_url, personal_website_url, email } = req.body;
     
     const validatedName = validateString(name, 'Name', 100);
     if (!validatedName) {
@@ -687,13 +696,18 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
     const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
     const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
     const validatedProfileImageUrl = validateString(profile_image_url, 'Profile Image URL', 500);
+    const validatedLinkedInUrl = validateString(linkedin_url, 'LinkedIn URL', 500);
+    const validatedInstagramUrl = validateString(instagram_url, 'Instagram URL', 500);
+    const validatedPersonalWebsiteUrl = validateString(personal_website_url, 'Personal Website URL', 500);
+    const validatedEmail = validateString(email, 'Email', 255);
     
     const result = await pool.query(`
       UPDATE brothers 
       SET name = $1, pledge_class = $2, graduation_year = $3, major = $4, 
           career_aspirations = $5, fun_facts = $6, status = $7, is_transfer = $8,
-          profile_image_url = $9, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10
+          profile_image_url = $9, linkedin_url = $10, instagram_url = $11, 
+          personal_website_url = $12, email = $13, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $14
     `, [
       validatedName,
       validatedPledgeClass,
@@ -704,6 +718,10 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
       validatedStatus,
       validatedIsTransfer,
       validatedProfileImageUrl,
+      validatedLinkedInUrl,
+      validatedInstagramUrl,
+      validatedPersonalWebsiteUrl,
+      validatedEmail,
       brotherId
     ]);
     
