@@ -376,6 +376,12 @@ async function initializeDatabase() {
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
       `);
       
+      // Add profile_image_url column if it doesn't exist (migration)
+      await pool.query(`
+        ALTER TABLE brothers 
+        ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
+      `);
+      
       // Create indexes for performance
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_brothers_family_id ON brothers(family_id);
@@ -584,7 +590,7 @@ async function validateBigIdInFamily(familyId, bigId) {
 // Create new brother
 app.post('/api/brothers', checkPassword, async (req, res) => {
   try {
-    const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id } = req.body;
+    const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id, profile_image_url } = req.body;
     
     const familyIdNum = parseInt(family_id, 10);
     if (!family_id || isNaN(familyIdNum) || familyIdNum < 1) {
@@ -596,7 +602,7 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       await validateBigIdInFamily(familyIdNum, parseInt(big_id, 10));
     }
     
-    let validatedName, validatedPledgeClass, validatedMajor, validatedCareerAspirations, validatedFunFacts, validatedGraduationYear, validatedStatus, validatedIsTransfer;
+    let validatedName, validatedPledgeClass, validatedMajor, validatedCareerAspirations, validatedFunFacts, validatedGraduationYear, validatedStatus, validatedIsTransfer, validatedProfileImageUrl;
     
     try {
       validatedName = validateString(name, 'Name', 100);
@@ -611,13 +617,14 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
       validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
       validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+      validatedProfileImageUrl = validateString(profile_image_url, 'Profile Image URL', 500);
     } catch (validationError) {
       return res.status(400).json({ error: validationError.message });
     }
     
     const insertResult = await pool.query(`
-      INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, profile_image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
     `, [
       familyIdNum,
@@ -628,7 +635,8 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       validatedCareerAspirations,
       validatedFunFacts,
       validatedStatus,
-      validatedIsTransfer
+      validatedIsTransfer,
+      validatedProfileImageUrl
     ]);
     
     const brotherId = insertResult.rows[0].id;
@@ -664,7 +672,7 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
       return res.status(400).json({ error: 'Invalid brother ID' });
     }
     
-    const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer } = req.body;
+    const { name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, profile_image_url } = req.body;
     
     const validatedName = validateString(name, 'Name', 100);
     if (!validatedName) {
@@ -678,13 +686,14 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
     const validatedGraduationYear = validateInteger(graduation_year, 'Graduation Year', 1950, 2100);
     const validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
     const validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
+    const validatedProfileImageUrl = validateString(profile_image_url, 'Profile Image URL', 500);
     
     const result = await pool.query(`
       UPDATE brothers 
       SET name = $1, pledge_class = $2, graduation_year = $3, major = $4, 
           career_aspirations = $5, fun_facts = $6, status = $7, is_transfer = $8,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $9
+          profile_image_url = $9, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $10
     `, [
       validatedName,
       validatedPledgeClass,
@@ -694,6 +703,7 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
       validatedFunFacts,
       validatedStatus,
       validatedIsTransfer,
+      validatedProfileImageUrl,
       brotherId
     ]);
     
