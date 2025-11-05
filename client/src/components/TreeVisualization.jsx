@@ -40,11 +40,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [error, setError] = useState(null);
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const reactFlowInstance = useReactFlow();
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
-  const { setCenter } = useReactFlow();
+  const { setCenter } = reactFlowInstance;
 
   /**
    * Loads family tree data (brothers and relationships) from the API
@@ -495,9 +496,49 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const onPaneClick = useCallback((event) => {
     if (event.target.classList.contains('react-flow__pane')) {
       setSelectedBrother(null);
+      setIsModalOpen(false);
       // Don't close add form on pane click - let user finish adding
     }
   }, []);
+
+  // Effect to restore ReactFlow interactions after modal closes
+  useEffect(() => {
+    if (!isModalOpen && !selectedBrother) {
+      // Modal is closed, restore ReactFlow interactions
+      const restoreInteractions = () => {
+        // Find all ReactFlow elements and ensure they're interactive
+        const reactFlowWrapper = document.querySelector('.react-flow');
+        const reactFlowPane = document.querySelector('.react-flow__pane');
+        const reactFlowViewport = document.querySelector('.react-flow__viewport');
+        
+        if (reactFlowWrapper) {
+          reactFlowWrapper.style.pointerEvents = 'auto';
+          reactFlowWrapper.style.zIndex = '1';
+        }
+        if (reactFlowPane) {
+          reactFlowPane.style.pointerEvents = 'auto';
+        }
+        if (reactFlowViewport) {
+          reactFlowViewport.style.pointerEvents = 'auto';
+        }
+        
+        // Force ReactFlow to re-enable interactions by triggering a small viewport change
+        if (reactFlowInstance) {
+          try {
+            const viewport = reactFlowInstance.getViewport();
+            reactFlowInstance.setViewport(viewport, { duration: 0 });
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+      };
+      
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        setTimeout(restoreInteractions, 50);
+      });
+    }
+  }, [isModalOpen, selectedBrother, reactFlowInstance]);
 
   const handleAddNodeClick = useCallback((event, node) => {
     if (event) event.stopPropagation();
@@ -687,14 +728,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           onClose={() => {
             setSelectedBrother(null);
             setIsModalOpen(false);
-            // Force ReactFlow to regain focus after modal closes
-            setTimeout(() => {
-              // Ensure ReactFlow container is interactive
-              const reactFlowWrapper = document.querySelector('.react-flow');
-              if (reactFlowWrapper) {
-                reactFlowWrapper.style.pointerEvents = 'auto';
-              }
-            }, 0);
           }}
           onUpdate={handleNodeUpdate}
           theme={theme}
