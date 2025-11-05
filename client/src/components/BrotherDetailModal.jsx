@@ -32,8 +32,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
     profile_image_url: brother.profile_image_url || '',
     linkedin_url: brother.linkedin_url || '',
     instagram_url: brother.instagram_url || '',
-    personal_website_url: brother.personal_website_url || '',
-    email: brother.email || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -58,8 +56,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
         profile_image_url: formData.profile_image_url,
         linkedin_url: formData.linkedin_url,
         instagram_url: formData.instagram_url,
-        personal_website_url: formData.personal_website_url,
-        email: formData.email,
       });
       setIsEditing(false);
       onUpdate();
@@ -310,7 +306,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
               )}
 
               {/* Links Section */}
-              {(brother.linkedin_url || brother.instagram_url || brother.personal_website_url || brother.email) && (
+              {(brother.linkedin_url || brother.instagram_url) && (
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
                   padding: 'var(--space-5)',
@@ -593,7 +589,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   color: theme?.nodeText || 'var(--text)',
                   marginBottom: 'var(--space-3)',
                 }}>
-                  Links & Contact
+                  Links
                 </h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -624,40 +620,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                       onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
                       className="input"
                       placeholder="https://instagram.com/username"
-                      style={{ 
-                        color: theme?.nodeText || 'var(--text)',
-                        borderRadius: '0px',
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
-                      Personal Website URL
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.personal_website_url}
-                      onChange={(e) => setFormData({ ...formData, personal_website_url: e.target.value })}
-                      className="input"
-                      placeholder="https://yourwebsite.com"
-                      style={{ 
-                        color: theme?.nodeText || 'var(--text)',
-                        borderRadius: '0px',
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="label" style={{ color: theme?.nodeText || 'var(--text)' }}>
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="input"
-                      placeholder="example@email.com"
                       style={{ 
                         color: theme?.nodeText || 'var(--text)',
                         borderRadius: '0px',
@@ -710,8 +672,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                     profile_image_url: brother.profile_image_url || '',
                     linkedin_url: brother.linkedin_url || '',
                     instagram_url: brother.instagram_url || '',
-                    personal_website_url: brother.personal_website_url || '',
-                    email: brother.email || '',
                   });
                 }}
                 className="btn btn-secondary flex-1"
