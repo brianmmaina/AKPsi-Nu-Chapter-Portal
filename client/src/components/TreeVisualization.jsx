@@ -277,17 +277,107 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       if (familyKey === 'pride') {
-        // PRIDE: Dark background with muted gold border
-        nodeStyle.background = '#181413';
+        // PRIDE: Deep espresso background with muted gold border and glow
+        nodeStyle.background = '#231d17';
         nodeStyle.border = `1.5px solid ${theme.accent}`; // #d4af7e muted gold
-        nodeStyle.color = '#ffffff'; // White text
+        nodeStyle.color = '#f8f5ef'; // Soft ivory text
         nodeStyle.borderRadius = '0px'; // Photo-focused, crisp corners
+        nodeStyle.padding = '12px';
+        nodeStyle.boxShadow = '0 10px 24px rgba(0,0,0,0.45)';
       }
 
       // Build node label based on family theme
       let nodeLabel;
       
-      if (familyKey === 'empire') {
+      if (familyKey === 'pride') {
+        nodeLabel = (
+          <div
+            style={{
+              fontFamily: theme.bodyFont,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              textAlign: 'left',
+              color: '#f8f5ef',
+            }}
+          >
+            {/* Accent bar */}
+            <div
+              style={{
+                height: 3,
+                background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
+                marginLeft: '-12px',
+                marginRight: '-12px',
+                marginTop: '-4px',
+                marginBottom: 6,
+              }}
+            />
+            {/* Name */}
+            <div
+              style={{
+                fontFamily: theme.titleFont,
+                fontSize: '12px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: '#d4af7e',
+                lineHeight: 1.2,
+              }}
+            >
+              {brother.name}
+            </div>
+            {/* Pledge Class */}
+            {brother.pledge_class && (
+              <div
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.4px',
+                  color: '#f8f5ef',
+                  opacity: 0.85,
+                }}
+              >
+                {brother.pledge_class}
+              </div>
+            )}
+            {/* Graduation year / status */}
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(248, 245, 239, 0.75)',
+              }}
+            >
+              {brother.graduation_year
+                ? `Class of ${brother.graduation_year}`
+                : brother.status === 'graduated'
+                    ? 'Graduated'
+                    : 'Currently Studying'}
+            </div>
+            {/* Major */}
+            {brother.major && (
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'rgba(248, 245, 239, 0.6)',
+                  fontStyle: 'italic',
+                }}
+              >
+                {brother.major}
+              </div>
+            )}
+            {/* Transfer indicator */}
+            {isTransfer && (
+              <div
+                style={{
+                  fontSize: '9px',
+                  color: 'rgba(212, 175, 126, 0.7)',
+                  fontStyle: 'italic',
+                }}
+              >
+                (Transfer)
+              </div>
+            )}
+          </div>
+        );
+      } else if (familyKey === 'empire') {
         // EMPIRE: Rich node with multiple fields per spec
         nodeLabel = (
           <div style={{ 
