@@ -760,7 +760,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         zoomOnScroll={!isModalOpen}
         zoomOnPinch={!isModalOpen}
         proOptions={{ hideAttribution: true }}
-        nodeTypes={nodeTypes}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />
