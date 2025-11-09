@@ -104,7 +104,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       setEdges([]);
       return;
     }
-    
+
     if (brothers.length === 0) {
       return; // Still loading, don't process yet
     }
@@ -115,7 +115,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
-        relationshipsMap.set(rel.little_id, rel.big_id);
+      relationshipsMap.set(rel.little_id, rel.big_id);
         if (!childrenMap.has(rel.big_id)) {
           childrenMap.set(rel.big_id, []);
         }
@@ -131,9 +131,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     // Node dimensions
     const nodeWidth = 180;
     const nodeHeight = 100;
-    const horizontalSpacing = 280; // Space between siblings
-    const baseVerticalSpacing = 200; // Space between generations
-    const pledgeVerticalSpacing = 180; // Additional spacing per pledge level
+    const horizontalSpacing = 260; // Slightly tighter sibling spacing
+    const baseVerticalSpacing = 160; // Shorter baseline generation spacing
+    const pledgeVerticalSpacing = 140; // Tighter pledge-class spacing
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -200,14 +200,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     } else {
       // No roots found, just position all nodes in a simple grid
-      const levelMap = new Map();
-      brothers.forEach(b => {
+    const levelMap = new Map();
+    brothers.forEach(b => {
         const bigId = relationshipsMap.get(b.id);
         const level = bigId ? 1 : 0;
-        if (!levelMap.has(level)) levelMap.set(level, []);
-        levelMap.get(level).push(b.id);
-      });
-      
+      if (!levelMap.has(level)) levelMap.set(level, []);
+      levelMap.get(level).push(b.id);
+    });
+
       levelMap.forEach((nodeIds, level) => {
         const spacing = horizontalSpacing;
         const startX = -((nodeIds.length - 1) * spacing) / 2;
@@ -542,17 +542,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeLabel = (
           <div
             style={{
-              fontFamily: theme.bodyFont,
-              width: '100%',
-              minHeight: nodeHeight,
+            fontFamily: theme.bodyFont,
+            width: '100%',
+            minHeight: nodeHeight,
               display: 'flex',
               flexDirection: 'column',
               gap: '6px',
               color: '#3b2b16',
             }}
           >
-            <div
-              style={{
+            <div 
+              style={{ 
                 fontFamily: theme.titleFont,
                 fontSize: '12px',
                 letterSpacing: '0.6px',
@@ -562,10 +562,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             >
               {brother.name}
             </div>
-
+            
             {brother.pledge_class && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '11px',
                   letterSpacing: '0.4px',
                   color: '#604720',
@@ -575,9 +575,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 {brother.pledge_class}
               </div>
             )}
-
-            <div
-              style={{
+            
+            <div 
+              style={{ 
                 fontSize: '10px',
                 color: 'rgba(59, 43, 22, 0.78)',
               }}
@@ -588,10 +588,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                     ? 'Graduated'
                     : 'Currently Studying'}
             </div>
-
+            
             {brother.major && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '10px',
                   color: 'rgba(59, 43, 22, 0.6)',
                   fontStyle: 'italic',
@@ -600,10 +600,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 {brother.major}
               </div>
             )}
-
+            
             {isTransfer && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '9px',
                   color: 'rgba(163, 124, 51, 0.8)',
                   fontStyle: 'italic',
@@ -688,9 +688,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           const edgeType = theme.edgeType || 'smoothstep';
           
           const edge = {
-            id: `e${rel.big_id}-${rel.little_id}`,
-            source: String(rel.big_id),
-            target: String(rel.little_id),
+          id: `e${rel.big_id}-${rel.little_id}`,
+          source: String(rel.big_id),
+          target: String(rel.little_id),
             type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
@@ -845,47 +845,47 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   if (!loading && brothers.length === 0) {
     return (
       <>
-        <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-          <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
-            <h2
-              className="font-bold mb-4"
-              style={{
-                fontSize: 'var(--text-3xl)',
-                fontFamily: 'var(--font-display)',
-                // WOLFPACK text should always be white
-                color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              {family.name} Family Tree
-            </h2>
-            <p
-              className="mb-6"
-              style={{
-                fontSize: 'var(--text-lg)',
-                color: theme.nodeText || 'var(--text-on-dark)',
-                marginBottom: 'var(--space-6)',
-              }}
-            >
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
+        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+          <h2
+            className="font-bold mb-4"
+            style={{
+              fontSize: 'var(--text-3xl)',
+              fontFamily: 'var(--font-display)',
+              // WOLFPACK text should always be white
+              color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
+              marginBottom: 'var(--space-4)',
+            }}
+          >
+            {family.name} Family Tree
+          </h2>
+          <p
+            className="mb-6"
+            style={{
+              fontSize: 'var(--text-lg)',
+              color: theme.nodeText || 'var(--text-on-dark)',
+              marginBottom: 'var(--space-6)',
+            }}
+          >
               This family tree is empty. Contact an administrator to add brothers to this family.
-            </p>
-            <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-              {onChangeFamily && (
-                <button 
-                  onClick={onChangeFamily} 
-                  className="btn"
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: theme.accent,
-                    borderColor: hexToRgba(theme.accent, 0.4),
-                  }}
-                >
-                  Back to Families
-                </button>
-              )}
-            </div>
+          </p>
+          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
+            {onChangeFamily && (
+              <button 
+                onClick={onChangeFamily} 
+                className="btn"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: theme.accent,
+                  borderColor: hexToRgba(theme.accent, 0.4),
+                }}
+              >
+                Back to Families
+              </button>
+            )}
           </div>
         </div>
+      </div>
         {/* Add functionality removed - site is read-only */}
       </>
     );
@@ -927,7 +927,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
+        minZoom={0.2}
         panOnDrag={!isModalOpen}
         zoomOnScroll={!isModalOpen}
         zoomOnPinch={!isModalOpen}
