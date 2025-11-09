@@ -366,12 +366,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
     });
 
+    const levelRemap = new Map();
+    Array.from(new Set(Array.from(adjustedPositions.values()).map(({ pledgeLevel }) => pledgeLevel)))
+      .sort((a, b) => a - b)
+      .forEach((level, idx) => levelRemap.set(level, idx));
+
     brothers.forEach((brother) => {
       const info = adjustedPositions.get(brother.id);
       if (!info) return;
+      const remappedLevel = levelRemap.get(info.pledgeLevel) ?? info.pledgeLevel;
       nodePositions.set(brother.id, {
         x: info.x,
-        y: info.pledgeLevel * pledgeVerticalSpacing,
+        y: remappedLevel * pledgeVerticalSpacing,
       });
     });
 
@@ -695,11 +701,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
-              stroke: familyKey === 'empire' ? '#b58532' : edgeColor,
-              strokeWidth: familyKey === 'empire' ? edgeStrokeWidth + 1 : edgeStrokeWidth,
-              opacity: 0.95,
+              stroke: edgeColor,
+              strokeWidth: edgeStrokeWidth + 1,
+              opacity: 0.97,
               strokeLinecap: 'round',
               strokeLinejoin: 'round',
+              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))',
             },
             markerEnd: MarkerType.ArrowClosed,
           };
