@@ -100,7 +100,7 @@ export const getThemeStyles = (themeName) => {
       titleFont: 'Cinzel, serif', // Elegant serif
       bodyFont: 'Inter, system-ui, sans-serif',
       nodeRadius: 8,
-      edgeType: 'straight',
+      edgeType: 'smoothstep',
       backgroundVariant: 'lines',
     },
   };
