@@ -132,7 +132,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const nodeWidth = 180;
     const nodeHeight = 100;
     const horizontalSpacing = 280; // Space between siblings
-    const verticalSpacing = 200; // Space between generations
+    const baseVerticalSpacing = 200; // Space between generations
+    const pledgeVerticalSpacing = 180; // Additional spacing per pledge level
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -169,7 +170,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       children.forEach((childId, index) => {
         const childWidth = getSubtreeWidth(childId);
         const childX = startX + (childWidth / 2) + children.slice(0, index).reduce((sum, cid) => sum + getSubtreeWidth(cid), 0);
-        positionNode(childId, childX, y + verticalSpacing);
+        positionNode(childId, childX, y + baseVerticalSpacing);
       });
     };
 
@@ -211,10 +212,67 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         const spacing = horizontalSpacing;
         const startX = -((nodeIds.length - 1) * spacing) / 2;
         nodeIds.forEach((nodeId, index) => {
-          nodePositions.set(nodeId, { x: startX + index * spacing, y: level * verticalSpacing });
+          nodePositions.set(nodeId, { x: startX + index * spacing, y: level * baseVerticalSpacing });
         });
       });
     }
+    const pledgeOrder = [
+      'alpha','beta','gamma','delta','epsilon','zeta','eta','theta','iota','kappa','lambda','mu','nu','xi','omicron','pi','rho','sigma','tau','upsilon','phi','chi','psi','omega',
+      'alpha alpha','alpha beta','alpha gamma','alpha delta','alpha epsilon','alpha zeta','alpha eta','alpha theta','alpha iota','alpha kappa','alpha lambda','alpha mu','alpha nu','alpha xi','alpha omicron','alpha pi','alpha rho','alpha sigma','alpha tau','alpha upsilon','alpha phi','alpha chi','alpha psi','alpha omega',
+    ];
+    const pledgeIndex = new Map(pledgeOrder.map((pledge, idx) => [pledge, idx]));
+    const getPledgeLevel = (pledgeClass, fallback) => {
+      if (!pledgeClass) return fallback;
+      const key = pledgeClass.toLowerCase().trim();
+      if (pledgeIndex.has(key)) {
+        return pledgeIndex.get(key);
+      }
+      return fallback;
+    };
+
+    const adjustedPositions = new Map();
+    const queue = [];
+    brothers.forEach((brother) => {
+      const pos = nodePositions.get(brother.id);
+      if (pos) {
+        const depthLevel = Math.floor(pos.y / baseVerticalSpacing);
+        const pledgeLevel = getPledgeLevel(brother.pledge_class, depthLevel);
+        adjustedPositions.set(brother.id, {
+          ...pos,
+          depthLevel,
+          pledgeLevel,
+        });
+      }
+    });
+
+    const enforceHierarchy = (nodeId) => {
+      const current = adjustedPositions.get(nodeId);
+      if (!current) return;
+      const children = childrenMap.get(nodeId) || [];
+      children.forEach((childId) => {
+        const childPos = adjustedPositions.get(childId);
+        if (!childPos) return;
+        if (childPos.pledgeLevel <= current.pledgeLevel) {
+          childPos.pledgeLevel = current.pledgeLevel + 1;
+        }
+        enforceHierarchy(childId);
+      });
+    };
+
+    brothers.forEach((brother) => {
+      if (!relationshipsMap.get(brother.id)) {
+        enforceHierarchy(brother.id);
+      }
+    });
+
+    brothers.forEach((brother) => {
+      const info = adjustedPositions.get(brother.id);
+      if (!info) return;
+      nodePositions.set(brother.id, {
+        x: info.x,
+        y: info.pledgeLevel * pledgeVerticalSpacing,
+      });
+    });
 
     // Create React Flow nodes
     brothers.forEach(brother => {
