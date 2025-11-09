@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -41,6 +41,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
+  const initialViewportRef = useRef(null);
   const reactFlowInstance = useReactFlow();
 
   // Memoize theme to prevent infinite re-renders
@@ -750,6 +751,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, []);
 
+  const restorePointerEvents = useCallback(() => {
+    const wrapper = document.querySelector('.react-flow');
+    const pane = document.querySelector('.react-flow__pane');
+    if (wrapper) {
+      wrapper.style.pointerEvents = 'auto';
+    }
+    if (pane) {
+      pane.style.pointerEvents = 'auto';
+    }
+  }, []);
+
   // Effect to restore ReactFlow interactions after modal closes
   useEffect(() => {
     if (!isModalOpen && !selectedBrother) {
@@ -757,16 +769,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       // The viewport restoration in onClose should handle most cases,
       // but we'll ensure pointer events are correct as a fallback
       const restoreInteractions = () => {
-        const reactFlowWrapper = document.querySelector('.react-flow');
-        if (reactFlowWrapper) {
-          reactFlowWrapper.style.pointerEvents = 'auto';
-        }
+        restorePointerEvents();
       };
       
       // Small delay to ensure modal is fully unmounted
       setTimeout(restoreInteractions, 100);
     }
-  }, [isModalOpen, selectedBrother]);
+  }, [isModalOpen, selectedBrother, restorePointerEvents]);
 
   const handleAddNodeClick = useCallback((event, node) => {
     if (event) event.stopPropagation();
@@ -778,7 +787,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const handleNodeUpdate = useCallback(() => {
     loadTreeData();
     setSelectedBrother(null);
-  }, [loadTreeData]);
+    setIsModalOpen(false);
+    restorePointerEvents();
+  }, [loadTreeData, restorePointerEvents]);
+
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    if (initialViewportRef.current) return;
+    try {
+      initialViewportRef.current = reactFlowInstance.getViewport();
+    } catch (e) {
+      initialViewportRef.current = null;
+    }
+  }, [nodes, reactFlowInstance]);
 
   useEffect(() => {
     if (!isTreeReady || nodes.length === 0) {
@@ -973,13 +994,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           familyId={family.id}
           onClose={() => {
             // Restore viewport to state before opening modal
-            if (viewportBeforeModal) {
-              try {
-                reactFlowInstance.setViewport(viewportBeforeModal, { duration: 300 });
-              } catch (e) {
-                // If viewport restore fails, continue anyway
+            const targetViewport = viewportBeforeModal || initialViewportRef.current;
+            try {
+              if (targetViewport) {
+                reactFlowInstance.setViewport(targetViewport, { duration: 300 });
+              } else {
+                reactFlowInstance.fitView({ padding: 0.25, duration: 400 });
               }
+            } catch (e) {
+              // If viewport restore fails, continue anyway
             }
+            restorePointerEvents();
             setSelectedBrother(null);
             setIsModalOpen(false);
             setViewportBeforeModal(null);
