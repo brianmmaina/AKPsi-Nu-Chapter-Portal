@@ -401,17 +401,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       };
 
       // Per-family refinements based on family-tree-corrected.md specifications
-      if (familyKey === 'power') {
-        // POWER: Hexagon shapes with transparent fill and champagne gold border
-        nodeStyle.background = 'transparent';
-        nodeStyle.color = '#ffffff'; // White text
-        nodeStyle.border = `3px solid ${theme.nodeBorder}`; // #ebd290 gold
-        nodeStyle.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-        nodeStyle.borderRadius = '0px'; // Hexagons use clip-path
-        nodeStyle.padding = '14px';
-        nodeStyle.boxShadow = '0 4px 16px rgba(235, 210, 144, 0.3)'; // Subtle gold glow
-      }
-
       if (familyKey === 'empire') {
         nodeStyle.background = '#fff4dd';
         nodeStyle.border = '1px solid rgba(163, 124, 51, 0.4)';
@@ -424,34 +413,50 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundSize = '9px 100%, 100% 100%';
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
-      }
-
-      if (familyKey === 'greed') {
-        // GREED: White boxes with crisp corners, dark text (UPPERCASE style)
+      } else if (familyKey === 'power') {
+        nodeStyle.background = '#0f2031';
+        nodeStyle.border = `1.5px solid ${theme.accent}`;
+        nodeStyle.color = '#ffffff';
+        nodeStyle.borderRadius = '6px';
+        nodeStyle.padding = '14px 18px 14px 26px';
+        nodeStyle.minHeight = '108px';
+        nodeStyle.boxShadow = '0 14px 28px rgba(8, 16, 24, 0.45), 0 4px 10px rgba(235, 210, 144, 0.25)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(235,210,144,0.55) 0px, rgba(235,210,144,0.55) 9px, transparent 9px)';
+        nodeStyle.backgroundSize = '9px 100%';
+        nodeStyle.backgroundRepeat = 'no-repeat';
+      } else if (familyKey === 'greed') {
         nodeStyle.background = '#ffffff';
-        nodeStyle.border = '1px solid #e0e0e0'; // Light gray border
-        nodeStyle.color = '#333333'; // Dark text on white boxes
-        nodeStyle.borderRadius = '0px'; // Crisp corners (0px from spec)
-        nodeStyle.padding = '8px 12px'; // From spec
-      }
-
-      if (familyKey === 'wolfpack') {
-        // WOLFPACK: White boxes with dark blue header bar
+        nodeStyle.border = `1px solid ${theme.nodeBorder}`;
+        nodeStyle.color = '#1f3326';
+        nodeStyle.borderRadius = '4px';
+        nodeStyle.padding = '12px 16px 12px 24px';
+        nodeStyle.minHeight = '104px';
+        nodeStyle.boxShadow = '0 10px 24px rgba(9,53,32,0.18), 0 4px 10px rgba(244, 217, 97, 0.15)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.35) 0px, rgba(244,217,97,0.35) 8px, transparent 8px)';
+        nodeStyle.backgroundSize = '8px 100%';
+        nodeStyle.backgroundRepeat = 'no-repeat';
+      } else if (familyKey === 'wolfpack') {
         nodeStyle.background = '#ffffff';
-        nodeStyle.border = `1px solid #d0d0d0`; // Light border
-        nodeStyle.color = '#3d5373'; // Dark blue text in boxes (but tabs/headers are white)
-        nodeStyle.borderRadius = '0px'; // Crisp corners
-        nodeStyle.padding = '10px 12px'; // From spec: padding: 10px 12px
-      }
-
-      if (familyKey === 'pride') {
-        // PRIDE: Deep espresso background with muted gold border and glow
+        nodeStyle.border = '1px solid rgba(61, 83, 115, 0.35)';
+        nodeStyle.color = '#2c3f5f';
+        nodeStyle.borderRadius = '4px';
+        nodeStyle.padding = '13px 16px 13px 24px';
+        nodeStyle.minHeight = '106px';
+        nodeStyle.boxShadow = '0 12px 26px rgba(54, 76, 115, 0.22), 0 4px 12px rgba(61, 83, 115, 0.18)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(61,83,115,0.45) 0px, rgba(61,83,115,0.45) 9px, transparent 9px)';
+        nodeStyle.backgroundSize = '9px 100%';
+        nodeStyle.backgroundRepeat = 'no-repeat';
+      } else if (familyKey === 'pride') {
         nodeStyle.background = '#231d17';
-        nodeStyle.border = `1.5px solid ${theme.accent}`; // #d4af7e muted gold
-        nodeStyle.color = '#f8f5ef'; // Soft ivory text
-        nodeStyle.borderRadius = '0px'; // Photo-focused, crisp corners
-        nodeStyle.padding = '12px';
-        nodeStyle.boxShadow = '0 10px 24px rgba(0,0,0,0.45)';
+        nodeStyle.border = `1.5px solid rgba(212,175,126,0.65)`;
+        nodeStyle.color = '#f8f5ef';
+        nodeStyle.borderRadius = '4px';
+        nodeStyle.padding = '14px 18px 14px 28px';
+        nodeStyle.minHeight = '110px';
+        nodeStyle.boxShadow = '0 14px 30px rgba(0,0,0,0.45), 0 6px 16px rgba(212,175,126,0.28)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(212,175,126,0.55) 0px, rgba(212,175,126,0.55) 10px, transparent 10px)';
+        nodeStyle.backgroundSize = '10px 100%';
+        nodeStyle.backgroundRepeat = 'no-repeat';
       }
 
       // Build node label based on family theme
