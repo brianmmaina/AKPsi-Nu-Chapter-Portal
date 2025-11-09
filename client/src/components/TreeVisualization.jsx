@@ -129,10 +129,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const nodePositions = new Map();
     
     // Node dimensions
-    const nodeWidth = familyKey === 'empire' ? 200 : 180;
-    const nodeHeight = familyKey === 'empire' ? 110 : 100;
-    const horizontalSpacing = familyKey === 'empire' ? 320 : 280; // Space between siblings
-    const verticalSpacing = familyKey === 'empire' ? 220 : 200; // Space between generations
+    const nodeWidth = familyKey === 'empire' ? 210 : 180;
+    const nodeHeight = familyKey === 'empire' ? 115 : 100;
+    const horizontalSpacing = familyKey === 'empire' ? 240 : 280; // Space between siblings
+    const verticalSpacing = familyKey === 'empire' ? 200 : 200; // Space between generations
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -248,14 +248,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       if (familyKey === 'empire') {
-        nodeStyle.background = '#fff7ea';
-        nodeStyle.border = '1px solid rgba(201, 168, 87, 0.35)';
+        nodeStyle.background = '#fff1cf';
+        nodeStyle.border = '1.5px solid rgba(163, 124, 51, 0.65)';
         nodeStyle.color = '#3b2b16';
-        nodeStyle.borderRadius = '4px';
-        nodeStyle.padding = '14px 18px 14px 26px';
-        nodeStyle.minHeight = '110px';
-        nodeStyle.boxShadow = '0 18px 32px rgba(48, 31, 12, 0.18), 0 6px 12px rgba(201, 168, 87, 0.24)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(201,168,87,0.55) 0px, rgba(201,168,87,0.55) 8px, transparent 8px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.26), transparent 55%)';
+        nodeStyle.borderRadius = '8px';
+        nodeStyle.padding = '18px 24px 18px 34px';
+        nodeStyle.minHeight = '118px';
+        nodeStyle.boxShadow = '0 22px 38px rgba(58, 33, 3, 0.32), 0 8px 18px rgba(201, 168, 87, 0.32)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(201,168,87,0.72) 0px, rgba(201,168,87,0.72) 11px, transparent 11px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.32), transparent 55%)';
         nodeStyle.backgroundSize = '8px 100%, 100% 100%';
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
@@ -539,11 +539,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
-              stroke: edgeColor,
-              strokeWidth: edgeStrokeWidth,
-              opacity: 0.95,
+              stroke: familyKey === 'empire' ? '#8a5b1a' : edgeColor,
+              strokeWidth: familyKey === 'empire' ? edgeStrokeWidth + 1 : edgeStrokeWidth,
+              opacity: 0.98,
               strokeLinecap: 'round',
               strokeLinejoin: 'round',
+              filter: familyKey === 'empire' ? 'drop-shadow(0 5px 10px rgba(80,40,2,0.25))' : undefined,
             },
             markerEnd: MarkerType.ArrowClosed,
           };
@@ -624,6 +625,23 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     loadTreeData();
     setSelectedBrother(null);
   }, [loadTreeData]);
+
+  useEffect(() => {
+    if (!isTreeReady || nodes.length === 0) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      try {
+        reactFlowInstance.fitView({
+          padding: 0.25,
+          duration: 600,
+        });
+      } catch (err) {
+        console.warn('Failed to fit view:', err);
+      }
+    });
+  }, [isTreeReady, nodes, reactFlowInstance]);
 
   // Remove loading state - tree will fade in instead
 
@@ -760,6 +778,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         zoomOnScroll={!isModalOpen}
         zoomOnPinch={!isModalOpen}
         proOptions={{ hideAttribution: true }}
+        fitView
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />
