@@ -221,12 +221,112 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       'alpha alpha','alpha beta','alpha gamma','alpha delta','alpha epsilon','alpha zeta','alpha eta','alpha theta','alpha iota','alpha kappa','alpha lambda','alpha mu','alpha nu','alpha xi','alpha omicron','alpha pi','alpha rho','alpha sigma','alpha tau','alpha upsilon','alpha phi','alpha chi','alpha psi','alpha omega',
     ];
     const pledgeIndex = new Map(pledgeOrder.map((pledge, idx) => [pledge, idx]));
-    const getPledgeLevel = (pledgeClass, fallback) => {
-      if (!pledgeClass) return fallback;
-      const key = pledgeClass.toLowerCase().trim();
-      if (pledgeIndex.has(key)) {
-        return pledgeIndex.get(key);
+    const pledgeSynonyms = {
+      'alphabeta': 'alpha beta',
+      'alpha beta': 'alpha beta',
+      'alpha-beta': 'alpha beta',
+      'alpha gamma': 'alpha gamma',
+      'alphagamma': 'alpha gamma',
+      'alphazeta': 'alpha zeta',
+      'alpha zeta': 'alpha zeta',
+      'alphatheta': 'alpha theta',
+      'alpha theta': 'alpha theta',
+      'alpha eta': 'alpha eta',
+      'alphaeta': 'alpha eta',
+      'alpha iota': 'alpha iota',
+      'alphaiota': 'alpha iota',
+      'alpha lambda': 'alpha lambda',
+      'alphalambda': 'alpha lambda',
+      'alpha mu': 'alpha mu',
+      'alphamu': 'alpha mu',
+      'alpha nu': 'alpha nu',
+      'alphan u': 'alpha nu',
+      'alpha xi': 'alpha xi',
+      'alphaxi': 'alpha xi',
+      'alpha omicron': 'alpha omicron',
+      'alphaomicron': 'alpha omicron',
+      'alpha pi': 'alpha pi',
+      'alphapi': 'alpha pi',
+      'alpha rho': 'alpha rho',
+      'alpharho': 'alpha rho',
+      'alpha sigma': 'alpha sigma',
+      'alphasigma': 'alpha sigma',
+      'alpha tau': 'alpha tau',
+      'alphatau': 'alpha tau',
+      'alpha upsilon': 'alpha upsilon',
+      'alphaupsilon': 'alpha upsilon',
+      'alpha phi': 'alpha phi',
+      'alphaphi': 'alpha phi',
+      'alpha chi': 'alpha chi',
+      'alphachi': 'alpha chi',
+      'alpha psi': 'alpha psi',
+      'alphapsi': 'alpha psi',
+      'alpha omega': 'alpha omega',
+      'alphaomega': 'alpha omega',
+    };
+
+    const letterToGreek = {
+      a: 'alpha',
+      b: 'beta',
+      g: 'gamma',
+      d: 'delta',
+      e: 'epsilon',
+      z: 'zeta',
+      h: 'eta',
+      t: 'theta',
+      i: 'iota',
+      k: 'kappa',
+      l: 'lambda',
+      m: 'mu',
+      n: 'nu',
+      x: 'xi',
+      o: 'omicron',
+      p: 'pi',
+      r: 'rho',
+      s: 'sigma',
+      u: 'upsilon',
+      f: 'phi',
+      c: 'chi',
+      y: 'psi',
+      w: 'omega',
+    };
+
+    const normalizePledge = (value) =>
+      value
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const expandDoubleLetter = (normalized) => {
+      const compact = normalized.replace(/\s+/g, '');
+      if (compact.length === 2) {
+        const first = letterToGreek[compact[0]];
+        const second = letterToGreek[compact[1]];
+        if (first && second) {
+          return `${first} ${second}`;
+        }
       }
+      return null;
+    };
+
+    const getPledgeLevel = (pledgeClass, fallback) => {
+      if (!pledgeClass || typeof pledgeClass !== 'string') return fallback;
+      const normalized = normalizePledge(pledgeClass);
+      if (!normalized) return fallback;
+
+      const synonym = pledgeSynonyms[normalized];
+      const canonical = synonym || normalized;
+
+      if (pledgeIndex.has(canonical)) {
+        return pledgeIndex.get(canonical);
+      }
+
+      const expanded = expandDoubleLetter(canonical);
+      if (expanded && pledgeIndex.has(expanded)) {
+        return pledgeIndex.get(expanded);
+      }
+
       return fallback;
     };
 
