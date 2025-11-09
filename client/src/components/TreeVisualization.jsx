@@ -48,6 +48,50 @@ const EMPIRE_PLEDGE_INDEX = EMPIRE_PLEDGE_ORDER.reduce((acc, name, index) => {
   return acc;
 }, {});
 
+const EMPIRE_PLEDGE_BASE_COUNT = EMPIRE_PLEDGE_ORDER.length;
+
+const GREEK_ABBREV_MAP = {
+  a: 'alpha',
+  b: 'beta',
+  g: 'gamma',
+  d: 'delta',
+  e: 'epsilon',
+  z: 'zeta',
+  h: 'eta',
+  q: 'theta',
+  t: 'tau',
+  i: 'iota',
+  k: 'kappa',
+  l: 'lambda',
+  m: 'mu',
+  n: 'nu',
+  x: 'xi',
+  o: 'omicron',
+  p: 'pi',
+  r: 'rho',
+  s: 'sigma',
+  u: 'upsilon',
+  f: 'phi',
+  c: 'chi',
+  y: 'psi',
+  w: 'omega',
+};
+
+const mapTokenToGreek = (token) => {
+  if (!token) return null;
+  const key = token.toLowerCase();
+  if (EMPIRE_PLEDGE_INDEX[key] !== undefined) {
+    return { index: EMPIRE_PLEDGE_INDEX[key], label: titleCase(key) };
+  }
+  if (key.length === 1 && GREEK_ABBREV_MAP[key]) {
+    const greek = GREEK_ABBREV_MAP[key];
+    if (EMPIRE_PLEDGE_INDEX[greek] !== undefined) {
+      return { index: EMPIRE_PLEDGE_INDEX[greek], label: titleCase(greek) };
+    }
+  }
+  return null;
+};
+
 const titleCase = (value = '') =>
   value
     .toLowerCase()
@@ -71,24 +115,45 @@ const getEmpirePledgeInfo = (pledgeClass) => {
     return null;
   }
 
-  const tokens = sanitized.split(' ');
-  let matchedToken = null;
+  const tokens = sanitized.split(' ').filter(Boolean);
 
+  // Direct Greek letter match
   for (const token of tokens) {
-    if (EMPIRE_PLEDGE_INDEX[token] !== undefined) {
-      matchedToken = token;
-      break;
+    const mapped = mapTokenToGreek(token);
+    if (mapped) {
+      return {
+        level: mapped.index,
+        label: mapped.label,
+      };
     }
   }
 
-  if (matchedToken === null) {
-    return null;
+  // Alpha-prefixed second cycle (e.g., "alpha beta")
+  if (tokens.length >= 2) {
+    const first = mapTokenToGreek(tokens[0]);
+    const second = mapTokenToGreek(tokens[1]);
+    if (first && second && first.index === 0) {
+      return {
+        level: EMPIRE_PLEDGE_BASE_COUNT + second.index,
+        label: `${first.label} ${second.label}`,
+      };
+    }
   }
 
-  return {
-    level: EMPIRE_PLEDGE_INDEX[matchedToken],
-    label: titleCase(pledgeClass),
-  };
+  // Compressed notation "AA", "AB", etc.
+  const compact = sanitized.replace(/\s+/g, '');
+  if (compact.length === 2) {
+    const first = mapTokenToGreek(compact[0]);
+    const second = mapTokenToGreek(compact[1]);
+    if (first && second && first.index === 0) {
+      return {
+        level: EMPIRE_PLEDGE_BASE_COUNT + second.index,
+        label: `${first.label} ${second.label}`,
+      };
+    }
+  }
+
+  return null;
 };
 
 const EmpireGuideNode = memo(({ data }) => {
