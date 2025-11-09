@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -15,191 +15,6 @@ import BrotherDetailModal from './BrotherDetailModal';
 import AddNodeForm from './AddNodeForm';
 import { getThemeStyles } from '../themes';
 import { hexToRgba } from '../utils/color';
-
-const EMPIRE_PLEDGE_ORDER = [
-  'alpha',
-  'beta',
-  'gamma',
-  'delta',
-  'epsilon',
-  'zeta',
-  'eta',
-  'theta',
-  'iota',
-  'kappa',
-  'lambda',
-  'mu',
-  'nu',
-  'xi',
-  'omicron',
-  'pi',
-  'rho',
-  'sigma',
-  'tau',
-  'upsilon',
-  'phi',
-  'chi',
-  'psi',
-  'omega',
-];
-
-const EMPIRE_PLEDGE_INDEX = EMPIRE_PLEDGE_ORDER.reduce((acc, name, index) => {
-  acc[name] = index;
-  return acc;
-}, {});
-
-const EMPIRE_PLEDGE_BASE_COUNT = EMPIRE_PLEDGE_ORDER.length;
-
-const GREEK_ABBREV_MAP = {
-  a: 'alpha',
-  b: 'beta',
-  g: 'gamma',
-  d: 'delta',
-  e: 'epsilon',
-  z: 'zeta',
-  h: 'eta',
-  q: 'theta',
-  t: 'tau',
-  i: 'iota',
-  k: 'kappa',
-  l: 'lambda',
-  m: 'mu',
-  n: 'nu',
-  x: 'xi',
-  o: 'omicron',
-  p: 'pi',
-  r: 'rho',
-  s: 'sigma',
-  u: 'upsilon',
-  f: 'phi',
-  c: 'chi',
-  y: 'psi',
-  w: 'omega',
-};
-
-const mapTokenToGreek = (token) => {
-  if (!token) return null;
-  const key = token.toLowerCase();
-  if (EMPIRE_PLEDGE_INDEX[key] !== undefined) {
-    return { index: EMPIRE_PLEDGE_INDEX[key], label: titleCase(key) };
-  }
-  if (key.length === 1 && GREEK_ABBREV_MAP[key]) {
-    const greek = GREEK_ABBREV_MAP[key];
-    if (EMPIRE_PLEDGE_INDEX[greek] !== undefined) {
-      return { index: EMPIRE_PLEDGE_INDEX[greek], label: titleCase(greek) };
-    }
-  }
-  return null;
-};
-
-const titleCase = (value = '') =>
-  value
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
-
-const getEmpirePledgeInfo = (pledgeClass) => {
-  if (!pledgeClass || typeof pledgeClass !== 'string') {
-    return null;
-  }
-
-  const sanitized = pledgeClass
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!sanitized) {
-    return null;
-  }
-
-  const tokens = sanitized.split(' ').filter(Boolean);
-
-  // Direct Greek letter match
-  for (const token of tokens) {
-    const mapped = mapTokenToGreek(token);
-    if (mapped) {
-      return {
-        level: mapped.index,
-        label: mapped.label,
-      };
-    }
-  }
-
-  // Alpha-prefixed second cycle (e.g., "alpha beta")
-  if (tokens.length >= 2) {
-    const first = mapTokenToGreek(tokens[0]);
-    const second = mapTokenToGreek(tokens[1]);
-    if (first && second && first.index === 0) {
-      return {
-        level: EMPIRE_PLEDGE_BASE_COUNT + second.index,
-        label: `${first.label} ${second.label}`,
-      };
-    }
-  }
-
-  // Compressed notation "AA", "AB", etc.
-  const compact = sanitized.replace(/\s+/g, '');
-  if (compact.length === 2) {
-    const first = mapTokenToGreek(compact[0]);
-    const second = mapTokenToGreek(compact[1]);
-    if (first && second && first.index === 0) {
-      return {
-        level: EMPIRE_PLEDGE_BASE_COUNT + second.index,
-        label: `${first.label} ${second.label}`,
-      };
-    }
-  }
-
-  return null;
-};
-
-const EmpireGuideNode = memo(({ data }) => {
-  const { width, label } = data || {};
-  return (
-    <div
-      style={{
-        width: width || 600,
-        height: 1,
-        position: 'relative',
-        pointerEvents: 'none',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          height: 2,
-          background: 'linear-gradient(90deg, rgba(212,175,126,0.2), rgba(212,175,126,0.45), rgba(212,175,126,0.2))',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
-        }}
-      />
-      {label && (
-        <div
-          style={{
-            position: 'absolute',
-            top: -18,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '4px 12px',
-            borderRadius: 999,
-            background: 'rgba(35,29,23,0.85)',
-            color: '#f8f5ef',
-            fontSize: '11px',
-            letterSpacing: '0.8px',
-            textTransform: 'uppercase',
-            boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
-            backdropFilter: 'blur(4px)',
-            pointerEvents: 'none',
-          }}
-        >
-          {label}
-        </div>
-      )}
-    </div>
-  );
-});
 
 /**
  * TreeVisualizationInner Component
@@ -223,7 +38,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const nodeTypes = useMemo(() => ({ empireGuide: EmpireGuideNode }), []);
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
@@ -295,22 +109,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return; // Still loading, don't process yet
     }
 
-    const isEmpire = familyKey === 'empire';
-    const pledgeLevels = new Map();
-    const pledgeLevelLabels = new Map();
-
-    if (isEmpire) {
-      brothers.forEach((brother) => {
-        const info = getEmpirePledgeInfo(brother.pledge_class);
-        if (info) {
-          pledgeLevels.set(brother.id, info.level);
-          if (!pledgeLevelLabels.has(info.level)) {
-            pledgeLevelLabels.set(info.level, info.label);
-          }
-        }
-      });
-    }
-
     // Build relationship structure: parent -> children
     const relationshipsMap = new Map(); // little_id -> big_id
     const childrenMap = new Map(); // big_id -> [little_ids]
@@ -331,10 +129,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const nodePositions = new Map();
     
     // Node dimensions
-    const nodeWidth = isEmpire ? 200 : 180;
-    const nodeHeight = isEmpire ? 110 : 100;
-    const horizontalSpacing = isEmpire ? 320 : 280; // Space between siblings
-    const verticalSpacing = isEmpire ? 160 : 200; // Base spacing for recursion (Empire will re-map later)
+    const nodeWidth = familyKey === 'empire' ? 200 : 180;
+    const nodeHeight = familyKey === 'empire' ? 110 : 100;
+    const horizontalSpacing = familyKey === 'empire' ? 320 : 280; // Space between siblings
+    const verticalSpacing = familyKey === 'empire' ? 220 : 200; // Space between generations
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -418,32 +216,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     }
 
-    const empireVerticalSpacing = 220;
-    const empireVerticalOffset = 80;
-    let minX = Infinity;
-    let maxX = -Infinity;
-
     // Create React Flow nodes
     brothers.forEach(brother => {
       let position = nodePositions.get(brother.id);
       const status = brother.status === 'studying' ? 'studying' : 'graduated';
       const isTransfer = brother.is_transfer === 1;
-      const pledgeLevel = pledgeLevels.get(brother.id);
-
-      if (isEmpire && position) {
-        if (pledgeLevel !== undefined) {
-          position = {
-            ...position,
-            y: pledgeLevel * empireVerticalSpacing + empireVerticalOffset,
-          };
-          nodePositions.set(brother.id, position);
-        }
-      }
-
-      if (position) {
-        minX = Math.min(minX, position.x);
-        maxX = Math.max(maxX, position.x + nodeWidth);
-      }
       
       const nodeStyle = {
         background: status === 'studying' ? theme.nodeStudying : theme.nodeGraduated,
@@ -738,36 +515,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     });
 
-    if (isEmpire && pledgeLevelLabels.size > 0 && isFinite(minX) && isFinite(maxX)) {
-      const sortedLevels = Array.from(pledgeLevelLabels.entries()).sort((a, b) => a[0] - b[0]);
-      const guidePadding = 220;
-      const guideWidth = Math.max(maxX - minX + guidePadding * 2, 640);
-
-      sortedLevels.forEach(([level, label]) => {
-        layoutNodes.push({
-          id: `empire-guide-${level}`,
-          type: 'empireGuide',
-          position: {
-            x: minX - guidePadding,
-            y: level * empireVerticalSpacing + empireVerticalOffset - 20,
-          },
-          data: {
-            width: guideWidth,
-            label,
-          },
-          draggable: false,
-          selectable: false,
-          focusable: false,
-          style: { pointerEvents: 'none' },
-        });
-      });
-    }
-
     // Create edges - only if both nodes exist
     // Use a more visible edge color for lineage
-    const edgeColor = isEmpire ? '#b89347' : (theme.edgeColor || theme.accent || '#666666');
+    const edgeColor = theme.edgeColor || theme.accent || '#666666';
     // Make edges thicker and more visible for clear lineage
-    const edgeStrokeWidth = isEmpire ? 3 : 4;
+    const edgeStrokeWidth = 4;
     
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
@@ -784,7 +536,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
             target: String(rel.little_id),
-            type: isEmpire ? 'smoothstep' : edgeType,
+            type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
               stroke: edgeColor,
@@ -792,7 +544,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               opacity: 0.95,
               strokeLinecap: 'round',
               strokeLinejoin: 'round',
-              filter: isEmpire ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.18))' : undefined,
             },
             markerEnd: MarkerType.ArrowClosed,
           };
