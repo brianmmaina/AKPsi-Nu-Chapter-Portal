@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -15,6 +15,126 @@ import BrotherDetailModal from './BrotherDetailModal';
 import AddNodeForm from './AddNodeForm';
 import { getThemeStyles } from '../themes';
 import { hexToRgba } from '../utils/color';
+
+const EMPIRE_PLEDGE_ORDER = [
+  'alpha',
+  'beta',
+  'gamma',
+  'delta',
+  'epsilon',
+  'zeta',
+  'eta',
+  'theta',
+  'iota',
+  'kappa',
+  'lambda',
+  'mu',
+  'nu',
+  'xi',
+  'omicron',
+  'pi',
+  'rho',
+  'sigma',
+  'tau',
+  'upsilon',
+  'phi',
+  'chi',
+  'psi',
+  'omega',
+];
+
+const EMPIRE_PLEDGE_INDEX = EMPIRE_PLEDGE_ORDER.reduce((acc, name, index) => {
+  acc[name] = index;
+  return acc;
+}, {});
+
+const titleCase = (value = '') =>
+  value
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+
+const getEmpirePledgeInfo = (pledgeClass) => {
+  if (!pledgeClass || typeof pledgeClass !== 'string') {
+    return null;
+  }
+
+  const sanitized = pledgeClass
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!sanitized) {
+    return null;
+  }
+
+  const tokens = sanitized.split(' ');
+  let matchedToken = null;
+
+  for (const token of tokens) {
+    if (EMPIRE_PLEDGE_INDEX[token] !== undefined) {
+      matchedToken = token;
+      break;
+    }
+  }
+
+  if (matchedToken === null) {
+    return null;
+  }
+
+  return {
+    level: EMPIRE_PLEDGE_INDEX[matchedToken],
+    label: titleCase(pledgeClass),
+  };
+};
+
+const EmpireGuideNode = memo(({ data }) => {
+  const { width, label } = data || {};
+  return (
+    <div
+      style={{
+        width: width || 600,
+        height: 1,
+        position: 'relative',
+        pointerEvents: 'none',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          height: 2,
+          background: 'linear-gradient(90deg, rgba(212,175,126,0.2), rgba(212,175,126,0.45), rgba(212,175,126,0.2))',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+        }}
+      />
+      {label && (
+        <div
+          style={{
+            position: 'absolute',
+            top: -18,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '4px 12px',
+            borderRadius: 999,
+            background: 'rgba(35,29,23,0.85)',
+            color: '#f8f5ef',
+            fontSize: '11px',
+            letterSpacing: '0.8px',
+            textTransform: 'uppercase',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
+            backdropFilter: 'blur(4px)',
+            pointerEvents: 'none',
+          }}
+        >
+          {label}
+        </div>
+      )}
+    </div>
+  );
+});
 
 /**
  * TreeVisualizationInner Component
@@ -38,6 +158,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const nodeTypes = useMemo(() => ({ empireGuide: EmpireGuideNode }), []);
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
@@ -109,6 +230,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return; // Still loading, don't process yet
     }
 
+    const isEmpire = familyKey === 'empire';
+    const pledgeLevels = new Map();
+    const pledgeLevelLabels = new Map();
+
+    if (isEmpire) {
+      brothers.forEach((brother) => {
+        const info = getEmpirePledgeInfo(brother.pledge_class);
+        if (info) {
+          pledgeLevels.set(brother.id, info.level);
+          if (!pledgeLevelLabels.has(info.level)) {
+            pledgeLevelLabels.set(info.level, info.label);
+          }
+        }
+      });
+    }
+
     // Build relationship structure: parent -> children
     const relationshipsMap = new Map(); // little_id -> big_id
     const childrenMap = new Map(); // big_id -> [little_ids]
@@ -129,10 +266,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const nodePositions = new Map();
     
     // Node dimensions
-    const nodeWidth = 180;
-    const nodeHeight = 100;
-    const horizontalSpacing = 280; // Space between siblings
-    const verticalSpacing = 200; // Space between generations
+    const nodeWidth = isEmpire ? 200 : 180;
+    const nodeHeight = isEmpire ? 110 : 100;
+    const horizontalSpacing = isEmpire ? 320 : 280; // Space between siblings
+    const verticalSpacing = isEmpire ? 160 : 200; // Base spacing for recursion (Empire will re-map later)
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -216,11 +353,32 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     }
 
+    const empireVerticalSpacing = 220;
+    const empireVerticalOffset = 80;
+    let minX = Infinity;
+    let maxX = -Infinity;
+
     // Create React Flow nodes
     brothers.forEach(brother => {
-      const position = nodePositions.get(brother.id);
+      let position = nodePositions.get(brother.id);
       const status = brother.status === 'studying' ? 'studying' : 'graduated';
       const isTransfer = brother.is_transfer === 1;
+      const pledgeLevel = pledgeLevels.get(brother.id);
+
+      if (isEmpire && position) {
+        if (pledgeLevel !== undefined) {
+          position = {
+            ...position,
+            y: pledgeLevel * empireVerticalSpacing + empireVerticalOffset,
+          };
+          nodePositions.set(brother.id, position);
+        }
+      }
+
+      if (position) {
+        minX = Math.min(minX, position.x);
+        maxX = Math.max(maxX, position.x + nodeWidth);
+      }
       
       const nodeStyle = {
         background: status === 'studying' ? theme.nodeStudying : theme.nodeGraduated,
@@ -248,14 +406,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       if (familyKey === 'empire') {
-        // EMPIRE: Elegant white boxes with tan borders, 2px border-radius (from spec: border-radius: 2px)
-        nodeStyle.background = '#ffffff';
-        nodeStyle.border = `1px solid ${theme.nodeBorder}`; // #d4c9b3 tan border
-        nodeStyle.color = '#1f1f1f'; // Very dark gray/black text
-        nodeStyle.borderRadius = '2px'; // From spec: border-radius: 2px
-        nodeStyle.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; // Subtle shadow
-        nodeStyle.padding = '10px 12px'; // Slightly more padding for richer content
-        nodeStyle.minHeight = '100px'; // Taller nodes for EMPIRE to fit more info
+        nodeStyle.background = '#fff7ea';
+        nodeStyle.border = '1px solid rgba(201, 168, 87, 0.35)';
+        nodeStyle.color = '#3b2b16';
+        nodeStyle.borderRadius = '4px';
+        nodeStyle.padding = '14px 18px 14px 26px';
+        nodeStyle.minHeight = '110px';
+        nodeStyle.boxShadow = '0 18px 32px rgba(48, 31, 12, 0.18), 0 6px 12px rgba(201, 168, 87, 0.24)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(201,168,87,0.55) 0px, rgba(201,168,87,0.55) 8px, transparent 8px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.26), transparent 55%)';
+        nodeStyle.backgroundSize = '8px 100%, 100% 100%';
+        nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
+        nodeStyle.backgroundPosition = 'left top, center';
+        nodeStyle.backdropFilter = 'blur(2px)';
+        nodeStyle.position = 'relative';
+        nodeStyle.overflow = 'hidden';
       }
 
       if (familyKey === 'greed') {
@@ -378,87 +542,74 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           </div>
         );
       } else if (familyKey === 'empire') {
-        // EMPIRE: Rich node with multiple fields per spec
         nodeLabel = (
-          <div style={{ 
-            fontFamily: theme.bodyFont,
-            width: '100%',
-            minHeight: nodeHeight,
-          }}>
-            {/* Gold accent bar */}
-            <div style={{ 
-              height: 3, 
-              background: 'linear-gradient(90deg, transparent, #c9a857, transparent)', 
-              marginBottom: 6,
-              marginLeft: '-8px',
-              marginRight: '-8px',
-              borderRadius: 2,
-            }} />
-            
-            {/* Member Name - Title Case, 10-11px, dark text */}
-            <div 
-              style={{ 
-                fontFamily: 'Inter, Arial, sans-serif',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#1f1f1f',
-                textTransform: 'capitalize',
-                marginBottom: 4,
-                lineHeight: '1.3',
+          <div
+            style={{
+              fontFamily: theme.bodyFont,
+              width: '100%',
+              minHeight: nodeHeight,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              color: '#3b2b16',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: theme.titleFont,
+                fontSize: '12px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: '#a37c33',
               }}
             >
               {brother.name}
             </div>
-            
-            {/* Pledge Class - Gold, 9-10px */}
+
             {brother.pledge_class && (
-              <div 
-                style={{ 
-                  fontSize: '9px',
-                  color: '#c9a857',
-                  fontWeight: 500,
-                  letterSpacing: '0.5px',
-                  marginBottom: 3,
+              <div
+                style={{
+                  fontSize: '11px',
+                  letterSpacing: '0.4px',
+                  color: '#604720',
+                  textTransform: 'uppercase',
                 }}
               >
-                {brother.pledge_class.toUpperCase()}
+                {brother.pledge_class}
               </div>
             )}
-            
-            {/* Graduation Year or Status - Secondary text */}
-            <div 
-              style={{ 
-                fontSize: '9px',
-                color: '#666666',
-                marginBottom: brother.major ? 3 : 0,
+
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(59, 43, 22, 0.78)',
               }}
             >
-              {brother.graduation_year ? `Class of ${brother.graduation_year}` : 
-               brother.status === 'graduated' ? 'Graduated' : 'Currently Studying'}
+              {brother.graduation_year
+                ? `Class of ${brother.graduation_year}`
+                : brother.status === 'graduated'
+                    ? 'Graduated'
+                    : 'Currently Studying'}
             </div>
-            
-            {/* Major - Smaller, tertiary text */}
+
             {brother.major && (
-              <div 
-                style={{ 
-                  fontSize: '8px',
-                  color: '#999999',
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'rgba(59, 43, 22, 0.6)',
                   fontStyle: 'italic',
-                  marginTop: 2,
                 }}
               >
                 {brother.major}
               </div>
             )}
-            
-            {/* Transfer indicator */}
+
             {isTransfer && (
-              <div 
-                style={{ 
-                  fontSize: '8px',
-                  color: '#999999',
+              <div
+                style={{
+                  fontSize: '9px',
+                  color: 'rgba(163, 124, 51, 0.8)',
                   fontStyle: 'italic',
-                  marginTop: 4,
                 }}
               >
                 (Transfer)
@@ -522,11 +673,36 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     });
 
+    if (isEmpire && pledgeLevelLabels.size > 0 && isFinite(minX) && isFinite(maxX)) {
+      const sortedLevels = Array.from(pledgeLevelLabels.entries()).sort((a, b) => a[0] - b[0]);
+      const guidePadding = 220;
+      const guideWidth = Math.max(maxX - minX + guidePadding * 2, 640);
+
+      sortedLevels.forEach(([level, label]) => {
+        layoutNodes.push({
+          id: `empire-guide-${level}`,
+          type: 'empireGuide',
+          position: {
+            x: minX - guidePadding,
+            y: level * empireVerticalSpacing + empireVerticalOffset - 20,
+          },
+          data: {
+            width: guideWidth,
+            label,
+          },
+          draggable: false,
+          selectable: false,
+          focusable: false,
+          style: { pointerEvents: 'none' },
+        });
+      });
+    }
+
     // Create edges - only if both nodes exist
     // Use a more visible edge color for lineage
-    const edgeColor = theme.edgeColor || theme.accent || '#666666';
+    const edgeColor = isEmpire ? '#b89347' : (theme.edgeColor || theme.accent || '#666666');
     // Make edges thicker and more visible for clear lineage
-    const edgeStrokeWidth = 4;
+    const edgeStrokeWidth = isEmpire ? 3 : 4;
     
     relationships.forEach(rel => {
       if (rel.big_id && rel.little_id) {
@@ -543,12 +719,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             id: `e${rel.big_id}-${rel.little_id}`,
             source: String(rel.big_id),
             target: String(rel.little_id),
-            type: edgeType,
+            type: isEmpire ? 'smoothstep' : edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
-            style: { 
-              stroke: edgeColor, 
+            style: {
+              stroke: edgeColor,
               strokeWidth: edgeStrokeWidth,
-              opacity: 1,
+              opacity: 0.95,
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+              filter: isEmpire ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.18))' : undefined,
             },
             markerEnd: MarkerType.ArrowClosed,
           };
@@ -765,6 +944,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         zoomOnScroll={!isModalOpen}
         zoomOnPinch={!isModalOpen}
         proOptions={{ hideAttribution: true }}
+        nodeTypes={nodeTypes}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
         <Controls />

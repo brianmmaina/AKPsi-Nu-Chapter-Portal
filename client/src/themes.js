@@ -3,22 +3,22 @@ export const getThemeStyles = (themeName) => {
     // EMPIRE - Cream background, white boxes, tan borders, dark gray lines
     // From family-tree-corrected.md: #f8f7f3 cream, #c9a857 gold primary
     empire: {
-      background: '#f8f7f3',
-      backgroundGrid: '#f0efeb',
-      backgroundTexture: 'radial-gradient(closest-side, rgba(0,0,0,0.02), rgba(0,0,0,0) 60%)',
-      nodeStudying: '#ffffff',
-      nodeGraduated: '#ffffff',
-      nodeBorder: '#d4c9b3', // Tan border #d4c9b3
-      nodeText: '#1f1f1f', // Very dark gray/black for member names
-      edgeColor: '#2a2a2a', // Darker gray for better visibility on cream background
+      background: '#f1e7d1',
+      backgroundGrid: '#e6d9bd',
+      backgroundTexture: 'radial-gradient(closest-side, rgba(201,168,87,0.08), rgba(0,0,0,0) 60%)',
+      nodeStudying: '#fff7ea',
+      nodeGraduated: '#fff7ea',
+      nodeBorder: '#d6b87a',
+      nodeText: '#3b2b16',
+      edgeColor: '#b89347',
       minimapNode: '#c9a857',
-      minimapBg: '#f0efeb',
-      modalBg: 'rgba(248, 247, 243, 0.95)',
-      accent: '#c9a857', // Warm gold primary
-      titleFont: 'Cinzel, serif', // Classic serif for elegance
+      minimapBg: '#f1e7d1',
+      modalBg: 'rgba(241, 231, 210, 0.92)',
+      accent: '#c9a857',
+      titleFont: 'Cinzel, serif',
       bodyFont: 'Inter, system-ui, sans-serif',
-      nodeRadius: 12, // Elegant rounded corners
-      edgeType: 'straight',
+      nodeRadius: 6,
+      edgeType: 'smoothstep',
       edgeAnimated: false,
       backgroundVariant: 'lines',
     },
