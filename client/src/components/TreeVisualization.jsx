@@ -423,15 +423,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [updateIndexWithFamily, waitForIndexBuild]);
 
-  // Define renderNodeTemplate without useCallback to avoid circular dependency issues
-  // It will be recreated when theme changes, but that's acceptable for stability
-  const renderNodeTemplate = (brother, themeParam, palette) => {
-    // Ensure we have a valid theme - use param first, then closure, then fallback
-    const themeToUse = themeParam || theme || getThemeStyles('default');
-    if (!themeToUse) {
-      console.warn('renderNodeTemplate: No theme available, using fallback');
-      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
-    }
+  // Define renderNodeTemplate using useMemo to ensure it's always initialized with theme
+  // This prevents "Cannot access uninitialized variable" errors in production
+  const renderNodeTemplate = useMemo(() => {
+    // Return a function that doesn't rely on closure - always uses theme param or fallback
+    return (brother, themeParam, palette) => {
+      // Always use themeParam if provided, otherwise use current theme, otherwise fallback
+      const themeToUse = themeParam || theme || getThemeStyles('default');
+      if (!themeToUse) {
+        console.warn('renderNodeTemplate: No theme available, using fallback');
+        return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+      }
     const rawPledge = brother.pledge_class || 'Unassigned';
     const pledgeLabel = rawPledge.toUpperCase();
     const statusLabel = statusLabelForBrother(brother);
@@ -539,10 +541,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         </div>
       </div>
     );
-  };
+    };
+  }, [theme]);
 
   const renderEmpireNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -558,10 +561,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       nameSize: '13px',
       nameTracking: '0.4px',
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
 
   const renderPowerNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -575,10 +578,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(243, 220, 166, 0.8)',
       supportsTransfer: true,
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
 
   const renderGreedNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -592,10 +595,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(180, 214, 138, 0.85)',
       supportsTransfer: true,
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
 
   const renderWolfpackNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -609,10 +612,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(156,184,234,0.82)',
       supportsTransfer: true,
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
 
   const renderPrideNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -627,10 +630,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       supportsTransfer: true,
       nameTracking: '0.6px',
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
 
   const renderDefaultNodeContent = useCallback((brother) => {
-    if (!theme) {
+    if (!theme || !renderNodeTemplate) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -644,7 +647,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
       supportsTransfer: true,
     });
-  }, [theme]);
+  }, [theme, renderNodeTemplate]);
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
