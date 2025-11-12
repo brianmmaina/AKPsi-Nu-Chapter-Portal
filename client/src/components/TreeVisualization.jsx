@@ -146,8 +146,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               textTransform: 'uppercase',
               padding: '4px 10px',
               borderRadius: 999,
-              background: 'rgba(201,168,87,0.18)',
-              color: '#6d5122',
+              background: 'rgba(147, 107, 28, 0.2)',
+              color: '#5a3d16',
               fontWeight: 600,
             }}
           >
@@ -160,7 +160,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               fontFamily: theme.titleFont,
               fontSize: '13px',
               letterSpacing: '0.4px',
-              color: '#3b2b16',
+              color: '#24170b',
               marginBottom: 4,
             }}
           >
@@ -169,7 +169,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           <div
             style={{
               fontSize: '10px',
-              color: 'rgba(59, 43, 22, 0.72)',
+              color: 'rgba(36, 23, 11, 0.9)',
               fontWeight: 500,
               letterSpacing: '0.3px',
             }}
@@ -180,7 +180,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             <div
               style={{
                 fontSize: '10px',
-                color: 'rgba(59, 43, 22, 0.62)',
+                color: 'rgba(36, 23, 11, 0.75)',
                 letterSpacing: '0.2px',
               }}
             >
@@ -567,14 +567,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       // Per-family refinements based on family-tree-corrected.md specifications
       if (familyKey === 'empire') {
-        nodeStyle.background = '#fff4dd';
-        nodeStyle.border = '1px solid rgba(163, 124, 51, 0.4)';
-        nodeStyle.color = '#3b2b16';
+        nodeStyle.background = '#fff6e8';
+        nodeStyle.border = '1px solid rgba(145, 104, 29, 0.6)';
+        nodeStyle.color = '#24170b';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '14px 16px 14px 26px';
         nodeStyle.minHeight = '108px';
-        nodeStyle.boxShadow = '0 12px 28px rgba(58, 33, 3, 0.18), 0 6px 14px rgba(201, 168, 87, 0.18)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(201,168,87,0.6) 0px, rgba(201,168,87,0.6) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.22), transparent 55%)';
+        nodeStyle.boxShadow = '0 20px 36px rgba(58, 33, 3, 0.22), 0 8px 18px rgba(201, 168, 87, 0.26)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(201,168,87,0.68) 0px, rgba(201,168,87,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.24), transparent 55%)';
         nodeStyle.backgroundSize = '9px 100%, 100% 100%';
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
@@ -590,31 +590,31 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'greed') {
-        nodeStyle.background = '#ffffff';
+        nodeStyle.background = '#f6faf6';
         nodeStyle.border = `1px solid ${theme.nodeBorder}`;
-        nodeStyle.color = '#1f3326';
+        nodeStyle.color = '#0a1f14';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '12px 16px 12px 24px';
         nodeStyle.minHeight = '104px';
-        nodeStyle.boxShadow = '0 10px 24px rgba(9,53,32,0.18), 0 4px 10px rgba(244, 217, 97, 0.15)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.35) 0px, rgba(244,217,97,0.35) 8px, transparent 8px)';
+        nodeStyle.boxShadow = '0 12px 26px rgba(9,53,32,0.22), 0 6px 14px rgba(244, 217, 97, 0.22)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.4) 0px, rgba(244,217,97,0.4) 8px, transparent 8px)';
         nodeStyle.backgroundSize = '8px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'wolfpack') {
-        nodeStyle.background = '#ffffff';
-        nodeStyle.border = '1px solid rgba(61, 83, 115, 0.35)';
-        nodeStyle.color = '#2c3f5f';
+        nodeStyle.background = '#f8fbff';
+        nodeStyle.border = '1px solid rgba(41, 62, 96, 0.45)';
+        nodeStyle.color = '#213352';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '13px 16px 13px 24px';
         nodeStyle.minHeight = '106px';
-        nodeStyle.boxShadow = '0 12px 26px rgba(54, 76, 115, 0.22), 0 4px 12px rgba(61, 83, 115, 0.18)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(61,83,115,0.45) 0px, rgba(61,83,115,0.45) 9px, transparent 9px)';
+        nodeStyle.boxShadow = '0 16px 30px rgba(41, 62, 96, 0.26), 0 6px 16px rgba(61, 83, 115, 0.22)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(61,83,115,0.55) 0px, rgba(61,83,115,0.55) 9px, transparent 9px)';
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'pride') {
         nodeStyle.background = '#231d17';
-        nodeStyle.border = `1.5px solid rgba(212,175,126,0.65)`;
-        nodeStyle.color = '#f8f5ef';
+        nodeStyle.border = `1.6px solid rgba(212,175,126,0.72)`;
+        nodeStyle.color = '#fbf7ee';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '14px 18px 14px 28px';
         nodeStyle.minHeight = '110px';
@@ -671,8 +671,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 style={{ 
                   fontSize: '10px',
                   letterSpacing: '0.4px',
-                  color: '#f8f5ef',
-                  opacity: 0.85,
+                  color: '#fbf7ee',
+                  opacity: 0.9,
                 }}
               >
                 {brother.pledge_class}
@@ -682,7 +682,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               <div 
                 style={{ 
                 fontSize: '10px',
-                color: 'rgba(248, 245, 239, 0.75)',
+                color: 'rgba(248, 245, 239, 0.85)',
               }}
             >
               {statusLabel}
@@ -691,7 +691,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               <div
                 style={{
                   fontSize: '10px',
-                  color: 'rgba(248, 245, 239, 0.6)',
+                  color: 'rgba(248, 245, 239, 0.72)',
                   letterSpacing: '0.3px',
                 }}
               >
@@ -734,12 +734,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 fontSize: '10px',
                 color:
                   familyKey === 'power'
-                    ? 'rgba(247, 235, 206, 0.75)'
+                    ? 'rgba(247, 235, 206, 0.92)'
                     : familyKey === 'greed'
-                      ? 'rgba(235, 245, 235, 0.75)'
+                      ? 'rgba(10, 31, 20, 0.82)'
                       : familyKey === 'wolfpack'
-                        ? 'rgba(44, 63, 95, 0.7)'
-                        : 'rgba(59, 43, 22, 0.7)',
+                        ? 'rgba(33, 51, 82, 0.82)'
+                        : 'rgba(36, 23, 11, 0.88)',
                 fontWeight: 500,
               }}
             >
@@ -751,12 +751,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                   fontSize: '10px',
                   color:
                     familyKey === 'power'
-                      ? 'rgba(247, 235, 206, 0.68)'
+                      ? 'rgba(247, 235, 206, 0.82)'
                       : familyKey === 'greed'
-                        ? 'rgba(235, 245, 235, 0.68)'
+                        ? 'rgba(10, 31, 20, 0.7)'
                         : familyKey === 'wolfpack'
-                          ? 'rgba(44, 63, 95, 0.6)'
-                          : 'rgba(59, 43, 22, 0.6)',
+                          ? 'rgba(33, 51, 82, 0.7)'
+                          : 'rgba(36, 23, 11, 0.7)',
                   letterSpacing: '0.2px',
                 }}
               >
