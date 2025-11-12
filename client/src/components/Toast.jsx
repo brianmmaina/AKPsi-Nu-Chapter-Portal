@@ -8,7 +8,7 @@ const Toast = ({ message, type = 'info', onClose, duration = 3000 }) => {
     return () => clearTimeout(timer);
   }, [onClose, duration]);
 
-  const typeStyles = {
+  const typeStylesMap = {
     success: {
       bg: 'var(--success)',
       border: 'var(--success)',
@@ -25,7 +25,8 @@ const Toast = ({ message, type = 'info', onClose, duration = 3000 }) => {
       bg: 'var(--warning)',
       border: 'var(--warning)',
     },
-  }[type] || typeStyles.info;
+  };
+  const typeStyles = typeStylesMap[type] || typeStylesMap.info;
 
   return (
     <div
