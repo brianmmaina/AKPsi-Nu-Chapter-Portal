@@ -424,7 +424,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [updateIndexWithFamily, waitForIndexBuild]);
 
   const renderNodeTemplate = useCallback((brother, themeParam, palette) => {
-    const themeToUse = themeParam || theme;
+    // Ensure we have a valid theme - use param first, then closure, then fallback
+    const themeToUse = themeParam || theme || getThemeStyles('default');
+    if (!themeToUse) {
+      console.warn('renderNodeTemplate: No theme available, using fallback');
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
     const rawPledge = brother.pledge_class || 'Unassigned';
     const pledgeLabel = rawPledge.toUpperCase();
     const statusLabel = statusLabelForBrother(brother);
@@ -534,8 +539,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }, [theme]);
 
-  const renderEmpireNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderEmpireNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: '#24170b',
       badgeBg: 'rgba(147, 107, 28, 0.2)',
       badgeColor: '#5a3d16',
@@ -547,10 +555,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       supportsTransfer: false,
       nameSize: '13px',
       nameTracking: '0.4px',
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
 
-  const renderPowerNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderPowerNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: '#fdf5dc',
       badgeBg: 'rgba(247, 227, 168, 0.24)',
       badgeColor: '#fef3d8',
@@ -560,10 +572,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(246, 233, 196, 0.86)',
       placeholderColor: 'rgba(243, 220, 166, 0.8)',
       supportsTransfer: true,
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
 
-  const renderGreedNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderGreedNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: '#0a2316',
       badgeBg: 'rgba(244, 217, 97, 0.28)',
       badgeColor: '#5b4811',
@@ -573,10 +589,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(10, 31, 20, 0.7)',
       placeholderColor: 'rgba(180, 214, 138, 0.85)',
       supportsTransfer: true,
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
 
-  const renderWolfpackNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderWolfpackNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: '#1e2c45',
       badgeBg: 'rgba(156,184,234,0.28)',
       badgeColor: '#1e2c45',
@@ -586,10 +606,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(24, 41, 68, 0.78)',
       placeholderColor: 'rgba(156,184,234,0.82)',
       supportsTransfer: true,
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
 
-  const renderPrideNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderPrideNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: '#fbf7ee',
       badgeBg: 'rgba(212, 175, 126, 0.24)',
       badgeColor: '#f1d0a0',
@@ -600,10 +624,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(212, 175, 126, 0.78)',
       supportsTransfer: true,
       nameTracking: '0.6px',
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
 
-  const renderDefaultNodeContent = useCallback((brother) =>
-    renderNodeTemplate(brother, theme, {
+  const renderDefaultNodeContent = useCallback((brother) => {
+    if (!theme || !renderNodeTemplate) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    return renderNodeTemplate(brother, theme, {
       bodyColor: theme.nodeText || '#3b2b16',
       badgeBg: hexToRgba(theme.accent || '#c9a857', 0.22),
       badgeColor: theme.nodeText || '#3b2b16',
@@ -613,7 +641,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: hexToRgba(theme.nodeText || '#3b2b16', 0.7),
       placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
       supportsTransfer: true,
-    }), [theme]);
+    });
+  }, [theme, renderNodeTemplate]);
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**

@@ -11,12 +11,32 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log error for debugging
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo,
-    });
+    // Log error for debugging - with safety checks
+    try {
+      const errorMessage = error?.message || error?.toString() || 'Unknown error';
+      const errorStack = error?.stack || '';
+      const componentStack = errorInfo?.componentStack || '';
+      
+      console.error('ErrorBoundary caught an error:', errorMessage, {
+        stack: errorStack,
+        componentStack: componentStack,
+      });
+      
+      this.setState({
+        error: error || new Error('Unknown error'),
+        errorInfo: errorInfo || { componentStack: '' },
+      });
+    } catch (setStateError) {
+      // If setState fails, at least try to log something
+      console.error('ErrorBoundary: Failed to set error state:', setStateError);
+      // Force update with minimal state
+      try {
+        this.setState({ hasError: true });
+      } catch (e) {
+        // Last resort - if even this fails, we're in trouble
+        console.error('ErrorBoundary: Critical failure:', e);
+      }
+    }
   }
 
   handleReset = () => {
@@ -83,8 +103,8 @@ class ErrorBoundary extends React.Component {
                     color: 'var(--text-muted)',
                   }}
                 >
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
+                  {this.state.error?.toString() || 'Error details unavailable'}
+                  {this.state.errorInfo?.componentStack || ''}
                 </pre>
               </details>
             )}

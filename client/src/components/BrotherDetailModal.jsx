@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { brothers as brothersApi } from '../api';
+import { hexToRgba } from '../utils/color';
 
 /**
  * BrotherDetailModal Component
