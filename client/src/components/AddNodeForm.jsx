@@ -43,7 +43,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       onToast?.({ message: 'Please enter a name', type: 'error' });
       return;
@@ -59,11 +59,11 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
       
       // Create the brother (token is added automatically via interceptor)
       const response = await brothersApi.create({
-        family_id: familyId,
+          family_id: familyId,
         big_id: bigIdToUse,
-        ...formData,
-        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
-        is_transfer: formData.is_transfer ? 1 : 0,
+          ...formData,
+          graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
+          is_transfer: formData.is_transfer ? 1 : 0,
       });
 
       const newBrotherId = response.data.id;
@@ -102,7 +102,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
     } catch (error) {
       // Log error in development only
       if (process.env.NODE_ENV === 'development') {
-        console.error('Error adding brother:', error);
+      console.error('Error adding brother:', error);
       }
       const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please try again.';
       onToast?.({ 

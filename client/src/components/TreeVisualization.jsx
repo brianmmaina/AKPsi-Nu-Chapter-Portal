@@ -208,7 +208,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [isTreeReady, setIsTreeReady] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [isPreparingExport, setIsPreparingExport] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [highlightBrotherId, setHighlightBrotherId] = useState(null);
+  const [lineageHighlightMode, setLineageHighlightMode] = useState('off');
+  const [lineageSourceId, setLineageSourceId] = useState(null);
   const initialViewportRef = useRef(null);
+  const treeBoundsRef = useRef({ width: 0, height: 0 });
+  const searchIndexRef = useRef([]);
+  const buildingIndexRef = useRef(false);
+  const toastTimeoutRef = useRef(null);
+  const highlightTimeoutRef = useRef(null);
   const hasFitRef = useRef(false);
   const reactFlowInstance = useReactFlow();
 
@@ -270,412 +282,156 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     };
   }, [theme.background, composedBackground, isEmpire, isTreeReady, theme.backgroundTexture]);
   const layoutSettings = useMemo(() => {
-    const defaults = {
-      horizontalSpacing: 260,
-      baseVerticalSpacing: 160,
-      pledgeVerticalSpacing: 140,
-      multiChildCompression: 1,
-      siblingPadding: 0,
+    const base = {
+      horizontalSpacing: 235,
+      baseVerticalSpacing: 150,
+      pledgeVerticalSpacing: 130,
+      multiChildCompression: 0.9,
+      siblingPadding: 36,
+      prongDropFactor: 1.12,
     };
 
     if (isEmpire) {
       return {
-        ...defaults,
+        ...base,
         horizontalSpacing: 220,
-        baseVerticalSpacing: 150,
-        pledgeVerticalSpacing: 130,
-        multiChildCompression: 0.85,
-        siblingPadding: 0,
+        multiChildCompression: 0.86,
+        siblingPadding: 30,
       };
     }
 
     if (isPower) {
       return {
-        ...defaults,
-        horizontalSpacing: 210,
-        baseVerticalSpacing: 150,
-        pledgeVerticalSpacing: 135,
-        multiChildCompression: 0.72,
-        siblingPadding: 24,
+        ...base,
+        siblingPadding: 42,
       };
     }
 
     if (isGreed) {
       return {
-        ...defaults,
-        horizontalSpacing: 215,
-        baseVerticalSpacing: 150,
-        pledgeVerticalSpacing: 135,
-        multiChildCompression: 0.78,
-        siblingPadding: 20,
+        ...base,
+        siblingPadding: 34,
       };
     }
 
     if (isPride) {
       return {
-        ...defaults,
-        horizontalSpacing: 230,
-        baseVerticalSpacing: 155,
-        pledgeVerticalSpacing: 135,
-        multiChildCompression: 0.8,
-        siblingPadding: 16,
+        ...base,
+        siblingPadding: 40,
       };
     }
 
     if (isWolfpack) {
       return {
-        ...defaults,
-        horizontalSpacing: 225,
-        baseVerticalSpacing: 155,
-        pledgeVerticalSpacing: 135,
-        multiChildCompression: 0.82,
-        siblingPadding: 18,
+        ...base,
+        siblingPadding: 38,
       };
     }
 
-    return defaults;
+    return base;
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
 
-  const renderEmpireNodeContent = (brother) => {
-    const pledgeLabel = brother.pledge_class
-      ? brother.pledge_class.toUpperCase()
-      : 'UNDECLARED';
+  const normalizeSearchValue = useCallback(
+    (value) =>
+      value
+        ?.toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || '',
+    [],
+  );
 
+  const showToast = useCallback((message, type = 'info') => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast({ message, type, id: Date.now() });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  }, []);
+
+  const updateIndexWithFamily = useCallback(
+    (familyId, familyName, brotherList) => {
+      if (!familyId || !Array.isArray(brotherList)) return;
+      const resolvedName = familyName || `Family ${familyId}`;
+      searchIndexRef.current = searchIndexRef.current.filter((entry) => entry.familyId !== familyId);
+      brotherList.forEach((brother) => {
+        if (!brother?.name) return;
+        searchIndexRef.current.push({
+          normalized: normalizeSearchValue(brother.name),
+          name: brother.name,
+          brother,
+          familyId,
+          familyName: resolvedName,
+        });
+      });
+    },
+    [normalizeSearchValue],
+  );
+
+  const waitForIndexBuild = useCallback(async () => {
+    if (!buildingIndexRef.current) return;
+    await new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!buildingIndexRef.current) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 50);
+    });
+  }, []);
+
+  const buildGlobalIndex = useCallback(async () => {
+    if (searchIndexRef.current.length) return;
+    await waitForIndexBuild();
+    if (searchIndexRef.current.length) return;
+
+    buildingIndexRef.current = true;
+    try {
+      const response = await familiesApi.getAll();
+      const allFamilies = response.data || [];
+      await Promise.all(
+        allFamilies.map(async (fam) => {
+          try {
+            const tree = await familiesApi.getTree(fam.id);
+            updateIndexWithFamily(fam.id, fam.name, tree.data?.brothers || []);
+          } catch (error) {
+            console.warn('Failed to index family', fam?.name, error);
+          }
+        }),
+      );
+    } catch (error) {
+      console.error('Failed to build search index:', error);
+      throw error;
+    } finally {
+      buildingIndexRef.current = false;
+    }
+  }, [updateIndexWithFamily, waitForIndexBuild]);
+
+  const renderNodeTemplate = (brother, theme, palette) => {
+    const rawPledge = brother.pledge_class || 'Unassigned';
+    const pledgeLabel = rawPledge.toUpperCase();
     const statusLabel = statusLabelForBrother(brother);
     const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-
-    return (
-      <div
-        title={`Pledge Class ${pledgeLabel}${statusLabel ? ` · ${statusLabel}` : ''}`}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 4,
-          }}
-        >
-          <div
-            style={{
-              fontSize: '9px',
-              letterSpacing: '1px',
-              textTransform: 'uppercase',
-              padding: '4px 10px',
-              borderRadius: 999,
-              background: 'rgba(147, 107, 28, 0.2)',
-              color: '#5a3d16',
-              fontWeight: 600,
-            }}
-          >
-            {pledgeLabel}
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: theme.titleFont,
-              fontSize: '13px',
-              letterSpacing: '0.4px',
-              color: '#24170b',
-              marginBottom: 4,
-            }}
-          >
-            {brother.name}
-          </div>
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(36, 23, 11, 0.9)',
-              fontWeight: 500,
-              letterSpacing: '0.3px',
-            }}
-          >
-            {statusLabel}
-          </div>
-          {classLabel && (
-            <div
-              style={{
-                fontSize: '10px',
-                color: 'rgba(36, 23, 11, 0.75)',
-                letterSpacing: '0.2px',
-              }}
-            >
-              {classLabel}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-  const renderPowerNodeContent = (brother) => {
-    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
-    const statusLabel = statusLabelForBrother(brother);
-    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-    const isTransfer = brother.is_transfer === 1;
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#fdf5dc' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '9px',
-              letterSpacing: '0.9px',
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: 'rgba(247, 227, 168, 0.2)',
-              color: 'rgba(247, 235, 206, 0.95)',
-              fontWeight: 600,
-            }}
-          >
-            {pledgeLabel}
-          </div>
-          {isTransfer && (
-            <div
-              style={{
-                fontSize: '9px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: 'rgba(247, 235, 206, 0.7)',
-              }}
-            >
-              Transfer
-            </div>
-          )}
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: theme.titleFont,
-              fontSize: '12px',
-              letterSpacing: '0.5px',
-              color: '#fef8e3',
-              marginBottom: 4,
-            }}
-          >
-            {brother.name}
-          </div>
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(250, 240, 210, 0.95)',
-              fontWeight: 500,
-              letterSpacing: '0.3px',
-            }}
-          >
-            {statusLabel}
-          </div>
-          {classLabel && (
-            <div
-              style={{
-                fontSize: '10px',
-                color: 'rgba(246, 233, 196, 0.86)',
-                letterSpacing: '0.2px',
-              }}
-            >
-              {classLabel}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderGreedNodeContent = (brother) => {
-    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
-    const statusLabel = statusLabelForBrother(brother);
-    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-    const isTransfer = brother.is_transfer === 1;
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#0a1f14' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '9px',
-              letterSpacing: '0.9px',
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: 'rgba(244, 217, 97, 0.24)',
-              color: '#5b4811',
-              fontWeight: 600,
-            }}
-          >
-            {pledgeLabel}
-          </div>
-          {isTransfer && (
-            <div
-              style={{
-                fontSize: '9px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: 'rgba(10, 31, 20, 0.6)',
-              }}
-            >
-              Transfer
-            </div>
-          )}
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: theme.titleFont,
-              fontSize: '12px',
-              letterSpacing: '0.4px',
-              color: '#182b1e',
-              marginBottom: 4,
-            }}
-          >
-            {brother.name}
-          </div>
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(10, 31, 20, 0.82)',
-              fontWeight: 500,
-              letterSpacing: '0.3px',
-            }}
-          >
-            {statusLabel}
-          </div>
-          {classLabel && (
-            <div
-              style={{
-                fontSize: '10px',
-                color: 'rgba(10, 31, 20, 0.7)',
-                letterSpacing: '0.2px',
-              }}
-            >
-              {classLabel}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderWolfpackNodeContent = (brother) => {
-    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
-    const statusLabel = statusLabelForBrother(brother);
-    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-    const isTransfer = brother.is_transfer === 1;
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#213352' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '9px',
-              letterSpacing: '0.9px',
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: 'rgba(61,83,115,0.18)',
-              color: '#1d2d49',
-              fontWeight: 600,
-            }}
-          >
-            {pledgeLabel}
-          </div>
-          {isTransfer && (
-            <div
-              style={{
-                fontSize: '9px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: 'rgba(33, 51, 82, 0.6)',
-              }}
-            >
-              Transfer
-            </div>
-          )}
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: theme.titleFont,
-              fontSize: '12px',
-              letterSpacing: '0.4px',
-              color: '#182a45',
-              marginBottom: 4,
-            }}
-          >
-            {brother.name}
-          </div>
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(24, 41, 68, 0.9)',
-              fontWeight: 500,
-              letterSpacing: '0.3px',
-            }}
-          >
-            {statusLabel}
-          </div>
-          {classLabel && (
-            <div
-              style={{
-                fontSize: '10px',
-                color: 'rgba(24, 41, 68, 0.78)',
-                letterSpacing: '0.2px',
-              }}
-            >
-              {classLabel}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderPrideNodeContent = (brother) => {
-    const statusLabel = statusLabelForBrother(brother);
-    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
-    const isTransfer = brother.is_transfer === 1;
+    const isPlaceholder = palette.isPlaceholder
+      ? palette.isPlaceholder(brother)
+      : !brother.name || /^unassigned/i.test(brother.name.trim());
+    const isTransfer = brother.is_transfer === 1 && palette.supportsTransfer;
+    const placeholderText = palette.placeholderText || 'Awaiting lineage assignment';
+    const effectiveName = brother.name || 'Unassigned';
 
     return (
       <div
         style={{
-          fontFamily: theme.bodyFont,
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px',
-          textAlign: 'left',
-          color: '#fbf7ee',
+          gap: 8,
+          maxWidth: 190,
+          whiteSpace: 'normal',
+          color: palette.bodyColor,
         }}
       >
-        <div
-          style={{
-            height: 3,
-            background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
-            marginLeft: '-16px',
-            marginRight: '-16px',
-            marginTop: '-6px',
-            marginBottom: 6,
-          }}
-        />
         <div
           style={{
             display: 'flex',
@@ -689,10 +445,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               fontSize: '9px',
               letterSpacing: '0.9px',
               textTransform: 'uppercase',
-              padding: '4px 10px',
+              padding: '4px 12px',
               borderRadius: 999,
-              background: 'rgba(212, 175, 126, 0.24)',
-              color: '#f1d0a0',
+              background: palette.badgeBg,
+              color: palette.badgeColor,
               fontWeight: 600,
             }}
           >
@@ -704,97 +460,145 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 fontSize: '9px',
                 letterSpacing: '0.6px',
                 textTransform: 'uppercase',
-                color: 'rgba(212, 175, 126, 0.75)',
+                color: palette.transferColor,
               }}
             >
               Transfer
             </div>
           )}
         </div>
-        <div
-          style={{
-            fontFamily: theme.titleFont,
-            fontSize: '12px',
-            letterSpacing: '0.6px',
-            textTransform: 'uppercase',
-            color: '#f6d9a5',
-            lineHeight: 1.2,
-          }}
-        >
-          {brother.name}
-        </div>
-        <div
-          style={{
-            fontSize: '10px',
-            color: 'rgba(248, 245, 239, 0.85)',
-          }}
-        >
-          {statusLabel}
-        </div>
-        {classLabel && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: palette.nameSize || '12px',
+              letterSpacing: palette.nameTracking || '0.5px',
+              lineHeight: 1.32,
+              color: palette.nameColor,
+            }}
+          >
+            {effectiveName}
+          </div>
           <div
             style={{
               fontSize: '10px',
-              color: 'rgba(248, 245, 239, 0.72)',
+              color: palette.statusColor,
+              fontWeight: 500,
               letterSpacing: '0.3px',
+              lineHeight: 1.4,
             }}
           >
-            {classLabel}
+            {statusLabel}
           </div>
-        )}
+          {classLabel && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: palette.classColor,
+                letterSpacing: '0.2px',
+                lineHeight: 1.4,
+              }}
+            >
+              {classLabel}
+            </div>
+          )}
+          {isPlaceholder && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: palette.placeholderColor || palette.statusColor,
+                fontStyle: 'italic',
+                lineHeight: 1.4,
+              }}
+            >
+              {placeholderText}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
-  const renderDefaultNodeContent = (brother) => {
-    const statusLabel = statusLabelForBrother(brother);
-    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
-    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+  const renderEmpireNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: '#24170b',
+      badgeBg: 'rgba(147, 107, 28, 0.2)',
+      badgeColor: '#5a3d16',
+      transferColor: 'rgba(59, 43, 22, 0.6)',
+      nameColor: '#24170b',
+      statusColor: 'rgba(36, 23, 11, 0.9)',
+      classColor: 'rgba(36, 23, 11, 0.75)',
+      placeholderColor: 'rgba(147, 107, 28, 0.75)',
+      supportsTransfer: false,
+      nameSize: '13px',
+      nameTracking: '0.4px',
+    });
 
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div
-          style={{
-            fontFamily: theme.titleFont,
-            fontSize: '12px',
-            color: theme.nodeText,
-            fontWeight: 600,
-          }}
-        >
-          {brother.name}
-        </div>
-        <div
-          style={{
-            fontSize: '10px',
-            letterSpacing: '0.4px',
-            color: theme.nodeText,
-            opacity: 0.8,
-          }}
-        >
-          {pledgeLabel}
-        </div>
-        <div
-          style={{
-            fontSize: '10px',
-            color: 'rgba(59, 43, 22, 0.7)',
-            fontWeight: 500,
-          }}
-        >
-          {statusLabel}
-        </div>
-        {classLabel && (
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(59, 43, 22, 0.62)',
-            }}
-          >
-            {classLabel}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const renderPowerNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: '#fdf5dc',
+      badgeBg: 'rgba(247, 227, 168, 0.24)',
+      badgeColor: '#fef3d8',
+      transferColor: 'rgba(247, 235, 206, 0.7)',
+      nameColor: '#fef8e3',
+      statusColor: 'rgba(250, 240, 210, 0.95)',
+      classColor: 'rgba(246, 233, 196, 0.86)',
+      placeholderColor: 'rgba(243, 220, 166, 0.8)',
+      supportsTransfer: true,
+    });
+
+  const renderGreedNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: '#0a2316',
+      badgeBg: 'rgba(244, 217, 97, 0.28)',
+      badgeColor: '#5b4811',
+      transferColor: 'rgba(10, 31, 20, 0.6)',
+      nameColor: '#182b1e',
+      statusColor: 'rgba(10, 31, 20, 0.82)',
+      classColor: 'rgba(10, 31, 20, 0.7)',
+      placeholderColor: 'rgba(180, 214, 138, 0.85)',
+      supportsTransfer: true,
+    });
+
+  const renderWolfpackNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: '#1e2c45',
+      badgeBg: 'rgba(156,184,234,0.28)',
+      badgeColor: '#1e2c45',
+      transferColor: 'rgba(33, 51, 82, 0.65)',
+      nameColor: '#1e2c45',
+      statusColor: 'rgba(24, 41, 68, 0.9)',
+      classColor: 'rgba(24, 41, 68, 0.78)',
+      placeholderColor: 'rgba(156,184,234,0.82)',
+      supportsTransfer: true,
+    });
+
+  const renderPrideNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: '#fbf7ee',
+      badgeBg: 'rgba(212, 175, 126, 0.24)',
+      badgeColor: '#f1d0a0',
+      transferColor: 'rgba(212, 175, 126, 0.75)',
+      nameColor: '#f6d9a5',
+      statusColor: 'rgba(248, 245, 239, 0.85)',
+      classColor: 'rgba(248, 245, 239, 0.72)',
+      placeholderColor: 'rgba(212, 175, 126, 0.78)',
+      supportsTransfer: true,
+      nameTracking: '0.6px',
+    });
+
+  const renderDefaultNodeContent = (brother) =>
+    renderNodeTemplate(brother, theme, {
+      bodyColor: theme.nodeText || '#3b2b16',
+      badgeBg: hexToRgba(theme.accent || '#c9a857', 0.22),
+      badgeColor: theme.nodeText || '#3b2b16',
+      transferColor: 'rgba(80,80,80,0.65)',
+      nameColor: theme.nodeText || '#3b2b16',
+      statusColor: hexToRgba(theme.nodeText || '#3b2b16', 0.82),
+      classColor: hexToRgba(theme.nodeText || '#3b2b16', 0.7),
+      placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
+      supportsTransfer: true,
+    });
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
@@ -831,6 +635,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   useEffect(() => {
     loadTreeData();
   }, [loadTreeData]);
+
+  const pledgeSummary = useMemo(() => {
+    const classes = new Set();
+    let placeholderCount = 0;
+    brothers.forEach((brother) => {
+      if (!brother?.name || /^unassigned/i.test(brother.name.trim())) {
+        placeholderCount += 1;
+      }
+      if (brother?.pledge_class) {
+        classes.add(brother.pledge_class.trim().toUpperCase());
+      }
+    });
+    return {
+      totalBrothers: brothers.length,
+      uniquePledgeClasses: classes.size,
+      placeholderCount,
+    };
+  }, [brothers]);
 
   /**
    * Calculates tree layout using BFS algorithm and creates React Flow nodes/edges
@@ -887,6 +709,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       pledgeVerticalSpacing,
       multiChildCompression,
       siblingPadding,
+      prongDropFactor,
     } = layoutSettings;
 
     /**
@@ -911,8 +734,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           ? multiChildCompression
           : 1;
 
-      const totalWidth =
-        childWidths.reduce((sum, width) => sum + width, 0) * compression;
+      let totalWidth;
+      if (children.length === 3) {
+        const pad = siblingPadding || horizontalSpacing * 0.25;
+        const left = childWidths[0] * compression;
+        const center = childWidths[1] * compression;
+        const right = childWidths[2] * compression;
+        totalWidth = left + center + right + pad * 2;
+      } else {
+        totalWidth =
+          childWidths.reduce((sum, width) => sum + width, 0) * compression +
+          Math.max(children.length - 1, 0) * siblingPadding;
+      }
       const width = Math.max(totalWidth, horizontalSpacing);
 
       subtreeWidthCache.set(rootId, width);
@@ -934,23 +767,41 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       // Calculate positions for children
-      let currentX = x;
-      const childWidths = children.map((childId) => getSubtreeWidth(childId));
+      const childWidthsRaw = children.map((childId) => getSubtreeWidth(childId));
       const compression =
         multiChildCompression < 1 && children.length >= 3
           ? multiChildCompression
           : 1;
-      const totalRawWidth = childWidths.reduce((sum, width) => sum + width, 0);
-      const totalSpacing =
-        Math.max(children.length - 1, 0) * siblingPadding * compression;
-      const totalWidth = totalRawWidth * compression + totalSpacing;
+
+      if (children.length === 3) {
+        const compressedWidths = childWidthsRaw.map((width) => width * compression);
+        const pad = siblingPadding || horizontalSpacing * 0.25;
+
+        const leftWidth = compressedWidths[0];
+        const centerWidth = compressedWidths[1];
+        const rightWidth = compressedWidths[2];
+
+        const leftX = x - (leftWidth / 2 + centerWidth / 2 + pad);
+        const rightX = x + (rightWidth / 2 + centerWidth / 2 + pad);
+        const outerY = y + baseVerticalSpacing;
+        const centerY = y + baseVerticalSpacing * (prongDropFactor || 1.12);
+
+        positionNode(children[0], leftX, outerY);
+        positionNode(children[2], rightX, outerY);
+        positionNode(children[1], x, centerY);
+        return;
+      }
+
+      const totalWidth =
+        childWidthsRaw.reduce((sum, width) => sum + width, 0) * compression +
+        Math.max(children.length - 1, 0) * siblingPadding;
       const startX = x - totalWidth / 2;
 
       let accumulatedWidth = 0;
       children.forEach((childId, index) => {
-        const width = childWidths[index] * compression;
-        const padding = index > 0 ? siblingPadding * compression : 0;
-        accumulatedWidth += padding;
+        const width = childWidthsRaw[index] * compression;
+        const pad = index > 0 ? siblingPadding : 0;
+        accumulatedWidth += pad;
         const childX = startX + accumulatedWidth + width / 2;
         positionNode(childId, childX, y + baseVerticalSpacing);
         accumulatedWidth += width;
@@ -1204,10 +1055,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       };
 
       // Per-family refinements based on family-tree-corrected.md specifications
-      const themeBackground = theme.nodeStudying || nodeStyle.background;
-
       if (familyKey === 'empire') {
-        nodeStyle.background = themeBackground || '#fff6e8';
+        nodeStyle.background = '#fff6e8';
         nodeStyle.border = '1.6px solid rgba(145, 104, 29, 0.75)';
         nodeStyle.color = '#24170b';
         nodeStyle.borderRadius = '4px';
@@ -1219,7 +1068,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
       } else if (familyKey === 'power') {
-        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(20, 38, 60, 0.92) 0%, rgba(10, 22, 38, 0.85) 100%)';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(20, 38, 60, 0.92) 0%, rgba(10, 22, 38, 0.85) 100%)';
         nodeStyle.border = '1.5px solid rgba(245, 210, 131, 0.85)';
         nodeStyle.color = '#fdf5dc';
         nodeStyle.borderRadius = '6px';
@@ -1230,29 +1079,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'greed') {
-        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(252,255,247,0.98) 0%, rgba(236,248,232,0.94) 100%)';
-        nodeStyle.border = '1.8px solid rgba(216, 242, 168, 0.9)';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(246, 252, 244, 0.96) 0%, rgba(233, 247, 230, 0.92) 100%)';
+        nodeStyle.border = '1.6px solid rgba(180, 214, 138, 0.9)';
         nodeStyle.color = '#0a2316';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '12px 16px 12px 24px';
         nodeStyle.minHeight = '104px';
-        nodeStyle.boxShadow = '0 18px 34px rgba(9,53,32,0.32), 0 8px 18px rgba(244, 217, 97, 0.28)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.7) 0px, rgba(244,217,97,0.7) 8px, transparent 8px)';
+        nodeStyle.boxShadow = '0 16px 32px rgba(9,53,32,0.28), 0 6px 16px rgba(244, 217, 97, 0.26)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.55) 0px, rgba(244,217,97,0.55) 8px, transparent 8px)';
         nodeStyle.backgroundSize = '8px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'wolfpack') {
-        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(236,244,255,0.96) 100%)';
-        nodeStyle.border = '1.8px solid rgba(214, 228, 255, 0.9)';
-        nodeStyle.color = '#1e2c45';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(248,252,255,0.98) 0%, rgba(234,243,255,0.94) 100%)';
+        nodeStyle.border = '1.6px solid rgba(156, 184, 234, 0.85)';
+        nodeStyle.color = '#1f2f49';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '13px 16px 13px 24px';
         nodeStyle.minHeight = '106px';
-        nodeStyle.boxShadow = '0 20px 38px rgba(24, 37, 58, 0.28), 0 8px 18px rgba(26, 37, 58, 0.2)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(156,184,234,0.78) 0px, rgba(156,184,234,0.78) 9px, transparent 9px)';
+        nodeStyle.boxShadow = '0 18px 34px rgba(41, 62, 96, 0.28), 0 6px 18px rgba(20, 33, 54, 0.2)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(156,184,234,0.65) 0px, rgba(156,184,234,0.65) 9px, transparent 9px)';
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'pride') {
-        nodeStyle.background = themeBackground || '#231d17';
+        nodeStyle.background = '#231d17';
         nodeStyle.border = `1.8px solid rgba(212,175,126,0.82)`;
         nodeStyle.color = '#fbf7ee';
         nodeStyle.borderRadius = '4px';
@@ -1262,6 +1111,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(212,175,126,0.55) 0px, rgba(212,175,126,0.55) 10px, transparent 10px)';
         nodeStyle.backgroundSize = '10px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
+      }
+
+      const isPlaceholderNode = !brother.name || /^unassigned/i.test(brother.name.trim());
+      if (isPlaceholderNode) {
+        const accentColor = hexToRgba(theme.accent || '#c9a857', 0.75);
+        const overlay = hexToRgba(theme.accent || '#c9a857', 0.12);
+        const existingShadow = nodeStyle.boxShadow ? `${nodeStyle.boxShadow}, ` : '';
+        nodeStyle.border = `1.8px dashed ${accentColor}`;
+        nodeStyle.boxShadow = `${existingShadow}0 0 0 1px ${hexToRgba(theme.accent || '#c9a857', 0.18)} inset`;
+        nodeStyle.backgroundImage = `${nodeStyle.backgroundImage ? `${nodeStyle.backgroundImage},` : ''}repeating-linear-gradient(135deg, ${overlay} 0 8px, transparent 8px 16px)`;
+      }
+      const isHighlightedNode = highlightBrotherId === String(brother.id);
+      if (isHighlightedNode) {
+        const accent = theme.accent || '#c9a857';
+        const existingShadow = nodeStyle.boxShadow ? `${nodeStyle.boxShadow}, ` : '';
+        nodeStyle.border = `2px solid ${accent}`;
+        nodeStyle.boxShadow = `${existingShadow}0 0 0 4px ${hexToRgba(accent, 0.3)}`;
+      }
+      if (lineageHighlightSet.has(String(brother.id))) {
+        const accent = hexToRgba(theme.accent || '#c9a857', 0.25);
+        const existingShadow = nodeStyle.boxShadow ? `${nodeStyle.boxShadow}, ` : '';
+        nodeStyle.boxShadow = `${existingShadow}0 0 0 3px ${accent}`;
+        nodeStyle.filter = 'brightness(1.05)';
       }
 
       // Build node label based on family theme
@@ -1298,6 +1170,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
     });
 
+    // capture layout bounds for dynamic viewport
+    if (layoutNodes.length) {
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      layoutNodes.forEach((node) => {
+        minX = Math.min(minX, node.position.x);
+        maxX = Math.max(maxX, node.position.x + nodeWidth);
+        minY = Math.min(minY, node.position.y);
+        maxY = Math.max(maxY, node.position.y + nodeHeight);
+      });
+      treeBoundsRef.current = {
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+    }
+
     // Create edges - only if both nodes exist
     // Use a more visible edge color for lineage
     const edgeColor = theme.edgeColor || theme.accent || '#666666';
@@ -1310,26 +1200,32 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         const bigExists = brothers.some(b => b.id === rel.big_id);
         const littleExists = brothers.some(b => b.id === rel.little_id);
         
-        // Only check if nodes exist - positions are guaranteed if they're in brothers array
         if (bigExists && littleExists) {
-          // Use smoothstep for better lineage visualization, or respect theme
-          const edgeType = theme.edgeType || 'smoothstep';
+          const childCount = (childrenMap.get(rel.big_id) || []).length;
+          const isSingleChild = childCount <= 1;
+          const edgeType = isSingleChild ? 'step' : (theme.edgeType || 'smoothstep');
+          const isLineageEdge =
+            lineageHighlightSet.has(String(rel.big_id)) && lineageHighlightSet.has(String(rel.little_id));
           
           const edge = {
-          id: `e${rel.big_id}-${rel.little_id}`,
-          source: String(rel.big_id),
-          target: String(rel.little_id),
+            id: `e${rel.big_id}-${rel.little_id}`,
+            source: String(rel.big_id),
+            target: String(rel.little_id),
             type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
-              stroke: edgeColor,
-              strokeWidth: edgeStrokeWidth + 1,
+              stroke: isLineageEdge ? hexToRgba(theme.accent || edgeColor, 0.9) : edgeColor,
+              strokeWidth: isLineageEdge ? edgeStrokeWidth + 2 : edgeStrokeWidth + 1,
               opacity: 0.97,
               strokeLinecap: 'round',
               strokeLinejoin: 'round',
               filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))',
+              borderRadius: isSingleChild ? 16 : undefined,
             },
             markerEnd: MarkerType.ArrowClosed,
+            data: {
+              isSingleChild,
+            },
           };
           layoutEdges.push(edge);
         }
@@ -1339,7 +1235,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     setNodes(layoutNodes);
     setEdges(layoutEdges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brothers, relationships, familyKey, layoutSettings]); // Use familyKey instead of theme object to prevent loops
+  }, [brothers, relationships, familyKey, layoutSettings, highlightBrotherId, lineageHighlightSet]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -1398,7 +1294,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           if (targetViewport) {
             reactFlowInstance.setViewport(targetViewport, { duration: 300 });
           } else {
-            reactFlowInstance.fitView({ padding: isEmpire ? 0.15 : 0.25, duration: 400 });
+            fitTreeView(isEmpire ? 0.15 : undefined, 400);
           }
         } catch (e) {
           // ignore viewport restore failures
@@ -1415,6 +1311,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       reactFlowInstance,
       isEmpire,
       restorePointerEvents,
+      fitTreeView,
     ],
   );
 
@@ -1475,14 +1372,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       if (event.key === '0') {
         event.preventDefault();
-        try {
-          reactFlowInstance.fitView({
-            padding: 0.15,
-            duration: 450,
-          });
-        } catch {
-          // ignore
-        }
+        fitTreeView(isEmpire ? 0.15 : undefined, 450);
         return;
       }
 
@@ -1510,7 +1400,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEmpire, reactFlowInstance, minZoom, maxZoom]);
+  }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeView]);
 
   useEffect(() => {
     if (!isTreeReady || nodes.length === 0 || hasFitRef.current) {
@@ -1519,16 +1409,40 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     requestAnimationFrame(() => {
       try {
-        reactFlowInstance.fitView({
-          padding: isEmpire ? 0.15 : 0.25,
-          duration: 500,
-        });
+        fitTreeView();
         hasFitRef.current = true;
       } catch (err) {
         console.warn('Failed to fit view:', err);
       }
     });
-  }, [isTreeReady, nodes, reactFlowInstance, isEmpire]);
+  }, [isTreeReady, nodes, reactFlowInstance, isEmpire, fitTreeView]);
+
+  const fitPaddingForBounds = useCallback(() => {
+    const { width, height } = treeBoundsRef.current;
+    const longestSide = Math.max(width, height);
+    if (!longestSide || !Number.isFinite(longestSide)) {
+      return 0.25;
+    }
+
+    if (longestSide < 600) return 0.42;
+    if (longestSide < 1200) return 0.28;
+    if (longestSide < 2000) return 0.22;
+    return 0.18;
+  }, []);
+
+  const fitTreeView = useCallback(
+    (paddingOverride, duration = 500) => {
+      try {
+        reactFlowInstance.fitView({
+          padding: paddingOverride ?? fitPaddingForBounds(),
+          duration,
+        });
+      } catch (err) {
+        console.warn('fitView failed:', err);
+      }
+    },
+    [fitPaddingForBounds, reactFlowInstance],
+  );
 
   // Remove loading state - tree will fade in instead
 
@@ -1624,8 +1538,358 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
+  const focusBrotherNode = useCallback(
+    (brotherId) => {
+      const targetNode = nodes.find((node) => node.id === String(brotherId));
+      if (!targetNode) {
+        return false;
+      }
+      const estimatedWidth = targetNode.style?.width || targetNode.style?.minWidth || 200;
+      const estimatedHeight = targetNode.style?.minHeight || targetNode.style?.height || 110;
+      try {
+        reactFlowInstance.setCenter(
+          targetNode.position.x + estimatedWidth / 2,
+          targetNode.position.y + estimatedHeight / 2,
+          {
+            zoom: 1.15,
+            duration: 600,
+          },
+        );
+      } catch (error) {
+        console.warn('Failed to center node:', error);
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+      setHighlightBrotherId(String(brotherId));
+      highlightTimeoutRef.current = setTimeout(() => setHighlightBrotherId(null), 2600);
+      if (lineageHighlightMode !== 'off') {
+        setLineageSourceId(String(brotherId));
+      }
+      return true;
+    },
+    [nodes, reactFlowInstance, lineageHighlightMode],
+  );
+
+  const handleSearchSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
+      const query = searchTerm.trim();
+      if (!query) {
+        showToast('Enter a name to search.');
+        return;
+      }
+      const normalizedQuery = normalizeSearchValue(query);
+      setIsSearching(true);
+      try {
+        updateIndexWithFamily(family.id, family.name, brothers);
+        await buildGlobalIndex();
+        const matches = searchIndexRef.current.filter((entry) =>
+          entry.normalized.includes(normalizedQuery),
+        );
+        if (matches.length === 0) {
+          showToast('No member found across the archive.');
+          return;
+        }
+
+        const chooseBestMatch = (list) => {
+          if (!list.length) return null;
+          const exact = list.find((entry) => entry.normalized === normalizedQuery);
+          return exact || list[0];
+        };
+
+        const currentMatches = matches.filter((entry) => entry.familyId === family.id);
+        if (currentMatches.length) {
+          const target = chooseBestMatch(currentMatches);
+          if (target && focusBrotherNode(target.brother.id)) {
+            showToast(`Centered on ${target.name}.`);
+          } else {
+            showToast('Found a match but could not center the node.');
+          }
+        } else {
+          const target = chooseBestMatch(matches);
+          if (target) {
+            const familyName = target.familyName || 'another family';
+            showToast(`Not in this family. Found in ${familyName}.`);
+          } else {
+            showToast('No member found across the archive.');
+          }
+        }
+      } catch (error) {
+        console.error('Search failed:', error);
+        showToast('Search failed. Please try again.');
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [searchTerm, showToast, normalizeSearchValue, updateIndexWithFamily, family.id, family.name, brothers, buildGlobalIndex, focusBrotherNode],
+  );
+
+  useEffect(() => {
+    if (!family?.id) return;
+    updateIndexWithFamily(family.id, family.name, brothers);
+  }, [brothers, family.id, family.name, updateIndexWithFamily]);
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const searchIsDark = ['power', 'pride', 'wolfpack'].includes(familyKey);
+  const searchPalette = useMemo(
+    () => ({
+      background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
+      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
+      border: hexToRgba(theme.accent || '#c9a857', 0.35),
+      buttonBg: theme.accent || '#c9a857',
+      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
+    }),
+    [familyKey, theme.accent, searchIsDark],
+  );
+
+  const handleExportTree = useCallback(async () => {
+    setIsPreparingExport(true);
+    showToast('Preparing export…');
+    
+    try {
+      // Fit view to show entire tree
+      fitTreeView();
+      
+      // Wait for view to settle
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Add print-specific class to body for print styles
+      document.body.classList.add('printing-tree');
+      
+      // Trigger print dialog
+      window.print();
+      
+      // Clean up after print dialog closes
+      setTimeout(() => {
+        document.body.classList.remove('printing-tree');
+        setIsPreparingExport(false);
+        showToast('Export ready. Use browser print dialog to save as PDF.');
+      }, 100);
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('Export failed. Please try again.');
+      setIsPreparingExport(false);
+    }
+  }, [fitTreeView, showToast]);
+
+  const childMap = useMemo(() => {
+    const map = new Map();
+    relationships.forEach((rel) => {
+      if (!rel.big_id || !rel.little_id) return;
+      const key = String(rel.big_id);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(String(rel.little_id));
+    });
+    return map;
+  }, [relationships]);
+
+  const parentMap = useMemo(() => {
+    const map = new Map();
+    relationships.forEach((rel) => {
+      if (!rel.big_id || !rel.little_id) return;
+      map.set(String(rel.little_id), String(rel.big_id));
+    });
+    return map;
+  }, [relationships]);
+
+  const lineageHighlightSet = useMemo(() => {
+    if (lineageHighlightMode === 'off' || !lineageSourceId) {
+      return new Set();
+    }
+
+    const gatherAncestors = (startId, accumulator) => {
+      let current = parentMap.get(startId);
+      while (current) {
+        accumulator.add(current);
+        current = parentMap.get(current);
+      }
+    };
+
+    const gatherDescendants = (startIds, accumulator) => {
+      const queue = [...startIds];
+      while (queue.length) {
+        const current = queue.shift();
+        const children = childMap.get(current) || [];
+        children.forEach((child) => {
+          if (!accumulator.has(child)) {
+            accumulator.add(child);
+            queue.push(child);
+          }
+        });
+      }
+    };
+
+    const seeded = new Set([lineageSourceId]);
+    if (lineageHighlightMode === 'ancestors' || lineageHighlightMode === 'both') {
+      gatherAncestors(lineageSourceId, seeded);
+    }
+    if (lineageHighlightMode === 'descendants' || lineageHighlightMode === 'both') {
+      gatherDescendants([lineageSourceId], seeded);
+    }
+    return seeded;
+  }, [lineageHighlightMode, lineageSourceId, parentMap, childMap]);
+
+  useEffect(() => {
+    if (lineageHighlightMode === 'off') {
+      setLineageSourceId(null);
+      return;
+    }
+    if (selectedBrother) {
+      setLineageSourceId(String(selectedBrother.id));
+    }
+  }, [lineageHighlightMode, selectedBrother]);
+
   return (
     <div className="w-full relative" style={containerStyle}>
+      <form
+        onSubmit={handleSearchSubmit}
+        style={{
+          position: 'absolute',
+          top: 24,
+          left: 24,
+          zIndex: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: searchPalette.background,
+          border: `1px solid ${searchPalette.border}`,
+          borderRadius: 999,
+          padding: '6px 12px',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.12)',
+        }}
+      >
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Search brothers"
+          aria-label="Search brothers"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            width: 180,
+            color: searchPalette.inputColor,
+            fontSize: '14px',
+          }}
+        />
+        <button
+          type="submit"
+          disabled={isSearching || !searchTerm.trim()}
+          style={{
+            background: searchPalette.buttonBg,
+            color: searchPalette.buttonText,
+            border: 'none',
+            borderRadius: 999,
+            padding: '6px 12px',
+            fontWeight: 600,
+            fontSize: '12px',
+            cursor: isSearching ? 'wait' : 'pointer',
+            opacity: isSearching ? 0.65 : 1,
+            transition: 'transform 0.2s ease',
+          }}
+        >
+          {isSearching ? 'Searching…' : 'Search'}
+        </button>
+      </form>
+
+      <div
+        style={{
+          position: 'absolute',
+          top: 24,
+          right: 24,
+          zIndex: 12,
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+        }}
+      >
+        <select
+          value={lineageHighlightMode}
+          onChange={(event) => setLineageHighlightMode(event.target.value)}
+          style={{
+            background: searchPalette.background,
+            color: searchPalette.inputColor,
+            border: `1px solid ${searchPalette.border}`,
+            borderRadius: 999,
+            padding: '6px 12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            cursor: 'pointer',
+            appearance: 'none',
+          }}
+        >
+          <option value="off">Highlight: Off</option>
+          <option value="ancestors">Highlight: Ancestors</option>
+          <option value="descendants">Highlight: Descendants</option>
+          <option value="both">Highlight: Lineage</option>
+        </select>
+        <button
+          type="button"
+          onClick={handleExportTree}
+          disabled={isPreparingExport}
+          style={{
+            background: theme.accent || '#c9a857',
+            color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: 999,
+            fontWeight: 600,
+            fontSize: '12px',
+            cursor: isPreparingExport ? 'wait' : 'pointer',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
+            opacity: isPreparingExport ? 0.65 : 1,
+          }}
+        >
+          {isPreparingExport ? 'Preparing…' : 'Export / Print'}
+        </button>
+      </div>
+
+      {toast && (
+        <div
+          key={toast.id}
+          style={{
+            position: 'absolute',
+            bottom: 96,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: presentation.legend.panelBg,
+            color: presentation.legend.textColor,
+            border: presentation.legend.border,
+            padding: '12px 20px',
+            borderRadius: 12,
+            boxShadow: '0 12px 22px rgba(0,0,0,0.18)',
+            zIndex: 12,
+            pointerEvents: 'none',
+            textTransform: 'none',
+            letterSpacing: '0.02em',
+            fontSize: '13px',
+            fontWeight: 500,
+            opacity: 0,
+            animation: 'toastFadeIn 0.3s ease-out forwards, toastFadeOut 0.3s ease-in 3.7s forwards',
+            maxWidth: '400px',
+            textAlign: 'center',
+          }}
+        >
+          {toast.message}
+        </div>
+      )}
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
     <div
       style={{
@@ -1697,6 +1961,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           borderRadius: 12,
           pointerEvents: 'none',
           boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
+          minWidth: 160,
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 6 }}>
@@ -1705,6 +1970,36 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         {presentation.legend.lines.map((line) => (
           <div key={line}>{line}</div>
         ))}
+        <div
+          style={{
+            borderTop: `1px solid ${hexToRgba(presentation.legend.textColor, 0.25)}`,
+            margin: '8px 0',
+            opacity: 0.6,
+          }}
+        />
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>Tree Summary</div>
+        <div>{`${pledgeSummary.totalBrothers} brothers`}</div>
+        <div>{`${pledgeSummary.uniquePledgeClasses} pledge classes`}</div>
+        {pledgeSummary.placeholderCount > 0 && (
+          <div>{`${pledgeSummary.placeholderCount} awaiting assignment`}</div>
+        )}
+        {selectedBrother && (
+          <div
+            style={{
+              marginTop: 6,
+              paddingTop: 6,
+              borderTop: `1px solid ${hexToRgba(presentation.legend.textColor, 0.18)}`,
+              textTransform: 'none',
+              letterSpacing: '0.02em',
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: 2 }}>Selected</div>
+            <div>{selectedBrother.name}</div>
+            <div style={{ opacity: 0.7 }}>
+              {selectedBrother.pledge_class || 'Unassigned'}
+            </div>
+          </div>
+        )}
       </div>
       <ReactFlow
         nodes={nodes}
@@ -1739,6 +2034,72 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
+
+      {/* Milestone Markers - Pledge Class Guides */}
+      {isTreeReady && nodes.length > 0 && (() => {
+        // Group nodes by pledge class and find their average Y position
+        const pledgeGroups = new Map();
+        nodes.forEach(node => {
+          const pledgeClass = node.data?.brother?.pledge_class;
+          if (pledgeClass) {
+            if (!pledgeGroups.has(pledgeClass)) {
+              pledgeGroups.set(pledgeClass, []);
+            }
+            pledgeGroups.get(pledgeClass).push(node.position.y);
+          }
+        });
+
+        // Calculate average Y for each pledge class
+        const milestoneMarkers = Array.from(pledgeGroups.entries())
+          .map(([pledgeClass, yPositions]) => ({
+            pledgeClass: pledgeClass.toUpperCase(),
+            avgY: yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length,
+          }))
+          .sort((a, b) => a.avgY - b.avgY)
+          .slice(0, 8); // Limit to 8 most prominent markers
+
+        return milestoneMarkers.map((marker, idx) => {
+          const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
+          const textColor = hexToRgba(presentation.legend.textColor || theme.nodeText, 0.5);
+          
+          return (
+            <div
+              key={`milestone-${marker.pledgeClass}-${idx}`}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: marker.avgY,
+                width: '100%',
+                height: '1px',
+                background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
+                pointerEvents: 'none',
+                zIndex: 0,
+                transform: 'translateY(-50%)',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 24,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: textColor,
+                  background: presentation.legend.panelBg || 'transparent',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  opacity: 0.7,
+                }}
+              >
+                {marker.pledgeClass}
+              </div>
+            </div>
+          );
+        });
+      })()}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (

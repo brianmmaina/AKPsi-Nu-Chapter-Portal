@@ -30,13 +30,14 @@ const Login = ({ password, setPassword, handleLogin }) => {
         </div>
 
         <h1
-          className="text-center mb-2 fade-zoom"
+          className="text-center mb-3 fade-zoom"
           style={{
             fontSize: 'var(--text-4xl)',
             fontFamily: 'var(--font-display)',
             fontWeight: 'var(--weight-bold)',
             color: 'var(--primary)',
-            marginBottom: 'var(--space-2)',
+            marginBottom: 'var(--space-3)',
+            letterSpacing: '0.05em',
           }}
         >
           Alpha Kappa Psi
@@ -46,12 +47,14 @@ const Login = ({ password, setPassword, handleLogin }) => {
           style={{
             fontSize: 'var(--text-lg)',
             fontFamily: 'var(--font-display)',
-            fontWeight: 'var(--weight-normal)',
+            fontWeight: 'var(--weight-medium)',
+            letterSpacing: '0.1em',
             color: 'var(--primary)',
             marginBottom: 'var(--space-8)',
+            opacity: 0.9,
           }}
         >
-          Family Trees
+          Nu Chapter Family Tree Archives
         </h2>
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           <div>

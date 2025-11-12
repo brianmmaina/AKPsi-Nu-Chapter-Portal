@@ -102,6 +102,29 @@
   }
 }
 
+/* Toast Fade Animations */
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes toastFadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+
 /* ============================================
    TILE SYSTEM (Family Selection)
    ============================================ */
@@ -255,5 +278,39 @@
   .tile:hover,
   .tile:focus-visible {
     transform: none;
+  }
+}
+
+/* ============================================
+   PRINT STYLES FOR TREE EXPORT
+   ============================================ */
+
+@media print {
+  body.printing-tree {
+    background: white;
+  }
+  
+  body.printing-tree * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  /* Hide UI elements during print */
+  body.printing-tree form,
+  body.printing-tree button:not(.react-flow__controls-button),
+  body.printing-tree select {
+    display: none !important;
+  }
+  
+  /* Ensure tree is visible */
+  body.printing-tree .react-flow {
+    width: 100% !important;
+    height: 100vh !important;
+  }
+  
+  /* Remove shadows and effects for cleaner print */
+  body.printing-tree .react-flow__node {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   }
 }

@@ -60,7 +60,7 @@ function App() {
   useEffect(() => {
     // Check if already authenticated (with session expiration check)
     if (isSessionValid()) {
-      const storedFamilyId = sessionStorage.getItem('selectedFamily');
+    const storedFamilyId = sessionStorage.getItem('selectedFamily');
       setIsAuthenticated(true);
       loadFamilies()
         .then((familiesData) => {
