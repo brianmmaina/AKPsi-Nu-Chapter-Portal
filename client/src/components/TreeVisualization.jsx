@@ -423,7 +423,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [updateIndexWithFamily, waitForIndexBuild]);
 
-  const renderNodeTemplate = useCallback((brother, themeParam, palette) => {
+  // Define renderNodeTemplate without useCallback to avoid circular dependency issues
+  // It will be recreated when theme changes, but that's acceptable for stability
+  const renderNodeTemplate = (brother, themeParam, palette) => {
     // Ensure we have a valid theme - use param first, then closure, then fallback
     const themeToUse = themeParam || theme || getThemeStyles('default');
     if (!themeToUse) {
@@ -537,10 +539,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         </div>
       </div>
     );
-  }, [theme]);
+  };
 
   const renderEmpireNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -556,10 +558,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       nameSize: '13px',
       nameTracking: '0.4px',
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
 
   const renderPowerNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -573,10 +575,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(243, 220, 166, 0.8)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
 
   const renderGreedNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -590,10 +592,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(180, 214, 138, 0.85)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
 
   const renderWolfpackNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -607,10 +609,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(156,184,234,0.82)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
 
   const renderPrideNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -625,10 +627,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       supportsTransfer: true,
       nameTracking: '0.6px',
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
 
   const renderDefaultNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
     return renderNodeTemplate(brother, theme, {
@@ -642,7 +644,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
+  }, [theme]);
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
