@@ -728,6 +728,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     if (brothers.length === 0) {
       return; // Still loading, don't process yet
     }
+
+    // Ensure all render functions are initialized before proceeding
+    // This prevents "Cannot access uninitialized variable" errors in production
+    if (!theme || !renderNodeTemplate || 
+        !renderEmpireNodeContent || !renderPowerNodeContent || 
+        !renderGreedNodeContent || !renderWolfpackNodeContent || 
+        !renderPrideNodeContent || !renderDefaultNodeContent) {
+      // Render functions not ready yet, skip this render
+      return;
+    }
     
     // Build relationship structure: parent -> children
     const relationshipsMap = new Map(); // little_id -> big_id
@@ -1085,6 +1095,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     });
 
     // Create React Flow nodes
+    // Double-check that theme and render functions are available (safety net)
+    if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
+      // Theme not fully initialized, skip node creation
+      return;
+    }
+
     brothers.forEach(brother => {
       let position = nodePositions.get(brother.id);
       const status = brother.status === 'studying' ? 'studying' : 'graduated';
@@ -1303,8 +1319,23 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brothers, relationships, familyKey, layoutSettings, highlightBrotherId, lineageHighlightSet]);
+  }, [
+    brothers, 
+    relationships, 
+    familyKey, 
+    layoutSettings, 
+    highlightBrotherId, 
+    lineageHighlightSet,
+    theme,
+    renderNodeTemplate,
+    renderEmpireNodeContent,
+    renderPowerNodeContent,
+    renderGreedNodeContent,
+    renderWolfpackNodeContent,
+    renderPrideNodeContent,
+    renderDefaultNodeContent,
+    loading,
+  ]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
