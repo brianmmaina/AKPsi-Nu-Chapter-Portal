@@ -871,6 +871,34 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, []);
 
+  const closeProfile = useCallback(
+    (restoreViewport = true) => {
+      if (restoreViewport) {
+        const targetViewport = viewportBeforeModal || initialViewportRef.current;
+        try {
+          if (targetViewport) {
+            reactFlowInstance.setViewport(targetViewport, { duration: 300 });
+          } else {
+            reactFlowInstance.fitView({ padding: isEmpire ? 0.15 : 0.25, duration: 400 });
+          }
+        } catch (e) {
+          // ignore viewport restore failures
+        }
+      }
+
+      restorePointerEvents();
+      setSelectedBrother(null);
+      setIsModalOpen(false);
+      setViewportBeforeModal(null);
+    },
+    [
+      viewportBeforeModal,
+      reactFlowInstance,
+      isEmpire,
+      restorePointerEvents,
+    ],
+  );
+
   // Effect to restore ReactFlow interactions after modal closes
   useEffect(() => {
     if (!isModalOpen && !selectedBrother) {
@@ -894,11 +922,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, []);
 
   const handleNodeUpdate = useCallback(() => {
+    closeProfile(true);
     loadTreeData();
-    setSelectedBrother(null);
-    setIsModalOpen(false);
-    restorePointerEvents();
-  }, [loadTreeData, restorePointerEvents]);
+  }, [closeProfile, loadTreeData]);
 
   useEffect(() => {
     if (nodes.length === 0) return;
@@ -1191,23 +1217,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         <BrotherDetailModal
           brother={selectedBrother}
           familyId={family.id}
-          onClose={() => {
-            // Restore viewport to state before opening modal
-            const targetViewport = viewportBeforeModal || initialViewportRef.current;
-            try {
-              if (targetViewport) {
-                reactFlowInstance.setViewport(targetViewport, { duration: 300 });
-              } else {
-                reactFlowInstance.fitView({ padding: isEmpire ? 0.15 : 0.25, duration: 400 });
-              }
-            } catch (e) {
-              // If viewport restore fails, continue anyway
-            }
-            restorePointerEvents();
-            setSelectedBrother(null);
-            setIsModalOpen(false);
-            setViewportBeforeModal(null);
-          }}
+          onClose={() => closeProfile(true)}
           onUpdate={handleNodeUpdate}
           theme={theme}
           onToast={onToast}
