@@ -423,17 +423,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [updateIndexWithFamily, waitForIndexBuild]);
 
-  // Define renderNodeTemplate using useMemo to ensure it's always initialized with theme
-  // This prevents "Cannot access uninitialized variable" errors in production
-  const renderNodeTemplate = useMemo(() => {
-    // Return a function that doesn't rely on closure - always uses theme param or fallback
-    return (brother, themeParam, palette) => {
-      // Always use themeParam if provided, otherwise use current theme, otherwise fallback
-      const themeToUse = themeParam || theme || getThemeStyles('default');
-      if (!themeToUse) {
-        console.warn('renderNodeTemplate: No theme available, using fallback');
-        return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
-      }
+  // Define renderNodeTemplate as a regular function to avoid closure/hoisting issues
+  // It will always use themeParam or fallback, never accessing theme from closure
+  const renderNodeTemplate = (brother, themeParam, palette) => {
+    // Always use themeParam if provided, otherwise fallback - never access theme from closure
+    const themeToUse = themeParam || getThemeStyles('default');
+    if (!themeToUse) {
+      console.warn('renderNodeTemplate: No theme available, using fallback');
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
     const rawPledge = brother.pledge_class || 'Unassigned';
     const pledgeLabel = rawPledge.toUpperCase();
     const statusLabel = statusLabelForBrother(brother);
@@ -541,33 +539,38 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         </div>
       </div>
     );
-    };
-  }, [theme]);
+  };
 
   const renderEmpireNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
-      bodyColor: '#24170b',
-      badgeBg: 'rgba(147, 107, 28, 0.2)',
-      badgeColor: '#5a3d16',
-      transferColor: 'rgba(59, 43, 22, 0.6)',
-      nameColor: '#24170b',
-      statusColor: 'rgba(36, 23, 11, 0.9)',
-      classColor: 'rgba(36, 23, 11, 0.75)',
-      placeholderColor: 'rgba(147, 107, 28, 0.75)',
-      supportsTransfer: false,
-      nameSize: '13px',
-      nameTracking: '0.4px',
-    });
-  }, [theme, renderNodeTemplate]);
+    try {
+      return renderNodeTemplate(brother, theme, {
+        bodyColor: '#24170b',
+        badgeBg: 'rgba(147, 107, 28, 0.2)',
+        badgeColor: '#5a3d16',
+        transferColor: 'rgba(59, 43, 22, 0.6)',
+        nameColor: '#24170b',
+        statusColor: 'rgba(36, 23, 11, 0.9)',
+        classColor: 'rgba(36, 23, 11, 0.75)',
+        placeholderColor: 'rgba(147, 107, 28, 0.75)',
+        supportsTransfer: false,
+        nameSize: '13px',
+        nameTracking: '0.4px',
+      });
+    } catch (error) {
+      console.warn('Error rendering Empire node:', error);
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+  }, [theme]);
 
   const renderPowerNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    if (!theme) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
+    try {
+      return renderNodeTemplate(brother, theme, {
       bodyColor: '#fdf5dc',
       badgeBg: 'rgba(247, 227, 168, 0.24)',
       badgeColor: '#fef3d8',
@@ -578,13 +581,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(243, 220, 166, 0.8)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
-
-  const renderGreedNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    } catch (error) {
+      console.warn('Error rendering Power node:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
+  }, [theme]);
+
+  const renderGreedNodeContent = useCallback((brother) => {
+    if (!theme) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    try {
+      return renderNodeTemplate(brother, theme, {
       bodyColor: '#0a2316',
       badgeBg: 'rgba(244, 217, 97, 0.28)',
       badgeColor: '#5b4811',
@@ -595,13 +603,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(180, 214, 138, 0.85)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
-
-  const renderWolfpackNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    } catch (error) {
+      console.warn('Error rendering Greed node:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
+  }, [theme]);
+
+  const renderWolfpackNodeContent = useCallback((brother) => {
+    if (!theme) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    try {
+      return renderNodeTemplate(brother, theme, {
       bodyColor: '#1e2c45',
       badgeBg: 'rgba(156,184,234,0.28)',
       badgeColor: '#1e2c45',
@@ -612,13 +625,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(156,184,234,0.82)',
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
-
-  const renderPrideNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    } catch (error) {
+      console.warn('Error rendering Wolfpack node:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
+  }, [theme]);
+
+  const renderPrideNodeContent = useCallback((brother) => {
+    if (!theme) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    try {
+      return renderNodeTemplate(brother, theme, {
       bodyColor: '#fbf7ee',
       badgeBg: 'rgba(212, 175, 126, 0.24)',
       badgeColor: '#f1d0a0',
@@ -630,13 +648,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       supportsTransfer: true,
       nameTracking: '0.6px',
     });
-  }, [theme, renderNodeTemplate]);
-
-  const renderDefaultNodeContent = useCallback((brother) => {
-    if (!theme || !renderNodeTemplate) {
+    } catch (error) {
+      console.warn('Error rendering Pride node:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-    return renderNodeTemplate(brother, theme, {
+  }, [theme]);
+
+  const renderDefaultNodeContent = useCallback((brother) => {
+    if (!theme) {
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+    try {
+      return renderNodeTemplate(brother, theme, {
       bodyColor: theme.nodeText || '#3b2b16',
       badgeBg: hexToRgba(theme.accent || '#c9a857', 0.22),
       badgeColor: theme.nodeText || '#3b2b16',
@@ -647,7 +670,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
       supportsTransfer: true,
     });
-  }, [theme, renderNodeTemplate]);
+    } catch (error) {
+      console.warn('Error rendering Default node:', error);
+      return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+    }
+  }, [theme]);
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
@@ -729,13 +756,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return; // Still loading, don't process yet
     }
 
-    // Ensure all render functions are initialized before proceeding
+    // Ensure theme is initialized before proceeding
     // This prevents "Cannot access uninitialized variable" errors in production
-    if (!theme || !renderNodeTemplate || 
-        !renderEmpireNodeContent || !renderPowerNodeContent || 
-        !renderGreedNodeContent || !renderWolfpackNodeContent || 
-        !renderPrideNodeContent || !renderDefaultNodeContent) {
-      // Render functions not ready yet, skip this render
+    if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
+      // Theme not fully initialized, skip this render
       return;
     }
     
@@ -1327,7 +1351,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     highlightBrotherId, 
     lineageHighlightSet,
     theme,
-    renderNodeTemplate,
     renderEmpireNodeContent,
     renderPowerNodeContent,
     renderGreedNodeContent,
