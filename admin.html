@@ -260,6 +260,21 @@
       </div>
 
       <div class="form-group">
+        <label for="profileImageUrl">Profile Image URL</label>
+        <input type="url" id="profileImageUrl" placeholder="https://example.com/headshot.jpg">
+      </div>
+
+      <div class="form-group">
+        <label for="linkedinUrl">LinkedIn URL</label>
+        <input type="url" id="linkedinUrl" placeholder="https://www.linkedin.com/in/username">
+      </div>
+
+      <div class="form-group">
+        <label for="instagramUrl">Instagram URL</label>
+        <input type="url" id="instagramUrl" placeholder="https://www.instagram.com/username">
+      </div>
+
+      <div class="form-group">
         <label for="status">Status</label>
         <select id="status">
           <option value="studying">Currently Studying</option>
@@ -403,6 +418,9 @@
         major: document.getElementById('major').value.trim() || null,
         career_aspirations: document.getElementById('careerAspirations').value.trim() || null,
         fun_facts: document.getElementById('funFacts').value.trim() || null,
+        profile_image_url: document.getElementById('profileImageUrl').value.trim() || null,
+        linkedin_url: document.getElementById('linkedinUrl').value.trim() || null,
+        instagram_url: document.getElementById('instagramUrl').value.trim() || null,
         status: document.getElementById('status').value,
         is_transfer: document.getElementById('isTransfer').checked ? 1 : 0,
         big_id: document.getElementById('bigBrother').value ? parseInt(document.getElementById('bigBrother').value) : null,

@@ -599,7 +599,23 @@ async function validateBigIdInFamily(familyId, bigId) {
 // Create new brother
 app.post('/api/brothers', checkPassword, async (req, res) => {
   try {
-    const { family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, big_id, profile_image_url } = req.body;
+    const {
+      family_id,
+      name,
+      pledge_class,
+      graduation_year,
+      major,
+      career_aspirations,
+      fun_facts,
+      status,
+      is_transfer,
+      big_id,
+      profile_image_url,
+      linkedin_url,
+      instagram_url,
+      personal_website_url,
+      email,
+    } = req.body;
     
     const familyIdNum = parseInt(family_id, 10);
     if (!family_id || isNaN(familyIdNum) || familyIdNum < 1) {
@@ -611,7 +627,19 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       await validateBigIdInFamily(familyIdNum, parseInt(big_id, 10));
     }
     
-    let validatedName, validatedPledgeClass, validatedMajor, validatedCareerAspirations, validatedFunFacts, validatedGraduationYear, validatedStatus, validatedIsTransfer, validatedProfileImageUrl;
+    let validatedName,
+      validatedPledgeClass,
+      validatedMajor,
+      validatedCareerAspirations,
+      validatedFunFacts,
+      validatedGraduationYear,
+      validatedStatus,
+      validatedIsTransfer,
+      validatedProfileImageUrl,
+      validatedLinkedInUrl,
+      validatedInstagramUrl,
+      validatedPersonalWebsiteUrl,
+      validatedEmail;
     
     try {
       validatedName = validateString(name, 'Name', 100);
@@ -627,13 +655,32 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       validatedStatus = status === 'graduated' ? 'graduated' : 'studying';
       validatedIsTransfer = is_transfer === true || is_transfer === 1 ? 1 : 0;
       validatedProfileImageUrl = validateString(profile_image_url, 'Profile Image URL', 500);
+      validatedLinkedInUrl = validateString(linkedin_url, 'LinkedIn URL', 500);
+      validatedInstagramUrl = validateString(instagram_url, 'Instagram URL', 500);
+      validatedPersonalWebsiteUrl = validateString(personal_website_url, 'Personal Website URL', 500);
+      validatedEmail = validateString(email, 'Email', 255);
     } catch (validationError) {
       return res.status(400).json({ error: validationError.message });
     }
     
     const insertResult = await pool.query(`
-      INSERT INTO brothers (family_id, name, pledge_class, graduation_year, major, career_aspirations, fun_facts, status, is_transfer, profile_image_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO brothers (
+        family_id,
+        name,
+        pledge_class,
+        graduation_year,
+        major,
+        career_aspirations,
+        fun_facts,
+        status,
+        is_transfer,
+        profile_image_url,
+        linkedin_url,
+        instagram_url,
+        personal_website_url,
+        email
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING id
     `, [
       familyIdNum,
@@ -645,7 +692,11 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
       validatedFunFacts,
       validatedStatus,
       validatedIsTransfer,
-      validatedProfileImageUrl
+      validatedProfileImageUrl,
+      validatedLinkedInUrl,
+      validatedInstagramUrl,
+      validatedPersonalWebsiteUrl,
+      validatedEmail
     ]);
     
     const brotherId = insertResult.rows[0].id;

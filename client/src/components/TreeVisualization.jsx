@@ -191,6 +191,392 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </div>
     );
   };
+  const renderPowerNodeContent = (brother) => {
+    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+    const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
+    const isTransfer = brother.is_transfer === 1;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.9px',
+              textTransform: 'uppercase',
+              padding: '4px 12px',
+              borderRadius: 999,
+              background: 'rgba(247, 227, 168, 0.2)',
+              color: 'rgba(247, 235, 206, 0.95)',
+              fontWeight: 600,
+            }}
+          >
+            {pledgeLabel}
+          </div>
+          {isTransfer && (
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: 'rgba(247, 235, 206, 0.7)',
+              }}
+            >
+              Transfer
+            </div>
+          )}
+        </div>
+        <div>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: '12px',
+              letterSpacing: '0.5px',
+              color: '#f9f1d0',
+              marginBottom: 4,
+            }}
+          >
+            {brother.name}
+          </div>
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(247, 235, 206, 0.92)',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+            }}
+          >
+            {statusLabel}
+          </div>
+          {classLabel && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(247, 235, 206, 0.82)',
+                letterSpacing: '0.2px',
+              }}
+            >
+              {classLabel}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderGreedNodeContent = (brother) => {
+    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+    const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
+    const isTransfer = brother.is_transfer === 1;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#0a1f14' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.9px',
+              textTransform: 'uppercase',
+              padding: '4px 12px',
+              borderRadius: 999,
+              background: 'rgba(244, 217, 97, 0.24)',
+              color: '#5b4811',
+              fontWeight: 600,
+            }}
+          >
+            {pledgeLabel}
+          </div>
+          {isTransfer && (
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: 'rgba(10, 31, 20, 0.6)',
+              }}
+            >
+              Transfer
+            </div>
+          )}
+        </div>
+        <div>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: '12px',
+              letterSpacing: '0.4px',
+              color: '#182b1e',
+              marginBottom: 4,
+            }}
+          >
+            {brother.name}
+          </div>
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(10, 31, 20, 0.82)',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+            }}
+          >
+            {statusLabel}
+          </div>
+          {classLabel && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(10, 31, 20, 0.7)',
+                letterSpacing: '0.2px',
+              }}
+            >
+              {classLabel}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderWolfpackNodeContent = (brother) => {
+    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+    const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
+    const isTransfer = brother.is_transfer === 1;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#213352' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.9px',
+              textTransform: 'uppercase',
+              padding: '4px 12px',
+              borderRadius: 999,
+              background: 'rgba(61,83,115,0.18)',
+              color: '#1d2d49',
+              fontWeight: 600,
+            }}
+          >
+            {pledgeLabel}
+          </div>
+          {isTransfer && (
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: 'rgba(33, 51, 82, 0.6)',
+              }}
+            >
+              Transfer
+            </div>
+          )}
+        </div>
+        <div>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: '12px',
+              letterSpacing: '0.4px',
+              color: '#213352',
+              marginBottom: 4,
+            }}
+          >
+            {brother.name}
+          </div>
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(33, 51, 82, 0.82)',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+            }}
+          >
+            {statusLabel}
+          </div>
+          {classLabel && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(33, 51, 82, 0.7)',
+                letterSpacing: '0.2px',
+              }}
+            >
+              {classLabel}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPrideNodeContent = (brother) => {
+    const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
+    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+    const isTransfer = brother.is_transfer === 1;
+
+    return (
+      <div
+        style={{
+          fontFamily: theme.bodyFont,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          textAlign: 'left',
+          color: '#fbf7ee',
+        }}
+      >
+        <div
+          style={{
+            height: 3,
+            background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
+            marginLeft: '-16px',
+            marginRight: '-16px',
+            marginTop: '-6px',
+            marginBottom: 6,
+          }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              letterSpacing: '0.9px',
+              textTransform: 'uppercase',
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: 'rgba(212, 175, 126, 0.24)',
+              color: '#f1d0a0',
+              fontWeight: 600,
+            }}
+          >
+            {pledgeLabel}
+          </div>
+          {isTransfer && (
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: 'rgba(212, 175, 126, 0.75)',
+              }}
+            >
+              Transfer
+            </div>
+          )}
+        </div>
+        <div
+          style={{
+            fontFamily: theme.titleFont,
+            fontSize: '12px',
+            letterSpacing: '0.6px',
+            textTransform: 'uppercase',
+            color: '#f6d9a5',
+            lineHeight: 1.2,
+          }}
+        >
+          {brother.name}
+        </div>
+        <div
+          style={{
+            fontSize: '10px',
+            color: 'rgba(248, 245, 239, 0.85)',
+          }}
+        >
+          {statusLabel}
+        </div>
+        {classLabel && (
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(248, 245, 239, 0.72)',
+              letterSpacing: '0.3px',
+            }}
+          >
+            {classLabel}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDefaultNodeContent = (brother) => {
+    const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
+    const pledgeLabel = (brother.pledge_class || 'Unassigned').toUpperCase();
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div
+          style={{
+            fontFamily: theme.titleFont,
+            fontSize: '12px',
+            color: theme.nodeText,
+            fontWeight: 600,
+          }}
+        >
+          {brother.name}
+        </div>
+        <div
+          style={{
+            fontSize: '10px',
+            letterSpacing: '0.4px',
+            color: theme.nodeText,
+            opacity: 0.8,
+          }}
+        >
+          {pledgeLabel}
+        </div>
+        <div
+          style={{
+            fontSize: '10px',
+            color: 'rgba(59, 43, 22, 0.7)',
+            fontWeight: 500,
+          }}
+        >
+          {statusLabel}
+        </div>
+        {classLabel && (
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(59, 43, 22, 0.62)',
+            }}
+          >
+            {classLabel}
+          </div>
+        )}
+      </div>
+    );
+  };
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
@@ -626,145 +1012,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       // Build node label based on family theme
       let nodeLabel;
-      
-      const statusLabel = statusLabelForBrother(brother);
-
-      if (familyKey === 'pride') {
-        nodeLabel = (
-            <div 
-              style={{ 
-            fontFamily: theme.bodyFont,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              textAlign: 'left',
-              color: '#f8f5ef',
-            }}
-          >
-            {/* Accent bar */}
-              <div 
-                style={{ 
-              height: 3, 
-                background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
-                marginLeft: '-12px',
-                marginRight: '-12px',
-                marginTop: '-4px',
-              marginBottom: 6,
-              }}
-            />
-            {/* Name */}
-            <div 
-              style={{ 
-                fontFamily: theme.titleFont,
-                fontSize: '12px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: '#d4af7e',
-                lineHeight: 1.2,
-              }}
-            >
-              {brother.name}
-            </div>
-            {/* Pledge Class */}
-            {brother.pledge_class && (
-              <div 
-                style={{ 
-                  fontSize: '10px',
-                  letterSpacing: '0.4px',
-                  color: '#fbf7ee',
-                  opacity: 0.9,
-                }}
-              >
-                {brother.pledge_class}
-              </div>
-            )}
-            {/* Status */}
-              <div 
-                style={{ 
-                fontSize: '10px',
-                color: 'rgba(248, 245, 239, 0.85)',
-              }}
-            >
-              {statusLabel}
-              </div>
-            {brother.graduation_year && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: 'rgba(248, 245, 239, 0.72)',
-                  letterSpacing: '0.3px',
-                }}
-              >
-                {`Class of ${brother.graduation_year}`}
-              </div>
-            )}
-          </div>
-        );
-      } else if (familyKey === 'empire') {
-        nodeLabel = renderEmpireNodeContent(brother);
-      } else {
-        // Other families: simpler node design
-        nodeLabel = (
-          <div className="text-center" style={{ fontFamily: theme.bodyFont, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div 
-              className="font-semibold" 
-              style={{ 
-                fontFamily: theme.titleFont,
-                textTransform: familyKey === 'greed' ? 'uppercase' : 'none', // GREED uses UPPERCASE
-                fontSize: familyKey === 'greed' ? '10px' : '12px', // From spec: 10-11px
-                color: theme.nodeText,
-              }}
-            >
-              {brother.name}
-            </div>
-            {brother.pledge_class && (
-              <div 
-                style={{ 
-                  fontSize: '10px',
-                  letterSpacing: '0.4px',
-                  color: theme.nodeText,
-                  opacity: 0.7,
-                }}
-              >
-                {brother.pledge_class}
-              </div>
-            )}
-            <div
-              style={{
-                fontSize: '10px',
-                color:
-                  familyKey === 'power'
-                    ? 'rgba(247, 235, 206, 0.92)'
-                    : familyKey === 'greed'
-                      ? 'rgba(10, 31, 20, 0.82)'
-                      : familyKey === 'wolfpack'
-                        ? 'rgba(33, 51, 82, 0.82)'
-                        : 'rgba(36, 23, 11, 0.88)',
-                fontWeight: 500,
-              }}
-            >
-              {statusLabel}
-            </div>
-            {brother.graduation_year && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  color:
-                    familyKey === 'power'
-                      ? 'rgba(247, 235, 206, 0.82)'
-                      : familyKey === 'greed'
-                        ? 'rgba(10, 31, 20, 0.7)'
-                        : familyKey === 'wolfpack'
-                          ? 'rgba(33, 51, 82, 0.7)'
-                          : 'rgba(36, 23, 11, 0.7)',
-                  letterSpacing: '0.2px',
-                }}
-              >
-                {`Class of ${brother.graduation_year}`}
-              </div>
-            )}
-          </div>
-        );
+      switch (familyKey) {
+        case 'empire':
+          nodeLabel = renderEmpireNodeContent(brother);
+          break;
+        case 'power':
+          nodeLabel = renderPowerNodeContent(brother);
+          break;
+        case 'greed':
+          nodeLabel = renderGreedNodeContent(brother);
+          break;
+        case 'wolfpack':
+          nodeLabel = renderWolfpackNodeContent(brother);
+          break;
+        case 'pride':
+          nodeLabel = renderPrideNodeContent(brother);
+          break;
+        default:
+          nodeLabel = renderDefaultNodeContent(brother);
       }
 
       // Add node with position (fallback to 0,0 if not calculated)
@@ -937,9 +1202,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [nodes, reactFlowInstance]);
 
   useEffect(() => {
-    initialViewportRef.current = null;
+    const targetViewport = defaultViewport;
+    try {
+      reactFlowInstance.setViewport(targetViewport, { duration: 300 });
+    } catch {
+      // ignore viewport errors
+    }
+    initialViewportRef.current = targetViewport;
     hasFitRef.current = false;
-  }, [family.id]);
+  }, [family.id, defaultViewport, reactFlowInstance]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
