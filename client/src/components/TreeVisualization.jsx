@@ -485,7 +485,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div
             style={{
-              fontFamily: theme.titleFont,
+              fontFamily: themeToUse.titleFont,
               fontSize: palette.nameSize || '12px',
               letterSpacing: palette.nameTracking || '0.5px',
               lineHeight: 1.32,
