@@ -16,6 +16,150 @@ import AddNodeForm from './AddNodeForm';
 import { getThemeStyles } from '../themes';
 import { hexToRgba } from '../utils/color';
 
+const FAMILY_PRESENTATION = {
+  empire: {
+    crestLetter: 'E',
+    accent: '#c9a857',
+    title: 'Empire Archives',
+    subtitle: 'Alpha Kappa Psi · Nu Chapter',
+    backgroundLayers: [
+      'radial-gradient(circle at 50% -10%, rgba(201,168,87,0.18) 0%, rgba(248,247,243,0) 55%)',
+      'linear-gradient(135deg, rgba(160,130,62,0.12) 0%, rgba(248,247,243,0) 60%)',
+    ],
+    header: {
+      textColor: 'rgba(59, 43, 22, 0.72)',
+      crestBg: 'rgba(201,168,87,0.15)',
+      crestColor: '#5a3d16',
+      panelBg: 'rgba(255, 245, 224, 0.82)',
+      shadow: '0 12px 24px rgba(201, 168, 87, 0.22)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(201,168,87,0.12)',
+      border: '1px solid rgba(201,168,87,0.45)',
+      textColor: 'rgba(59,43,22,0.75)',
+    },
+  },
+  power: {
+    crestLetter: 'P',
+    accent: '#f5d283',
+    title: 'Power Ledger',
+    subtitle: 'Strategic Lineage Records',
+    backgroundLayers: [
+      'radial-gradient(circle at 50% -20%, rgba(247,227,168,0.22) 0%, rgba(9,20,32,0) 60%)',
+      'linear-gradient(135deg, rgba(16,38,64,0.4) 0%, rgba(10,20,33,0.05) 65%)',
+    ],
+    header: {
+      textColor: 'rgba(248, 235, 206, 0.82)',
+      crestBg: 'rgba(245,210,131,0.18)',
+      crestColor: '#f8e7c2',
+      panelBg: 'rgba(16, 34, 54, 0.8)',
+      shadow: '0 12px 28px rgba(8, 16, 24, 0.4)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(15,32,49,0.78)',
+      border: '1px solid rgba(245,210,131,0.35)',
+      textColor: 'rgba(247, 235, 206, 0.82)',
+    },
+  },
+  greed: {
+    crestLetter: 'G',
+    accent: '#e7f28f',
+    title: 'Greed Chronicles',
+    subtitle: 'Commerce & Ambition Registry',
+    backgroundLayers: [
+      'radial-gradient(circle at 50% -10%, rgba(210,240,150,0.24) 0%, rgba(12,35,23,0) 55%)',
+      'linear-gradient(135deg, rgba(10,35,23,0.35) 0%, rgba(12,35,23,0.05) 60%)',
+    ],
+    header: {
+      textColor: 'rgba(12, 35, 23, 0.82)',
+      crestBg: 'rgba(244,217,97,0.18)',
+      crestColor: '#1c3b28',
+      panelBg: 'rgba(241, 250, 233, 0.88)',
+      shadow: '0 12px 26px rgba(11, 35, 22, 0.22)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(241,250,233,0.88)',
+      border: '1px solid rgba(244,217,97,0.35)',
+      textColor: 'rgba(12,35,23,0.82)',
+    },
+  },
+  pride: {
+    crestLetter: 'P',
+    accent: '#d4af7e',
+    title: 'Pride Registry',
+    subtitle: 'Heritage of Excellence',
+    backgroundLayers: [
+      'radial-gradient(circle at 50% -15%, rgba(212,175,126,0.18) 0%, rgba(27,16,9,0) 60%)',
+      'linear-gradient(135deg, rgba(33, 20, 12, 0.55) 0%, rgba(27,17,11,0.1) 62%)',
+    ],
+    header: {
+      textColor: 'rgba(250, 240, 225, 0.86)',
+      crestBg: 'rgba(212,175,126,0.22)',
+      crestColor: '#f5ddaf',
+      panelBg: 'rgba(38, 25, 16, 0.8)',
+      shadow: '0 14px 32px rgba(0,0,0,0.35)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(35,29,23,0.82)',
+      border: '1px solid rgba(212,175,126,0.4)',
+      textColor: 'rgba(248, 245, 239, 0.82)',
+    },
+  },
+  wolfpack: {
+    crestLetter: 'W',
+    accent: '#8ca6d1',
+    title: 'Wolfpack Archives',
+    subtitle: 'Brotherhood & Unity Ledger',
+    backgroundLayers: [
+      'radial-gradient(circle at 50% -12%, rgba(140,166,209,0.22) 0%, rgba(22,32,52,0) 58%)',
+      'linear-gradient(135deg, rgba(28,42,66,0.42) 0%, rgba(22,32,52,0.08) 60%)',
+    ],
+    header: {
+      textColor: 'rgba(214,223,240,0.88)',
+      crestBg: 'rgba(140,166,209,0.2)',
+      crestColor: '#1f2f49',
+      panelBg: 'rgba(33, 45, 69, 0.85)',
+      shadow: '0 14px 30px rgba(26, 37, 58, 0.32)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(33,45,69,0.85)',
+      border: '1px solid rgba(140,166,209,0.35)',
+      textColor: 'rgba(214,223,240,0.88)',
+    },
+  },
+  default: {
+    crestLetter: 'A',
+    accent: '#d4b067',
+    title: 'Family Records',
+    subtitle: 'Alpha Kappa Psi',
+    backgroundLayers: [],
+    header: {
+      textColor: '#3a2c19',
+      crestBg: 'rgba(212,176,103,0.18)',
+      crestColor: '#3a2c19',
+      panelBg: 'rgba(255, 249, 236, 0.86)',
+      shadow: '0 10px 22px rgba(58, 43, 21, 0.16)',
+    },
+    legend: {
+      title: 'Navigation',
+      lines: ['0 reset view', '+ zoom in · - zoom out'],
+      panelBg: 'rgba(255,249,236,0.86)',
+      border: '1px solid rgba(212,176,103,0.4)',
+      textColor: '#3a2c19',
+    },
+  },
+};
+
 /**
  * TreeVisualizationInner Component
  * 
@@ -71,6 +215,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
+  const presentation = useMemo(
+    () => FAMILY_PRESENTATION[familyKey] || FAMILY_PRESENTATION.default,
+    [familyKey],
+  );
   const isEmpire = familyKey === 'empire';
   const isPower = familyKey === 'power';
   const isGreed = familyKey === 'greed';
@@ -88,19 +236,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const maxZoom = isEmpire ? 1.4 : 2;
   const composedBackground = useMemo(() => {
     const layers = [];
-    if (isEmpire) {
-      layers.push(
-        'radial-gradient(circle at 50% -10%, rgba(201,168,87,0.18) 0%, rgba(248,247,243,0) 55%)',
-      );
-      layers.push(
-        'linear-gradient(135deg, rgba(160,130,62,0.12) 0%, rgba(248,247,243,0) 60%)',
-      );
+    if (presentation.backgroundLayers?.length) {
+      layers.push(...presentation.backgroundLayers);
     }
     if (theme.backgroundTexture) {
       layers.push(theme.backgroundTexture);
     }
     return layers.join(', ');
-  }, [isEmpire, theme.backgroundTexture]);
+  }, [presentation.backgroundLayers, theme.backgroundTexture]);
 
   const containerStyle = useMemo(() => {
     const sizeValue = isEmpire
@@ -267,7 +410,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const isTransfer = brother.is_transfer === 1;
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, color: '#fdf5dc' }}>
         <div
           style={{
             display: 'flex',
@@ -308,7 +451,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               fontFamily: theme.titleFont,
               fontSize: '12px',
               letterSpacing: '0.5px',
-              color: '#f9f1d0',
+              color: '#fef8e3',
               marginBottom: 4,
             }}
           >
@@ -317,7 +460,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           <div
             style={{
               fontSize: '10px',
-              color: 'rgba(247, 235, 206, 0.92)',
+              color: 'rgba(250, 240, 210, 0.95)',
               fontWeight: 500,
               letterSpacing: '0.3px',
             }}
@@ -328,7 +471,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             <div
               style={{
                 fontSize: '10px',
-                color: 'rgba(247, 235, 206, 0.82)',
+                color: 'rgba(246, 233, 196, 0.86)',
                 letterSpacing: '0.2px',
               }}
             >
@@ -468,7 +611,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               fontFamily: theme.titleFont,
               fontSize: '12px',
               letterSpacing: '0.4px',
-              color: '#213352',
+              color: '#182a45',
               marginBottom: 4,
             }}
           >
@@ -477,7 +620,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           <div
             style={{
               fontSize: '10px',
-              color: 'rgba(33, 51, 82, 0.82)',
+              color: 'rgba(24, 41, 68, 0.9)',
               fontWeight: 500,
               letterSpacing: '0.3px',
             }}
@@ -488,7 +631,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             <div
               style={{
                 fontSize: '10px',
-                color: 'rgba(33, 51, 82, 0.7)',
+                color: 'rgba(24, 41, 68, 0.78)',
                 letterSpacing: '0.2px',
               }}
             >
@@ -1052,7 +1195,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       // Per-family refinements based on family-tree-corrected.md specifications
       if (familyKey === 'empire') {
         nodeStyle.background = '#fff6e8';
-        nodeStyle.border = '1px solid rgba(145, 104, 29, 0.6)';
+        nodeStyle.border = '1.6px solid rgba(145, 104, 29, 0.75)';
         nodeStyle.color = '#24170b';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '14px 16px 14px 26px';
@@ -1063,41 +1206,41 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
       } else if (familyKey === 'power') {
-        nodeStyle.background = '#0f2031';
-        nodeStyle.border = `1.5px solid ${theme.accent}`;
-        nodeStyle.color = '#ffffff';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(20, 38, 60, 0.92) 0%, rgba(10, 22, 38, 0.85) 100%)';
+        nodeStyle.border = '1.5px solid rgba(245, 210, 131, 0.85)';
+        nodeStyle.color = '#fdf5dc';
         nodeStyle.borderRadius = '6px';
         nodeStyle.padding = '14px 18px 14px 26px';
         nodeStyle.minHeight = '108px';
-        nodeStyle.boxShadow = '0 14px 28px rgba(8, 16, 24, 0.45), 0 4px 10px rgba(235, 210, 144, 0.25)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(235,210,144,0.55) 0px, rgba(235,210,144,0.55) 9px, transparent 9px)';
+        nodeStyle.boxShadow = '0 18px 34px rgba(8, 16, 24, 0.55), 0 6px 16px rgba(245, 210, 131, 0.3)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(243,220,166,0.75) 0px, rgba(243,220,166,0.75) 9px, transparent 9px)';
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'greed') {
-        nodeStyle.background = '#f6faf6';
-        nodeStyle.border = `1px solid ${theme.nodeBorder}`;
-        nodeStyle.color = '#0a1f14';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(246, 252, 244, 0.96) 0%, rgba(233, 247, 230, 0.92) 100%)';
+        nodeStyle.border = '1.6px solid rgba(180, 214, 138, 0.9)';
+        nodeStyle.color = '#0a2316';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '12px 16px 12px 24px';
         nodeStyle.minHeight = '104px';
-        nodeStyle.boxShadow = '0 12px 26px rgba(9,53,32,0.22), 0 6px 14px rgba(244, 217, 97, 0.22)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.4) 0px, rgba(244,217,97,0.4) 8px, transparent 8px)';
+        nodeStyle.boxShadow = '0 16px 32px rgba(9,53,32,0.28), 0 6px 16px rgba(244, 217, 97, 0.26)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.55) 0px, rgba(244,217,97,0.55) 8px, transparent 8px)';
         nodeStyle.backgroundSize = '8px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'wolfpack') {
-        nodeStyle.background = '#f8fbff';
-        nodeStyle.border = '1px solid rgba(41, 62, 96, 0.45)';
-        nodeStyle.color = '#213352';
+        nodeStyle.background = 'linear-gradient(135deg, rgba(248,252,255,0.98) 0%, rgba(234,243,255,0.94) 100%)';
+        nodeStyle.border = '1.6px solid rgba(156, 184, 234, 0.85)';
+        nodeStyle.color = '#1f2f49';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '13px 16px 13px 24px';
         nodeStyle.minHeight = '106px';
-        nodeStyle.boxShadow = '0 16px 30px rgba(41, 62, 96, 0.26), 0 6px 16px rgba(61, 83, 115, 0.22)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(61,83,115,0.55) 0px, rgba(61,83,115,0.55) 9px, transparent 9px)';
+        nodeStyle.boxShadow = '0 18px 34px rgba(41, 62, 96, 0.28), 0 6px 18px rgba(20, 33, 54, 0.2)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(156,184,234,0.65) 0px, rgba(156,184,234,0.65) 9px, transparent 9px)';
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'pride') {
         nodeStyle.background = '#231d17';
-        nodeStyle.border = `1.6px solid rgba(212,175,126,0.72)`;
+        nodeStyle.border = `1.8px solid rgba(212,175,126,0.82)`;
         nodeStyle.color = '#fbf7ee';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '14px 18px 14px 28px';
@@ -1471,58 +1614,85 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   return (
     <div className="w-full relative" style={containerStyle}>
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
-      {isEmpire && (
-    <div
-      style={{
-            position: 'absolute',
-            top: 28,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            textAlign: 'center',
-            color: 'rgba(59, 43, 22, 0.72)',
-            letterSpacing: '0.4em',
-            textTransform: 'uppercase',
-            pointerEvents: 'none',
+      <div
+        style={{
+          position: 'absolute',
+          top: 26,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          color: presentation.header.textColor,
+          letterSpacing: '0.32em',
+          textTransform: 'uppercase',
+          pointerEvents: 'none',
+          padding: '10px 24px 14px',
+          background: presentation.header.panelBg,
+          borderRadius: 18,
+          boxShadow: presentation.header.shadow,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px',
+        }}
+      >
+        <span
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: '50%',
+            background: presentation.header.crestBg,
+            color: presentation.header.crestColor,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: theme.titleFont,
+            fontSize: '18px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            border: `1px solid ${hexToRgba(presentation.accent, 0.4)}`,
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600 }}>
-            Alpha Kappa Psi · Nu Chapter
+          {presentation.crestLetter}
+        </span>
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8 }}>
+            {presentation.subtitle}
           </div>
           <div
             style={{
               fontFamily: theme.titleFont,
               fontSize: '18px',
               letterSpacing: '0.25em',
-              marginTop: 6,
+              marginTop: 4,
             }}
           >
-            Empire Archives
+            {presentation.title}
           </div>
         </div>
-      )}
-      {isEmpire && (
-        <div
-          style={{
-            position: 'absolute',
-            right: 24,
-            bottom: 24,
-            background: 'rgba(201,168,87,0.12)',
-            border: '1px solid rgba(201,168,87,0.45)',
-            color: 'rgba(59,43,22,0.75)',
-            fontSize: '10px',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            padding: '12px 16px',
-            borderRadius: 12,
-            pointerEvents: 'none',
-            boxShadow: '0 10px 24px rgba(58,33,3,0.22)',
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Navigation</div>
-          <div>0 reset view</div>
-          <div>+ zoom in · - zoom out</div>
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          right: 24,
+          bottom: 24,
+          background: presentation.legend.panelBg,
+          border: presentation.legend.border,
+          color: presentation.legend.textColor,
+          fontSize: '10px',
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          padding: '12px 16px',
+          borderRadius: 12,
+          pointerEvents: 'none',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 6 }}>
+          {presentation.legend.title}
         </div>
-      )}
+        {presentation.legend.lines.map((line) => (
+          <div key={line}>{line}</div>
+        ))}
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}

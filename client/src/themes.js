@@ -29,9 +29,9 @@ export const getThemeStyles = (themeName) => {
       backgroundGrid: '#0d151f',
       nodeStudying: 'transparent', // Hexagons with transparent fill
       nodeGraduated: 'transparent',
-      nodeBorder: '#ebd290', // Champagne gold hexagon border
+      nodeBorder: '#f3dca6', // Champagne gold hexagon border
       nodeText: '#ffffff', // White text
-      edgeColor: '#ebd290', // Gold connecting lines
+      edgeColor: '#f6e4b7', // Gold connecting lines
       minimapNode: '#ebd290',
       minimapBg: '#101a26',
       modalBg: 'rgba(16, 26, 38, 0.95)',
@@ -49,9 +49,9 @@ export const getThemeStyles = (themeName) => {
       backgroundGrid: '#073d26',
       nodeStudying: '#ffffff', // White boxes
       nodeGraduated: '#ffffff',
-      nodeBorder: '#e0e0e0', // Light gray border
-      nodeText: '#333333', // Dark text on white boxes (UPPERCASE)
-      edgeColor: '#ffffff', // White connecting lines
+      nodeBorder: '#b6d88a', // Muted chartreuse border
+      nodeText: '#0a2316', // Deep forest text for contrast
+      edgeColor: '#f4d961', // Luminescent gold connecting lines
       minimapNode: '#ffffff',
       minimapBg: '#095332',
       modalBg: 'rgba(9, 83, 50, 0.95)',
@@ -69,9 +69,9 @@ export const getThemeStyles = (themeName) => {
       backgroundGrid: '#2a3a5c',
       nodeStudying: '#ffffff', // White boxes
       nodeGraduated: '#ffffff',
-      nodeBorder: '#3d5373', // Dark blue header bar color
-      nodeText: '#3d5373', // Dark blue text (but headers/accents are white)
-      edgeColor: '#364c73', // Slate blue connecting lines
+      nodeBorder: '#9cb8ea', // Misty blue border for contrast
+      nodeText: '#1f2f49', // Deep navy text
+      edgeColor: '#d4e2ff', // Soft arctic connecting lines
       minimapNode: '#ffffff',
       minimapBg: '#2a3a5c',
       modalBg: 'rgba(54, 76, 115, 0.95)',
