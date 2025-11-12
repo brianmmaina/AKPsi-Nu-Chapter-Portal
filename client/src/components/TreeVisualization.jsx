@@ -72,11 +72,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
   const isEmpire = familyKey === 'empire';
-  const defaultViewport = useMemo(
-    () => (isEmpire ? { x: 0, y: 0, zoom: 0.6 } : { x: 0, y: 0, zoom: 0.75 }),
-    [isEmpire],
-  );
-  const minZoom = isEmpire ? 0.12 : 0.2;
+  const isPower = familyKey === 'power';
+  const isGreed = familyKey === 'greed';
+  const isPride = familyKey === 'pride';
+  const isWolfpack = familyKey === 'wolfpack';
+  const defaultViewport = useMemo(() => {
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.6 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.73 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.74 };
+    return { x: 0, y: 0, zoom: 0.75 };
+  }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
+  const minZoom = isEmpire ? 0.12 : 0.18;
   const maxZoom = isEmpire ? 1.4 : 2;
   const composedBackground = useMemo(() => {
     const layers = [];
@@ -118,6 +126,67 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       overflow: 'hidden',
     };
   }, [theme.background, composedBackground, isEmpire, isTreeReady, theme.backgroundTexture]);
+  const layoutSettings = useMemo(() => {
+    const defaults = {
+      horizontalSpacing: 260,
+      baseVerticalSpacing: 160,
+      pledgeVerticalSpacing: 140,
+      multiChildCompression: 1,
+    };
+
+    if (isEmpire) {
+      return {
+        ...defaults,
+        horizontalSpacing: 220,
+        baseVerticalSpacing: 150,
+        pledgeVerticalSpacing: 130,
+        multiChildCompression: 0.85,
+      };
+    }
+
+    if (isPower) {
+      return {
+        ...defaults,
+        horizontalSpacing: 210,
+        baseVerticalSpacing: 150,
+        pledgeVerticalSpacing: 135,
+        multiChildCompression: 0.72,
+      };
+    }
+
+    if (isGreed) {
+      return {
+        ...defaults,
+        horizontalSpacing: 215,
+        baseVerticalSpacing: 150,
+        pledgeVerticalSpacing: 135,
+        multiChildCompression: 0.78,
+      };
+    }
+
+    if (isPride) {
+      return {
+        ...defaults,
+        horizontalSpacing: 230,
+        baseVerticalSpacing: 155,
+        pledgeVerticalSpacing: 135,
+        multiChildCompression: 0.8,
+      };
+    }
+
+    if (isWolfpack) {
+      return {
+        ...defaults,
+        horizontalSpacing: 225,
+        baseVerticalSpacing: 155,
+        pledgeVerticalSpacing: 135,
+        multiChildCompression: 0.82,
+      };
+    }
+
+    return defaults;
+  }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
+
   const renderEmpireNodeContent = (brother) => {
     const pledgeLabel = brother.pledge_class
       ? brother.pledge_class.toUpperCase()
@@ -658,13 +727,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     const layoutNodes = [];
     const layoutEdges = [];
     const nodePositions = new Map();
+    const subtreeWidthCache = new Map();
     
     // Node dimensions
     const nodeWidth = 180;
     const nodeHeight = 100;
-    const horizontalSpacing = isEmpire ? 220 : 260;
-    const baseVerticalSpacing = isEmpire ? 150 : 160;
-    const pledgeVerticalSpacing = isEmpire ? 130 : 140;
+    const {
+      horizontalSpacing,
+      baseVerticalSpacing,
+      pledgeVerticalSpacing,
+      multiChildCompression,
+    } = layoutSettings;
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -672,11 +745,28 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
      * @returns {number} Width needed for this subtree
      */
     const getSubtreeWidth = (rootId) => {
+      if (subtreeWidthCache.has(rootId)) {
+        return subtreeWidthCache.get(rootId);
+      }
+
       const children = childrenMap.get(rootId) || [];
       if (children.length === 0) {
+        subtreeWidthCache.set(rootId, horizontalSpacing);
         return horizontalSpacing;
       }
-      return children.reduce((sum, childId) => sum + getSubtreeWidth(childId), 0);
+
+      const childWidths = children.map((childId) => getSubtreeWidth(childId));
+      const compression =
+        multiChildCompression < 1 && children.length >= 3
+          ? multiChildCompression
+          : 1;
+
+      const totalWidth =
+        childWidths.reduce((sum, width) => sum + width, 0) * compression;
+      const width = Math.max(totalWidth, horizontalSpacing);
+
+      subtreeWidthCache.set(rootId, width);
+      return width;
     };
 
     /**
@@ -695,13 +785,21 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       // Calculate positions for children
       let currentX = x;
-      const totalWidth = children.reduce((sum, childId) => sum + getSubtreeWidth(childId), 0);
+      const childWidths = children.map((childId) => getSubtreeWidth(childId));
+      const compression =
+        multiChildCompression < 1 && children.length >= 3
+          ? multiChildCompression
+          : 1;
+      const totalWidth =
+        childWidths.reduce((sum, width) => sum + width, 0) * compression;
       const startX = x - totalWidth / 2;
 
+      let accumulatedWidth = 0;
       children.forEach((childId, index) => {
-        const childWidth = getSubtreeWidth(childId);
-        const childX = startX + (childWidth / 2) + children.slice(0, index).reduce((sum, cid) => sum + getSubtreeWidth(cid), 0);
+        const width = childWidths[index] * compression;
+        const childX = startX + accumulatedWidth + width / 2;
         positionNode(childId, childX, y + baseVerticalSpacing);
+        accumulatedWidth += width;
       });
     };
 
@@ -1085,7 +1183,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     setNodes(layoutNodes);
     setEdges(layoutEdges);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brothers, relationships, familyKey]); // Use familyKey instead of theme object to prevent loops
+  }, [brothers, relationships, familyKey, layoutSettings]); // Use familyKey instead of theme object to prevent loops
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
