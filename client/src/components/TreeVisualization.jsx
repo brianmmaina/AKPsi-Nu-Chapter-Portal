@@ -275,6 +275,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       baseVerticalSpacing: 160,
       pledgeVerticalSpacing: 140,
       multiChildCompression: 1,
+      siblingPadding: 0,
     };
 
     if (isEmpire) {
@@ -284,6 +285,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         baseVerticalSpacing: 150,
         pledgeVerticalSpacing: 130,
         multiChildCompression: 0.85,
+        siblingPadding: 0,
       };
     }
 
@@ -294,6 +296,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         baseVerticalSpacing: 150,
         pledgeVerticalSpacing: 135,
         multiChildCompression: 0.72,
+        siblingPadding: 24,
       };
     }
 
@@ -304,6 +307,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         baseVerticalSpacing: 150,
         pledgeVerticalSpacing: 135,
         multiChildCompression: 0.78,
+        siblingPadding: 20,
       };
     }
 
@@ -314,6 +318,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         baseVerticalSpacing: 155,
         pledgeVerticalSpacing: 135,
         multiChildCompression: 0.8,
+        siblingPadding: 16,
       };
     }
 
@@ -324,6 +329,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         baseVerticalSpacing: 155,
         pledgeVerticalSpacing: 135,
         multiChildCompression: 0.82,
+        siblingPadding: 18,
       };
     }
 
@@ -880,6 +886,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       baseVerticalSpacing,
       pledgeVerticalSpacing,
       multiChildCompression,
+      siblingPadding,
     } = layoutSettings;
 
     /**
@@ -933,13 +940,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         multiChildCompression < 1 && children.length >= 3
           ? multiChildCompression
           : 1;
-      const totalWidth =
-        childWidths.reduce((sum, width) => sum + width, 0) * compression;
+      const totalRawWidth = childWidths.reduce((sum, width) => sum + width, 0);
+      const totalSpacing =
+        Math.max(children.length - 1, 0) * siblingPadding * compression;
+      const totalWidth = totalRawWidth * compression + totalSpacing;
       const startX = x - totalWidth / 2;
 
       let accumulatedWidth = 0;
       children.forEach((childId, index) => {
         const width = childWidths[index] * compression;
+        const padding = index > 0 ? siblingPadding * compression : 0;
+        accumulatedWidth += padding;
         const childX = startX + accumulatedWidth + width / 2;
         positionNode(childId, childX, y + baseVerticalSpacing);
         accumulatedWidth += width;
@@ -1193,8 +1204,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       };
 
       // Per-family refinements based on family-tree-corrected.md specifications
+      const themeBackground = theme.nodeStudying || nodeStyle.background;
+
       if (familyKey === 'empire') {
-        nodeStyle.background = '#fff6e8';
+        nodeStyle.background = themeBackground || '#fff6e8';
         nodeStyle.border = '1.6px solid rgba(145, 104, 29, 0.75)';
         nodeStyle.color = '#24170b';
         nodeStyle.borderRadius = '4px';
@@ -1206,7 +1219,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundRepeat = 'no-repeat, no-repeat';
         nodeStyle.backgroundPosition = 'left top, center';
       } else if (familyKey === 'power') {
-        nodeStyle.background = 'linear-gradient(135deg, rgba(20, 38, 60, 0.92) 0%, rgba(10, 22, 38, 0.85) 100%)';
+        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(20, 38, 60, 0.92) 0%, rgba(10, 22, 38, 0.85) 100%)';
         nodeStyle.border = '1.5px solid rgba(245, 210, 131, 0.85)';
         nodeStyle.color = '#fdf5dc';
         nodeStyle.borderRadius = '6px';
@@ -1217,29 +1230,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'greed') {
-        nodeStyle.background = 'linear-gradient(135deg, rgba(246, 252, 244, 0.96) 0%, rgba(233, 247, 230, 0.92) 100%)';
-        nodeStyle.border = '1.6px solid rgba(180, 214, 138, 0.9)';
+        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(252,255,247,0.98) 0%, rgba(236,248,232,0.94) 100%)';
+        nodeStyle.border = '1.8px solid rgba(216, 242, 168, 0.9)';
         nodeStyle.color = '#0a2316';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '12px 16px 12px 24px';
         nodeStyle.minHeight = '104px';
-        nodeStyle.boxShadow = '0 16px 32px rgba(9,53,32,0.28), 0 6px 16px rgba(244, 217, 97, 0.26)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.55) 0px, rgba(244,217,97,0.55) 8px, transparent 8px)';
+        nodeStyle.boxShadow = '0 18px 34px rgba(9,53,32,0.32), 0 8px 18px rgba(244, 217, 97, 0.28)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(244,217,97,0.7) 0px, rgba(244,217,97,0.7) 8px, transparent 8px)';
         nodeStyle.backgroundSize = '8px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'wolfpack') {
-        nodeStyle.background = 'linear-gradient(135deg, rgba(248,252,255,0.98) 0%, rgba(234,243,255,0.94) 100%)';
-        nodeStyle.border = '1.6px solid rgba(156, 184, 234, 0.85)';
-        nodeStyle.color = '#1f2f49';
+        nodeStyle.background = themeBackground || 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(236,244,255,0.96) 100%)';
+        nodeStyle.border = '1.8px solid rgba(214, 228, 255, 0.9)';
+        nodeStyle.color = '#1e2c45';
         nodeStyle.borderRadius = '4px';
         nodeStyle.padding = '13px 16px 13px 24px';
         nodeStyle.minHeight = '106px';
-        nodeStyle.boxShadow = '0 18px 34px rgba(41, 62, 96, 0.28), 0 6px 18px rgba(20, 33, 54, 0.2)';
-        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(156,184,234,0.65) 0px, rgba(156,184,234,0.65) 9px, transparent 9px)';
+        nodeStyle.boxShadow = '0 20px 38px rgba(24, 37, 58, 0.28), 0 8px 18px rgba(26, 37, 58, 0.2)';
+        nodeStyle.backgroundImage = 'linear-gradient(90deg, rgba(156,184,234,0.78) 0px, rgba(156,184,234,0.78) 9px, transparent 9px)';
         nodeStyle.backgroundSize = '9px 100%';
         nodeStyle.backgroundRepeat = 'no-repeat';
       } else if (familyKey === 'pride') {
-        nodeStyle.background = '#231d17';
+        nodeStyle.background = themeBackground || '#231d17';
         nodeStyle.border = `1.8px solid rgba(212,175,126,0.82)`;
         nodeStyle.color = '#fbf7ee';
         nodeStyle.borderRadius = '4px';
@@ -1614,8 +1627,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   return (
     <div className="w-full relative" style={containerStyle}>
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
-      <div
-        style={{
+    <div
+      style={{
           position: 'absolute',
           top: 26,
           left: '50%',

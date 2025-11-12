@@ -27,8 +27,8 @@ export const getThemeStyles = (themeName) => {
     power: {
       background: '#101a26',
       backgroundGrid: '#0d151f',
-      nodeStudying: 'transparent', // Hexagons with transparent fill
-      nodeGraduated: 'transparent',
+      nodeStudying: 'rgba(17, 30, 48, 0.96)', // solid cards
+      nodeGraduated: 'rgba(17, 30, 48, 0.96)',
       nodeBorder: '#f3dca6', // Champagne gold hexagon border
       nodeText: '#ffffff', // White text
       edgeColor: '#f6e4b7', // Gold connecting lines
@@ -45,17 +45,17 @@ export const getThemeStyles = (themeName) => {
     // GREED - Deep forest green background with white boxes and yellow-gold accents
     // From family-tree-corrected.md: #095332 forest green, #f4d961 golden yellow
     greed: {
-      background: '#095332',
-      backgroundGrid: '#073d26',
-      nodeStudying: '#ffffff', // White boxes
-      nodeGraduated: '#ffffff',
-      nodeBorder: '#b6d88a', // Muted chartreuse border
+      background: '#064729',
+      backgroundGrid: '#04341f',
+      nodeStudying: '#fcfff7', // bright cards
+      nodeGraduated: '#fcfff7',
+      nodeBorder: '#d8f2a8', // vivid border
       nodeText: '#0a2316', // Deep forest text for contrast
-      edgeColor: '#f4d961', // Luminescent gold connecting lines
+      edgeColor: '#f9e97a', // luminous gold connecting lines
       minimapNode: '#ffffff',
-      minimapBg: '#095332',
-      modalBg: 'rgba(9, 83, 50, 0.95)',
-      accent: '#f4d961', // Golden yellow primary
+      minimapBg: '#064729',
+      modalBg: 'rgba(7, 58, 34, 0.95)',
+      accent: '#f6e66a', // Golden yellow primary
       titleFont: 'Montserrat, system-ui, sans-serif', // Heavy/bold sans-serif
       bodyFont: 'Montserrat, system-ui, sans-serif',
       nodeRadius: 0, // Crisp corners (0px border-radius)
@@ -67,11 +67,11 @@ export const getThemeStyles = (themeName) => {
     wolfpack: {
       background: '#364c73',
       backgroundGrid: '#2a3a5c',
-      nodeStudying: '#ffffff', // White boxes
-      nodeGraduated: '#ffffff',
-      nodeBorder: '#9cb8ea', // Misty blue border for contrast
-      nodeText: '#1f2f49', // Deep navy text
-      edgeColor: '#d4e2ff', // Soft arctic connecting lines
+      nodeStudying: '#f7faff', // Bright cards
+      nodeGraduated: '#f7faff',
+      nodeBorder: '#d6e4ff', // Brighter border for contrast
+      nodeText: '#1e2c45', // Deep navy text
+      edgeColor: '#f0f6ff', // High contrast connecting lines
       minimapNode: '#ffffff',
       minimapBg: '#2a3a5c',
       modalBg: 'rgba(54, 76, 115, 0.95)',
@@ -88,8 +88,8 @@ export const getThemeStyles = (themeName) => {
     pride: {
       background: '#181413',
       backgroundGrid: '#242220',
-      nodeStudying: '#181413', // Dark background with gold border
-      nodeGraduated: '#181413',
+      nodeStudying: '#2a1d12', // Solid dark card
+      nodeGraduated: '#2a1d12',
       nodeBorder: '#d4af7e', // Muted gold border
       nodeText: '#ffffff', // White text
       edgeColor: '#d4af7e', // Gold connecting lines
