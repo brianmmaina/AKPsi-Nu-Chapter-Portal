@@ -1743,6 +1743,31 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     return seeded;
   }, [lineageHighlightMode, lineageSourceId, parentMap, childMap]);
 
+  const milestoneMarkers = useMemo(() => {
+    if (!isTreeReady || !nodes.length) return [];
+    
+    // Group nodes by pledge class and find their average Y position
+    const pledgeGroups = new Map();
+    nodes.forEach(node => {
+      const pledgeClass = node.data?.brother?.pledge_class;
+      if (pledgeClass) {
+        if (!pledgeGroups.has(pledgeClass)) {
+          pledgeGroups.set(pledgeClass, []);
+        }
+        pledgeGroups.get(pledgeClass).push(node.position.y);
+      }
+    });
+
+    // Calculate average Y for each pledge class
+    return Array.from(pledgeGroups.entries())
+      .map(([pledgeClass, yPositions]) => ({
+        pledgeClass: pledgeClass.toUpperCase(),
+        avgY: yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length,
+      }))
+      .sort((a, b) => a.avgY - b.avgY)
+      .slice(0, 8); // Limit to 8 most prominent markers
+  }, [isTreeReady, nodes]);
+
   useEffect(() => {
     if (lineageHighlightMode === 'off') {
       setLineageSourceId(null);
@@ -2036,70 +2061,47 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </ReactFlow>
 
       {/* Milestone Markers - Pledge Class Guides */}
-      {isTreeReady && nodes.length > 0 && (() => {
-        // Group nodes by pledge class and find their average Y position
-        const pledgeGroups = new Map();
-        nodes.forEach(node => {
-          const pledgeClass = node.data?.brother?.pledge_class;
-          if (pledgeClass) {
-            if (!pledgeGroups.has(pledgeClass)) {
-              pledgeGroups.set(pledgeClass, []);
-            }
-            pledgeGroups.get(pledgeClass).push(node.position.y);
-          }
-        });
-
-        // Calculate average Y for each pledge class
-        const milestoneMarkers = Array.from(pledgeGroups.entries())
-          .map(([pledgeClass, yPositions]) => ({
-            pledgeClass: pledgeClass.toUpperCase(),
-            avgY: yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length,
-          }))
-          .sort((a, b) => a.avgY - b.avgY)
-          .slice(0, 8); // Limit to 8 most prominent markers
-
-        return milestoneMarkers.map((marker, idx) => {
-          const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
-          const textColor = hexToRgba(presentation.legend.textColor || theme.nodeText, 0.5);
-          
-          return (
+      {milestoneMarkers.map((marker, idx) => {
+        const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
+        const textColor = hexToRgba(presentation.legend.textColor || theme.nodeText, 0.5);
+        
+        return (
+          <div
+            key={`milestone-${marker.pledgeClass}-${idx}`}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: marker.avgY,
+              width: '100%',
+              height: '1px',
+              background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
+              pointerEvents: 'none',
+              zIndex: 0,
+              transform: 'translateY(-50%)',
+            }}
+          >
             <div
-              key={`milestone-${marker.pledgeClass}-${idx}`}
               style={{
                 position: 'absolute',
-                left: 0,
-                top: marker.avgY,
-                width: '100%',
-                height: '1px',
-                background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
-                pointerEvents: 'none',
-                zIndex: 0,
+                left: 24,
+                top: '50%',
                 transform: 'translateY(-50%)',
+                fontSize: '10px',
+                fontWeight: 600,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: textColor,
+                background: presentation.legend.panelBg || 'transparent',
+                padding: '2px 8px',
+                borderRadius: 4,
+                opacity: 0.7,
               }}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 24,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: textColor,
-                  background: presentation.legend.panelBg || 'transparent',
-                  padding: '2px 8px',
-                  borderRadius: 4,
-                  opacity: 0.7,
-                }}
-              >
-                {marker.pledgeClass}
-              </div>
+              {marker.pledgeClass}
             </div>
-          );
-        });
-      })()}
+          </div>
+        );
+      })}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
