@@ -423,7 +423,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [updateIndexWithFamily, waitForIndexBuild]);
 
-  const renderNodeTemplate = (brother, theme, palette) => {
+  const renderNodeTemplate = useCallback((brother, themeParam, palette) => {
+    const themeToUse = themeParam || theme;
     const rawPledge = brother.pledge_class || 'Unassigned';
     const pledgeLabel = rawPledge.toUpperCase();
     const statusLabel = statusLabelForBrother(brother);
@@ -531,7 +532,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         </div>
       </div>
     );
-  };
+  }, [theme]);
 
   const renderEmpireNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
@@ -2090,63 +2091,55 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </ReactFlow>
 
       {/* Milestone Markers - Pledge Class Guides */}
-      {(() => {
-        if (!milestoneMarkers || !Array.isArray(milestoneMarkers) || milestoneMarkers.length === 0) {
-          return null;
-        }
-        if (!theme || !presentation) {
-          return null;
-        }
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && theme && presentation && milestoneMarkers.map((marker, idx) => {
+        if (!marker || typeof marker.avgY !== 'number') return null;
+        if (!theme || !presentation) return null;
         
-        return milestoneMarkers.map((marker, idx) => {
-          if (!marker || typeof marker.avgY !== 'number') return null;
+        try {
+          const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
+          const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
           
-          try {
-            const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
-            const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
-            
-            return (
+          return (
+            <div
+              key={`milestone-${marker.pledgeClass || idx}-${idx}`}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: marker.avgY,
+                width: '100%',
+                height: '1px',
+                background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
+                pointerEvents: 'none',
+                zIndex: 0,
+                transform: 'translateY(-50%)',
+              }}
+            >
               <div
-                key={`milestone-${marker.pledgeClass || idx}-${idx}`}
                 style={{
                   position: 'absolute',
-                  left: 0,
-                  top: marker.avgY,
-                  width: '100%',
-                  height: '1px',
-                  background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
-                  pointerEvents: 'none',
-                  zIndex: 0,
+                  left: 24,
+                  top: '50%',
                   transform: 'translateY(-50%)',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: textColor,
+                  background: presentation.legend?.panelBg || 'transparent',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  opacity: 0.7,
                 }}
               >
-                <div
-        style={{
-          position: 'absolute',
-                    left: 24,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: textColor,
-                    background: presentation.legend?.panelBg || 'transparent',
-                    padding: '2px 8px',
-                    borderRadius: 4,
-                    opacity: 0.7,
-                  }}
-                >
-                  {marker.pledgeClass || ''}
-                </div>
+                {marker.pledgeClass || ''}
               </div>
-            );
-          } catch (error) {
-            console.warn('Error rendering milestone marker:', error);
-            return null;
-          }
-        });
-      })()}
+            </div>
+          );
+        } catch (error) {
+          console.warn('Error rendering milestone marker:', error);
+          return null;
+        }
+      })}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
