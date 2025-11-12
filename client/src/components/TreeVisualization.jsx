@@ -196,17 +196,6 @@ const statusLabelForBrother = (brother) => {
 };
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
-  // Safety check: ensure family prop exists
-  if (!family || !family.theme) {
-    return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ fontSize: '1.2rem', color: '#666' }}>Family data not available. Please select a family.</p>
-        </div>
-      </div>
-    );
-  }
-
   const [brothers, setBrothers] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [selectedBrother, setSelectedBrother] = useState(null);
@@ -234,6 +223,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const highlightTimeoutRef = useRef(null);
   const hasFitRef = useRef(false);
   const reactFlowInstance = useReactFlow();
+
+  // Safety check: ensure family prop exists (after hooks)
+  if (!family || !family.theme) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ fontSize: '1.2rem', color: '#666' }}>Family data not available. Please select a family.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => {
