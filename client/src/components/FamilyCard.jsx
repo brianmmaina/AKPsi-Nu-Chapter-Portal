@@ -67,14 +67,14 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
       tabIndex={0}
       className={`tile text-center group ${isClicked ? 'click-zoom' : ''}`}
       style={{
-        backgroundColor: 'var(--akpsi-navy-subtle)',
-        border: `1.5px solid ${accent}80`,
-        borderRadius: 'var(--radius-md)',
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        border: `1.5px solid ${accent}55`,
+        borderRadius: '18px',
         padding: 'var(--space-4) var(--space-5)',
-        minWidth: '180px',
+        minWidth: '200px',
         backgroundImage,
         backgroundSize,
-        boxShadow: 'var(--shadow-sm)',
+        boxShadow: '0 14px 28px rgba(50, 33, 15, 0.08)',
         transition: 'all var(--motion-fast) var(--ease-standard), opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
         opacity,
         transform: isLoaded ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
@@ -117,6 +117,17 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
           {family.name}
         </h3>
       </div>
+      <p
+        style={{
+          fontSize: 'var(--text-xs)',
+          color: 'rgba(51, 38, 20, 0.6)',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          marginBottom: 'var(--space-3)',
+        }}
+      >
+        Family Records
+      </p>
       <div
         className="tile-underline mx-auto"
         style={{

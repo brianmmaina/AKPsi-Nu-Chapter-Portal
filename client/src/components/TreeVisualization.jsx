@@ -42,11 +42,165 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
   const initialViewportRef = useRef(null);
+  const hasFitRef = useRef(false);
   const reactFlowInstance = useReactFlow();
 
   // Memoize theme to prevent infinite re-renders
   const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
   const familyKey = family.theme;
+  const isEmpire = familyKey === 'empire';
+  const defaultViewport = useMemo(
+    () => (isEmpire ? { x: 0, y: 0, zoom: 0.6 } : { x: 0, y: 0, zoom: 0.75 }),
+    [isEmpire],
+  );
+  const minZoom = isEmpire ? 0.12 : 0.2;
+  const maxZoom = isEmpire ? 1.4 : 2;
+  const composedBackground = useMemo(() => {
+    const layers = [];
+    if (isEmpire) {
+      layers.push(
+        'radial-gradient(circle at 50% -10%, rgba(201,168,87,0.18) 0%, rgba(248,247,243,0) 55%)',
+      );
+      layers.push(
+        'linear-gradient(135deg, rgba(160,130,62,0.12) 0%, rgba(248,247,243,0) 60%)',
+      );
+    }
+    if (theme.backgroundTexture) {
+      layers.push(theme.backgroundTexture);
+    }
+    return layers.join(', ');
+  }, [isEmpire, theme.backgroundTexture]);
+
+  const containerStyle = useMemo(() => {
+    const sizeValue = isEmpire
+      ? theme.backgroundTexture
+        ? '100% 100%, 100% 100%, 280px 280px'
+        : '100% 100%, 100% 100%'
+      : theme.backgroundTexture
+        ? '280px 280px'
+        : undefined;
+
+    return {
+      width: '100%',
+      height: '100vh',
+      backgroundColor: theme.background,
+      backgroundImage: composedBackground || undefined,
+      backgroundSize: sizeValue,
+      backgroundPosition: 'center',
+      pointerEvents: 'auto',
+      opacity: isTreeReady ? 1 : 0,
+      transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
+      transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
+      position: 'relative',
+      overflow: 'hidden',
+    };
+  }, [theme.background, composedBackground, isEmpire, isTreeReady, theme.backgroundTexture]);
+  const renderEmpireNodeContent = (brother, isTransfer) => {
+    const pledgeLabel = brother.pledge_class
+      ? brother.pledge_class.toUpperCase()
+      : 'UNDECLARED';
+
+    let subtitle = '';
+    if (brother.status === 'graduated') {
+      subtitle = `Class of ${brother.graduation_year || '—'}`;
+    } else if (brother.status === 'studying') {
+      subtitle = 'Currently Studying';
+    } else if (brother.graduation_year) {
+      subtitle = `Class of ${brother.graduation_year}`;
+    }
+
+    const major = brother.major || '';
+    const aspirations =
+      brother.career_aspirations || brother.fun_facts || brother.notes || '';
+
+    return (
+      <div
+        title={`Pledge Class ${pledgeLabel}${subtitle ? ` · ${subtitle}` : ''}`}
+        style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 4,
+          }}
+        >
+          <div
+            style={{
+              fontSize: '9px',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: 'rgba(201,168,87,0.18)',
+              color: '#6d5122',
+              fontWeight: 600,
+            }}
+          >
+            {pledgeLabel}
+          </div>
+          {isTransfer && (
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.6px',
+                textTransform: 'uppercase',
+                color: 'rgba(59, 43, 22, 0.6)',
+              }}
+            >
+              Transfer
+            </div>
+          )}
+        </div>
+        <div>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: '13px',
+              letterSpacing: '0.4px',
+              color: '#3b2b16',
+              marginBottom: subtitle ? 2 : 0,
+            }}
+          >
+            {brother.name}
+          </div>
+          {subtitle && (
+            <div style={{ fontSize: '10px', color: 'rgba(59, 43, 22, 0.7)' }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+        {major && (
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(59, 43, 22, 0.75)',
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontWeight: 600, letterSpacing: '0.4px' }}>
+              Major
+            </span>
+            <span>{major}</span>
+          </div>
+        )}
+        {aspirations && (
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(59, 43, 22, 0.65)',
+              lineHeight: 1.45,
+            }}
+          >
+            {aspirations}
+          </div>
+        )}
+      </div>
+    );
+  };
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
@@ -109,7 +263,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     if (brothers.length === 0) {
       return; // Still loading, don't process yet
     }
-
+    
     // Build relationship structure: parent -> children
     const relationshipsMap = new Map(); // little_id -> big_id
     const childrenMap = new Map(); // big_id -> [little_ids]
@@ -132,9 +286,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     // Node dimensions
     const nodeWidth = 180;
     const nodeHeight = 100;
-    const horizontalSpacing = 260; // Slightly tighter sibling spacing
-    const baseVerticalSpacing = 160; // Shorter baseline generation spacing
-    const pledgeVerticalSpacing = 140; // Tighter pledge-class spacing
+    const horizontalSpacing = isEmpire ? 220 : 260;
+    const baseVerticalSpacing = isEmpire ? 150 : 160;
+    const pledgeVerticalSpacing = isEmpire ? 130 : 140;
 
     /**
      * Recursively calculates the width needed for a subtree
@@ -217,6 +371,27 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         });
       });
     }
+    if (isEmpire) {
+      brothers.forEach((brother) => {
+        const children = childrenMap.get(brother.id) || [];
+        if (children.length === 0) {
+          return;
+        }
+        const childXs = children
+          .map((childId) => nodePositions.get(childId))
+          .filter(Boolean)
+          .map((pos) => pos.x);
+        if (childXs.length === 0) {
+          return;
+        }
+        const avgX = childXs.reduce((sum, x) => sum + x, 0) / childXs.length;
+        const currentPos = nodePositions.get(brother.id);
+        if (currentPos) {
+          nodePositions.set(brother.id, { ...currentPos, x: avgX });
+        }
+      });
+    }
+
     const pledgeOrder = [
       'alpha','beta','gamma','delta','epsilon','zeta','eta','theta','iota','kappa','lambda','mu','nu','xi','omicron','pi','rho','sigma','tau','upsilon','phi','chi','psi','omega',
       'alpha alpha','alpha beta','alpha gamma','alpha delta','alpha epsilon','alpha zeta','alpha eta','alpha theta','alpha iota','alpha kappa','alpha lambda','alpha mu','alpha nu','alpha xi','alpha omicron','alpha pi','alpha rho','alpha sigma','alpha tau','alpha upsilon','alpha phi','alpha chi','alpha psi','alpha omega',
@@ -466,7 +641,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodeLabel = (
           <div
             style={{
-              fontFamily: theme.bodyFont,
+            fontFamily: theme.bodyFont,
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
@@ -477,17 +652,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             {/* Accent bar */}
             <div
               style={{
-                height: 3,
+              height: 3, 
                 background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
                 marginLeft: '-12px',
                 marginRight: '-12px',
                 marginTop: '-4px',
-                marginBottom: 6,
+              marginBottom: 6,
               }}
             />
             {/* Name */}
-            <div
-              style={{
+            <div 
+              style={{ 
                 fontFamily: theme.titleFont,
                 fontSize: '12px',
                 letterSpacing: '0.6px',
@@ -500,8 +675,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             </div>
             {/* Pledge Class */}
             {brother.pledge_class && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '10px',
                   letterSpacing: '0.4px',
                   color: '#f8f5ef',
@@ -512,8 +687,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               </div>
             )}
             {/* Graduation year / status */}
-            <div
-              style={{
+            <div 
+              style={{ 
                 fontSize: '10px',
                 color: 'rgba(248, 245, 239, 0.75)',
               }}
@@ -526,8 +701,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             </div>
             {/* Major */}
             {brother.major && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '10px',
                   color: 'rgba(248, 245, 239, 0.6)',
                   fontStyle: 'italic',
@@ -538,8 +713,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             )}
             {/* Transfer indicator */}
             {isTransfer && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '9px',
                   color: 'rgba(212, 175, 126, 0.7)',
                   fontStyle: 'italic',
@@ -551,81 +726,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           </div>
         );
       } else if (familyKey === 'empire') {
-        nodeLabel = (
-          <div
-            style={{
-            fontFamily: theme.bodyFont,
-            width: '100%',
-            minHeight: nodeHeight,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              color: '#3b2b16',
-            }}
-          >
-            <div 
-              style={{ 
-                fontFamily: theme.titleFont,
-                fontSize: '12px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: '#a37c33',
-              }}
-            >
-              {brother.name}
-            </div>
-            
-            {brother.pledge_class && (
-              <div 
-                style={{ 
-                  fontSize: '11px',
-                  letterSpacing: '0.4px',
-                  color: '#604720',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {brother.pledge_class}
-              </div>
-            )}
-            
-            <div 
-              style={{ 
-                fontSize: '10px',
-                color: 'rgba(59, 43, 22, 0.78)',
-              }}
-            >
-              {brother.graduation_year
-                ? `Class of ${brother.graduation_year}`
-                : brother.status === 'graduated'
-                    ? 'Graduated'
-                    : 'Currently Studying'}
-            </div>
-            
-            {brother.major && (
-              <div 
-                style={{ 
-                  fontSize: '10px',
-                  color: 'rgba(59, 43, 22, 0.6)',
-                  fontStyle: 'italic',
-                }}
-              >
-                {brother.major}
-              </div>
-            )}
-            
-            {isTransfer && (
-              <div 
-                style={{ 
-                  fontSize: '9px',
-                  color: 'rgba(163, 124, 51, 0.8)',
-                  fontStyle: 'italic',
-                }}
-              >
-                (Transfer)
-              </div>
-            )}
-          </div>
-        );
+        nodeLabel = renderEmpireNodeContent(brother, isTransfer);
       } else {
         // Other families: simpler node design
         nodeLabel = (
@@ -814,21 +915,73 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [nodes, reactFlowInstance]);
 
   useEffect(() => {
-    if (!isTreeReady || nodes.length === 0) {
+    initialViewportRef.current = null;
+    hasFitRef.current = false;
+  }, [family.id]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!isEmpire) return;
+      if (event.target instanceof HTMLElement && event.target.closest('input, textarea, [contenteditable="true"]')) {
+        return;
+      }
+
+      if (event.key === '0') {
+        event.preventDefault();
+        try {
+          reactFlowInstance.fitView({
+            padding: 0.15,
+            duration: 450,
+          });
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      const adjustZoom = (direction) => {
+        try {
+          const currentViewport = reactFlowInstance.getViewport();
+          const nextZoom = Math.max(
+            minZoom,
+            Math.min(maxZoom, currentViewport.zoom * direction),
+          );
+          reactFlowInstance.zoomTo(nextZoom, 200);
+        } catch {
+          // ignore
+        }
+      };
+
+      if (event.key === '-' || event.key === '_') {
+        event.preventDefault();
+        adjustZoom(0.9);
+      } else if (event.key === '=' || event.key === '+') {
+        event.preventDefault();
+        adjustZoom(1.1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEmpire, reactFlowInstance, minZoom, maxZoom]);
+
+  useEffect(() => {
+    if (!isTreeReady || nodes.length === 0 || hasFitRef.current) {
       return;
     }
 
     requestAnimationFrame(() => {
       try {
         reactFlowInstance.fitView({
-          padding: 0.25,
-          duration: 600,
+          padding: isEmpire ? 0.15 : 0.25,
+          duration: 500,
         });
+        hasFitRef.current = true;
       } catch (err) {
         console.warn('Failed to fit view:', err);
       }
     });
-  }, [isTreeReady, nodes, reactFlowInstance]);
+  }, [isTreeReady, nodes, reactFlowInstance, isEmpire]);
 
   // Remove loading state - tree will fade in instead
 
@@ -925,23 +1078,60 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }
 
   return (
-    <div
-      className="w-full relative"
-      style={{
-        width: '100%',
-        height: '100vh',
-        backgroundColor: theme.background,
-        backgroundImage: theme.backgroundTexture,
-        backgroundSize: '280px 280px',
-        backgroundPosition: 'center',
-        pointerEvents: 'auto',
-        opacity: isTreeReady ? 1 : 0,
-        transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
-        transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
-      }}
-    >
+    <div className="w-full relative" style={containerStyle}>
       {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
-
+      {isEmpire && (
+    <div
+      style={{
+            position: 'absolute',
+            top: 28,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            textAlign: 'center',
+            color: 'rgba(59, 43, 22, 0.72)',
+            letterSpacing: '0.4em',
+            textTransform: 'uppercase',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 600 }}>
+            Alpha Kappa Psi · Nu Chapter
+          </div>
+          <div
+            style={{
+              fontFamily: theme.titleFont,
+              fontSize: '18px',
+              letterSpacing: '0.25em',
+              marginTop: 6,
+            }}
+          >
+            Empire Archives
+          </div>
+        </div>
+      )}
+      {isEmpire && (
+        <div
+          style={{
+            position: 'absolute',
+            right: 24,
+            bottom: 24,
+            background: 'rgba(201,168,87,0.12)',
+            border: '1px solid rgba(201,168,87,0.45)',
+            color: 'rgba(59,43,22,0.75)',
+            fontSize: '10px',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            padding: '12px 16px',
+            borderRadius: 12,
+            pointerEvents: 'none',
+            boxShadow: '0 10px 24px rgba(58,33,3,0.22)',
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Navigation</div>
+          <div>0 reset view</div>
+          <div>+ zoom in · - zoom out</div>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -960,8 +1150,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
-        minZoom={0.2}
+        defaultViewport={defaultViewport}
+        minZoom={minZoom}
+        maxZoom={maxZoom}
         panOnDrag={!isModalOpen}
         zoomOnScroll={!isModalOpen}
         zoomOnPinch={!isModalOpen}
@@ -1011,7 +1202,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               if (targetViewport) {
                 reactFlowInstance.setViewport(targetViewport, { duration: 300 });
               } else {
-                reactFlowInstance.fitView({ padding: 0.25, duration: 400 });
+                reactFlowInstance.fitView({ padding: isEmpire ? 0.15 : 0.25, duration: 400 });
               }
             } catch (e) {
               // If viewport restore fails, continue anyway

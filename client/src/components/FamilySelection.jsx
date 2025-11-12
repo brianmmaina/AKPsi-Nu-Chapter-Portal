@@ -32,7 +32,15 @@ const FamilySelection = ({ families, onSelectFamily }) => {
   }, [onSelectFamily]);
 
   return (
-    <div className="relative min-h-screen flex flex-col akpsi-bg" style={{ padding: 'var(--space-4)' }}>
+    <div
+      className="relative min-h-screen flex flex-col"
+      style={{
+        padding: 'var(--space-4)',
+        backgroundColor: '#f4ede2',
+        backgroundImage:
+          'radial-gradient(circle at top, rgba(211,175,55,0.12) 0%, rgba(244,237,226,0) 55%), linear-gradient(135deg, rgba(109,81,34,0.08) 0%, rgba(244,237,226,0) 60%)',
+      }}
+    >
       {/* Large centered AKΨ watermark */}
       <div className="akpsi-watermark" aria-hidden>
         <div className="akpsi-watermark-inner">ΑΚΨ</div>
@@ -60,34 +68,39 @@ const FamilySelection = ({ families, onSelectFamily }) => {
           </div>
           <h1
             style={{
-              fontSize: 'var(--text-2xl)',
+              fontSize: 'calc(var(--text-2xl) * 1.1)',
               fontFamily: 'var(--font-display)',
-              color: 'var(--primary)',
-              fontWeight: 'var(--weight-bold)',
-              letterSpacing: 'var(--tracking-wide)',
+              color: '#6d5122',
+              fontWeight: '700',
+              letterSpacing: '0.4em',
+              textTransform: 'uppercase',
               marginBottom: 'var(--space-1)',
             }}
           >
-            Alpha Kappa Psi
+            Nu Chapter Archives
           </h1>
           <h2
             style={{
-              fontSize: 'var(--text-base)',
+              fontSize: 'var(--text-lg)',
               fontFamily: 'var(--font-display)',
-              color: 'var(--primary)',
-              fontWeight: 'var(--weight-normal)',
-              marginBottom: 'var(--space-1)',
+              color: '#9a7d45',
+              fontWeight: '500',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              marginBottom: 'var(--space-2)',
             }}
           >
-            Select a Family
+            Family Tree Collection
           </h2>
           <p
             style={{
-              fontSize: 'var(--text-xs)',
-              color: 'var(--text-muted)',
+              fontSize: 'var(--text-sm)',
+              color: 'rgba(51, 38, 20, 0.65)',
+              maxWidth: '520px',
+              margin: '0 auto',
             }}
           >
-            Explore lineage, classes, and connections
+            Explore preserved lineage ledgers, pledge classes, and mentorship ties of the Alpha Kappa Psi Nu Chapter.
           </p>
         </div>
 
