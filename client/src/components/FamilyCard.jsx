@@ -67,14 +67,12 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
       tabIndex={0}
       className={`tile text-center group ${isClicked ? 'click-zoom' : ''}`}
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        border: `1.5px solid ${accent}55`,
+        background: cardStyle.background,
+        border: cardStyle.border,
         borderRadius: '18px',
         padding: 'var(--space-4) var(--space-5)',
         minWidth: '200px',
-        backgroundImage,
-        backgroundSize,
-        boxShadow: '0 14px 28px rgba(50, 33, 15, 0.08)',
+        boxShadow: cardStyle.shadow,
         transition: 'all var(--motion-fast) var(--ease-standard), opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
         opacity,
         transform: isLoaded ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
@@ -84,14 +82,14 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
         if (isLoaded) {
           e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
         }
-        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        e.currentTarget.style.boxShadow = '0 20px 36px rgba(31, 24, 18, 0.18)';
         e.currentTarget.style.borderColor = `${accent}CC`;
       }}
       onMouseLeave={(e) => {
         if (isLoaded) {
           e.currentTarget.style.transform = 'translateY(0) scale(1)';
         }
-        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+        e.currentTarget.style.boxShadow = cardStyle.shadow;
         e.currentTarget.style.borderColor = `${accent}80`;
       }}
       aria-label={`Select ${family.name} family`}
@@ -120,7 +118,7 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
       <p
         style={{
           fontSize: 'var(--text-xs)',
-          color: 'rgba(51, 38, 20, 0.6)',
+          color: cardStyle.text,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           marginBottom: 'var(--space-3)',

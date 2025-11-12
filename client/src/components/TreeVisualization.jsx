@@ -28,6 +28,29 @@ import { hexToRgba } from '../utils/color';
  * @param {Function} props.onChangeFamily - Callback to change the selected family
  * @returns {JSX.Element} React Flow tree visualization
  */
+const statusLabelForBrother = (brother) => {
+  const normalized = (brother.status || '').toLowerCase().trim();
+  const gradYear = brother.graduation_year;
+
+  if (normalized === 'graduated' || normalized === 'alumni') {
+    return gradYear ? `Graduated · ${gradYear}` : 'Graduated';
+  }
+
+  if (normalized === 'studying' || normalized === 'active' || normalized === 'current') {
+    return 'Currently Studying';
+  }
+
+  if (normalized === 'prospective') {
+    return 'Prospective Member';
+  }
+
+  if (gradYear) {
+    return `Class of ${gradYear}`;
+  }
+
+  return brother.status || 'Status Pending';
+};
+
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [brothers, setBrothers] = useState([]);
   const [relationships, setRelationships] = useState([]);
@@ -95,28 +118,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       overflow: 'hidden',
     };
   }, [theme.background, composedBackground, isEmpire, isTreeReady, theme.backgroundTexture]);
-  const renderEmpireNodeContent = (brother, isTransfer) => {
+  const renderEmpireNodeContent = (brother) => {
     const pledgeLabel = brother.pledge_class
       ? brother.pledge_class.toUpperCase()
       : 'UNDECLARED';
 
-    let subtitle = '';
-    if (brother.status === 'graduated') {
-      subtitle = `Class of ${brother.graduation_year || '—'}`;
-    } else if (brother.status === 'studying') {
-      subtitle = 'Currently Studying';
-    } else if (brother.graduation_year) {
-      subtitle = `Class of ${brother.graduation_year}`;
-    }
-
-    const major = brother.major || '';
-    const aspirations =
-      brother.career_aspirations || brother.fun_facts || brother.notes || '';
+    const statusLabel = statusLabelForBrother(brother);
 
     return (
       <div
-        title={`Pledge Class ${pledgeLabel}${subtitle ? ` · ${subtitle}` : ''}`}
-        style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        title={`Pledge Class ${pledgeLabel}${statusLabel ? ` · ${statusLabel}` : ''}`}
+        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
       >
         <div
           style={{
@@ -140,18 +152,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           >
             {pledgeLabel}
           </div>
-          {isTransfer && (
-            <div
-              style={{
-                fontSize: '9px',
-                letterSpacing: '0.6px',
-                textTransform: 'uppercase',
-                color: 'rgba(59, 43, 22, 0.6)',
-              }}
-            >
-              Transfer
-            </div>
-          )}
         </div>
         <div>
           <div
@@ -160,44 +160,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               fontSize: '13px',
               letterSpacing: '0.4px',
               color: '#3b2b16',
-              marginBottom: subtitle ? 2 : 0,
+              marginBottom: 4,
             }}
           >
             {brother.name}
           </div>
-          {subtitle && (
-            <div style={{ fontSize: '10px', color: 'rgba(59, 43, 22, 0.7)' }}>
-              {subtitle}
-            </div>
-          )}
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'rgba(59, 43, 22, 0.72)',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+            }}
+          >
+            {statusLabel}
+          </div>
         </div>
-        {major && (
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(59, 43, 22, 0.75)',
-              display: 'flex',
-              gap: 6,
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ fontWeight: 600, letterSpacing: '0.4px' }}>
-              Major
-            </span>
-            <span>{major}</span>
-          </div>
-        )}
-        {aspirations && (
-          <div
-            style={{
-              fontSize: '10px',
-              color: 'rgba(59, 43, 22, 0.65)',
-              lineHeight: 1.45,
-            }}
-          >
-            {aspirations}
-          </div>
-        )}
       </div>
     );
   };
@@ -637,10 +615,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       // Build node label based on family theme
       let nodeLabel;
       
+      const statusLabel = statusLabelForBrother(brother);
+
       if (familyKey === 'pride') {
         nodeLabel = (
-          <div
-            style={{
+            <div 
+              style={{ 
             fontFamily: theme.bodyFont,
               display: 'flex',
               flexDirection: 'column',
@@ -650,8 +630,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             }}
           >
             {/* Accent bar */}
-            <div
-              style={{
+              <div 
+                style={{ 
               height: 3, 
                 background: 'linear-gradient(90deg, rgba(212, 175, 126, 0.6), rgba(212, 175, 126, 0))',
                 marginLeft: '-12px',
@@ -686,63 +666,23 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 {brother.pledge_class}
               </div>
             )}
-            {/* Graduation year / status */}
-            <div 
-              style={{ 
+            {/* Status */}
+              <div 
+                style={{ 
                 fontSize: '10px',
                 color: 'rgba(248, 245, 239, 0.75)',
               }}
             >
-              {brother.graduation_year
-                ? `Class of ${brother.graduation_year}`
-                : brother.status === 'graduated'
-                    ? 'Graduated'
-                    : 'Currently Studying'}
-            </div>
-            {/* Major */}
-            {brother.major && (
-              <div 
-                style={{ 
-                  fontSize: '10px',
-                  color: 'rgba(248, 245, 239, 0.6)',
-                  fontStyle: 'italic',
-                }}
-              >
-                {brother.major}
+              {statusLabel}
               </div>
-            )}
-            {/* Transfer indicator */}
-            {isTransfer && (
-              <div 
-                style={{ 
-                  fontSize: '9px',
-                  color: 'rgba(212, 175, 126, 0.7)',
-                  fontStyle: 'italic',
-                }}
-              >
-                (Transfer)
-              </div>
-            )}
           </div>
         );
       } else if (familyKey === 'empire') {
-        nodeLabel = renderEmpireNodeContent(brother, isTransfer);
+        nodeLabel = renderEmpireNodeContent(brother);
       } else {
         // Other families: simpler node design
         nodeLabel = (
-          <div className="text-center" style={{ fontFamily: theme.bodyFont }}>
-            {familyKey === 'wolfpack' && (
-              // WOLFPACK: Dark blue header bar at top of white box
-              <div style={{ 
-                height: 6, 
-                background: '#3d5373', 
-                marginBottom: 6, 
-                borderRadius: 0,
-                marginLeft: '-10px',
-                marginRight: '-10px',
-                marginTop: '-10px',
-              }} />
-            )}
+          <div className="text-center" style={{ fontFamily: theme.bodyFont, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div 
               className="font-semibold" 
               style={{ 
@@ -754,19 +694,34 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             >
               {brother.name}
             </div>
-            {isTransfer && (
+            {brother.pledge_class && (
               <div 
-                className="text-xs mt-1" 
                 style={{ 
-                  color: familyKey === 'empire' ? '#999999' : 
-                         familyKey === 'power' ? '#999999' :
-                         'rgba(156, 163, 175, 1)',
-                  fontStyle: 'italic', // Transfer labels in italic per spec
+                  fontSize: '10px',
+                  letterSpacing: '0.4px',
+                  color: theme.nodeText,
+                  opacity: 0.7,
                 }}
               >
-                (Transfer)
+                {brother.pledge_class}
               </div>
             )}
+            <div
+              style={{
+                fontSize: '10px',
+                color:
+                  familyKey === 'power'
+                    ? 'rgba(247, 235, 206, 0.75)'
+                    : familyKey === 'greed'
+                      ? 'rgba(235, 245, 235, 0.75)'
+                      : familyKey === 'wolfpack'
+                        ? 'rgba(44, 63, 95, 0.7)'
+                        : 'rgba(59, 43, 22, 0.7)',
+                fontWeight: 500,
+              }}
+            >
+              {statusLabel}
+            </div>
           </div>
         );
       }
