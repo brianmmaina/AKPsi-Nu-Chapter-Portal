@@ -533,7 +533,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   };
 
-  const renderEmpireNodeContent = (brother) =>
+  const renderEmpireNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: '#24170b',
       badgeBg: 'rgba(147, 107, 28, 0.2)',
@@ -546,9 +546,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       supportsTransfer: false,
       nameSize: '13px',
       nameTracking: '0.4px',
-    });
+    }), [theme]);
 
-  const renderPowerNodeContent = (brother) =>
+  const renderPowerNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: '#fdf5dc',
       badgeBg: 'rgba(247, 227, 168, 0.24)',
@@ -559,9 +559,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(246, 233, 196, 0.86)',
       placeholderColor: 'rgba(243, 220, 166, 0.8)',
       supportsTransfer: true,
-    });
+    }), [theme]);
 
-  const renderGreedNodeContent = (brother) =>
+  const renderGreedNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: '#0a2316',
       badgeBg: 'rgba(244, 217, 97, 0.28)',
@@ -572,9 +572,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(10, 31, 20, 0.7)',
       placeholderColor: 'rgba(180, 214, 138, 0.85)',
       supportsTransfer: true,
-    });
+    }), [theme]);
 
-  const renderWolfpackNodeContent = (brother) =>
+  const renderWolfpackNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: '#1e2c45',
       badgeBg: 'rgba(156,184,234,0.28)',
@@ -585,9 +585,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: 'rgba(24, 41, 68, 0.78)',
       placeholderColor: 'rgba(156,184,234,0.82)',
       supportsTransfer: true,
-    });
+    }), [theme]);
 
-  const renderPrideNodeContent = (brother) =>
+  const renderPrideNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: '#fbf7ee',
       badgeBg: 'rgba(212, 175, 126, 0.24)',
@@ -599,9 +599,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       placeholderColor: 'rgba(212, 175, 126, 0.78)',
       supportsTransfer: true,
       nameTracking: '0.6px',
-    });
+    }), [theme]);
 
-  const renderDefaultNodeContent = (brother) =>
+  const renderDefaultNodeContent = useCallback((brother) =>
     renderNodeTemplate(brother, theme, {
       bodyColor: theme.nodeText || '#3b2b16',
       badgeBg: hexToRgba(theme.accent || '#c9a857', 0.22),
@@ -612,7 +612,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       classColor: hexToRgba(theme.nodeText || '#3b2b16', 0.7),
       placeholderColor: hexToRgba(theme.accent || '#c9a857', 0.7),
       supportsTransfer: true,
-    });
+    }), [theme]);
   const { setCenter, getViewport } = reactFlowInstance;
 
   /**
@@ -1222,9 +1222,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             lineageHighlightSet.has(String(rel.big_id)) && lineageHighlightSet.has(String(rel.little_id));
           
           const edge = {
-            id: `e${rel.big_id}-${rel.little_id}`,
-            source: String(rel.big_id),
-            target: String(rel.little_id),
+          id: `e${rel.big_id}-${rel.little_id}`,
+          source: String(rel.big_id),
+          target: String(rel.little_id),
             type: edgeType,
             animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
             style: {
@@ -1862,7 +1862,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </form>
 
       <div
-        style={{
+      style={{
           position: 'absolute',
           top: 24,
           right: 24,
@@ -2090,49 +2090,63 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </ReactFlow>
 
       {/* Milestone Markers - Pledge Class Guides */}
-      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && theme && presentation && milestoneMarkers.map((marker, idx) => {
-        if (!marker || typeof marker.avgY !== 'number') return null;
+      {(() => {
+        if (!milestoneMarkers || !Array.isArray(milestoneMarkers) || milestoneMarkers.length === 0) {
+          return null;
+        }
+        if (!theme || !presentation) {
+          return null;
+        }
         
-        const accentColor = hexToRgba(theme?.accent || '#c9a857', 0.15);
-        const textColor = hexToRgba(presentation?.legend?.textColor || theme?.nodeText || '#666666', 0.5);
-        
-        return (
-          <div
-            key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: marker.avgY,
-              width: '100%',
-              height: '1px',
-              background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
-              pointerEvents: 'none',
-              zIndex: 0,
-              transform: 'translateY(-50%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                left: 24,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '10px',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: textColor,
-                background: presentation?.legend?.panelBg || 'transparent',
-                padding: '2px 8px',
-                borderRadius: 4,
-                opacity: 0.7,
-              }}
-            >
-              {marker.pledgeClass || ''}
-            </div>
-          </div>
-        );
-      })}
+        return milestoneMarkers.map((marker, idx) => {
+          if (!marker || typeof marker.avgY !== 'number') return null;
+          
+          try {
+            const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
+            const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
+            
+            return (
+              <div
+                key={`milestone-${marker.pledgeClass || idx}-${idx}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: marker.avgY,
+                  width: '100%',
+                  height: '1px',
+                  background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                <div
+        style={{
+          position: 'absolute',
+                    left: 24,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: textColor,
+                    background: presentation.legend?.panelBg || 'transparent',
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    opacity: 0.7,
+                  }}
+                >
+                  {marker.pledgeClass || ''}
+                </div>
+              </div>
+            );
+          } catch (error) {
+            console.warn('Error rendering milestone marker:', error);
+            return null;
+          }
+        });
+      })()}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
