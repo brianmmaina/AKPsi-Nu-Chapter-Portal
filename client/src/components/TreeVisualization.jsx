@@ -1153,24 +1153,34 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       // Build node label based on family theme
       let nodeLabel;
-      switch (familyKey) {
-        case 'empire':
-          nodeLabel = renderEmpireNodeContent(brother);
-          break;
-        case 'power':
-          nodeLabel = renderPowerNodeContent(brother);
-          break;
-        case 'greed':
-          nodeLabel = renderGreedNodeContent(brother);
-          break;
-        case 'wolfpack':
-          nodeLabel = renderWolfpackNodeContent(brother);
-          break;
-        case 'pride':
-          nodeLabel = renderPrideNodeContent(brother);
-          break;
-        default:
-          nodeLabel = renderDefaultNodeContent(brother);
+      if (!theme) {
+        // Fallback if theme not ready
+        nodeLabel = <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+      } else {
+        try {
+          switch (familyKey) {
+            case 'empire':
+              nodeLabel = renderEmpireNodeContent(brother);
+              break;
+            case 'power':
+              nodeLabel = renderPowerNodeContent(brother);
+              break;
+            case 'greed':
+              nodeLabel = renderGreedNodeContent(brother);
+              break;
+            case 'wolfpack':
+              nodeLabel = renderWolfpackNodeContent(brother);
+              break;
+            case 'pride':
+              nodeLabel = renderPrideNodeContent(brother);
+              break;
+            default:
+              nodeLabel = renderDefaultNodeContent(brother);
+          }
+        } catch (error) {
+          console.warn('Error rendering node content:', error);
+          nodeLabel = <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+        }
       }
 
       // Add node with position (fallback to 0,0 if not calculated)
