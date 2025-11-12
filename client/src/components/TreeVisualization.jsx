@@ -196,6 +196,17 @@ const statusLabelForBrother = (brother) => {
 };
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
+  // Safety check: ensure family prop exists
+  if (!family || !family.theme) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ fontSize: '1.2rem', color: '#666' }}>Family data not available. Please select a family.</p>
+        </div>
+      </div>
+    );
+  }
+
   const [brothers, setBrothers] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [selectedBrother, setSelectedBrother] = useState(null);
@@ -225,8 +236,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const reactFlowInstance = useReactFlow();
 
   // Memoize theme to prevent infinite re-renders
-  const theme = useMemo(() => getThemeStyles(family.theme), [family.theme]);
-  const familyKey = family.theme;
+  const theme = useMemo(() => {
+    if (!family || !family.theme) return getThemeStyles('default');
+    return getThemeStyles(family.theme);
+  }, [family?.theme]);
+  const familyKey = family?.theme || 'default';
   const presentation = useMemo(
     () => FAMILY_PRESENTATION[familyKey] || FAMILY_PRESENTATION.default,
     [familyKey],
@@ -1744,28 +1758,43 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [lineageHighlightMode, lineageSourceId, parentMap, childMap]);
 
   const milestoneMarkers = useMemo(() => {
-    if (!isTreeReady || !nodes.length) return [];
+    if (!isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
+      return [];
+    }
     
-    // Group nodes by pledge class and find their average Y position
-    const pledgeGroups = new Map();
-    nodes.forEach(node => {
-      const pledgeClass = node.data?.brother?.pledge_class;
-      if (pledgeClass) {
-        if (!pledgeGroups.has(pledgeClass)) {
-          pledgeGroups.set(pledgeClass, []);
+    try {
+      // Group nodes by pledge class and find their average Y position
+      const pledgeGroups = new Map();
+      nodes.forEach(node => {
+        if (!node || !node.data || !node.data.brother) return;
+        const pledgeClass = node.data.brother.pledge_class;
+        if (pledgeClass && node.position && typeof node.position.y === 'number') {
+          if (!pledgeGroups.has(pledgeClass)) {
+            pledgeGroups.set(pledgeClass, []);
+          }
+          pledgeGroups.get(pledgeClass).push(node.position.y);
         }
-        pledgeGroups.get(pledgeClass).push(node.position.y);
-      }
-    });
+      });
 
-    // Calculate average Y for each pledge class
-    return Array.from(pledgeGroups.entries())
-      .map(([pledgeClass, yPositions]) => ({
-        pledgeClass: pledgeClass.toUpperCase(),
-        avgY: yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length,
-      }))
-      .sort((a, b) => a.avgY - b.avgY)
-      .slice(0, 8); // Limit to 8 most prominent markers
+      if (pledgeGroups.size === 0) return [];
+
+      // Calculate average Y for each pledge class
+      return Array.from(pledgeGroups.entries())
+        .map(([pledgeClass, yPositions]) => {
+          if (!yPositions || yPositions.length === 0) return null;
+          const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
+          return {
+            pledgeClass: String(pledgeClass || '').toUpperCase(),
+            avgY: avgY,
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.avgY - b.avgY)
+        .slice(0, 8); // Limit to 8 most prominent markers
+    } catch (error) {
+      console.warn('Error calculating milestone markers:', error);
+      return [];
+    }
   }, [isTreeReady, nodes]);
 
   useEffect(() => {
@@ -2061,13 +2090,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </ReactFlow>
 
       {/* Milestone Markers - Pledge Class Guides */}
-      {milestoneMarkers.map((marker, idx) => {
-        const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
-        const textColor = hexToRgba(presentation.legend.textColor || theme.nodeText, 0.5);
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && theme && presentation && milestoneMarkers.map((marker, idx) => {
+        if (!marker || typeof marker.avgY !== 'number') return null;
+        
+        const accentColor = hexToRgba(theme?.accent || '#c9a857', 0.15);
+        const textColor = hexToRgba(presentation?.legend?.textColor || theme?.nodeText || '#666666', 0.5);
         
         return (
           <div
-            key={`milestone-${marker.pledgeClass}-${idx}`}
+            key={`milestone-${marker.pledgeClass || idx}-${idx}`}
             style={{
               position: 'absolute',
               left: 0,
@@ -2091,13 +2122,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color: textColor,
-                background: presentation.legend.panelBg || 'transparent',
+                background: presentation?.legend?.panelBg || 'transparent',
                 padding: '2px 8px',
                 borderRadius: 4,
                 opacity: 0.7,
               }}
             >
-              {marker.pledgeClass}
+              {marker.pledgeClass || ''}
             </div>
           </div>
         );
