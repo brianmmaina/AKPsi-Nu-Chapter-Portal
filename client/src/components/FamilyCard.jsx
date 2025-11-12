@@ -15,40 +15,57 @@ import { getThemeStyles } from '../themes';
  * @returns {JSX.Element} Family selection card
  */
 const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => {
-  const { accent, titleColor, backgroundImage, backgroundSize } = useMemo(() => {
+  const { accent, titleColor, cardStyle } = useMemo(() => {
     const theme = getThemeStyles(family.theme);
     const accent = theme?.accent || '#D3AF37';
-    const titleColor = family.theme === 'wolfpack' ? '#ffffff' : accent;
-    
-    // Subtle per-family patterns (preserve family identity)
-    let backgroundImage = undefined;
-    let backgroundSize = undefined;
-    switch (family.theme) {
-      case 'power':
-        backgroundImage = `repeating-linear-gradient(60deg, ${accent}0D 0 1px, transparent 1px 12px), repeating-linear-gradient(-60deg, ${accent}0D 0 1px, transparent 1px 12px)`;
-        backgroundSize = 'auto';
-        break;
-      case 'empire':
-        backgroundImage = `radial-gradient(circle at 1px 1px, ${accent}0D 1px, transparent 1px)`;
-        backgroundSize = '14px 14px';
-        break;
-      case 'greed':
-        backgroundImage = `repeating-linear-gradient(45deg, ${accent}0A 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, ${accent}08 0 1px, transparent 1px 8px)`;
-        backgroundSize = 'auto';
-        break;
-      case 'wolfpack':
-        backgroundImage = `repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 12px)`;
-        backgroundSize = 'auto';
-        break;
-      case 'pride':
-        backgroundImage = `radial-gradient(circle at 1px 1px, ${accent}0D 1px, transparent 1px)`;
-        backgroundSize = '18px 18px';
-        break;
-      default:
-        break;
-    }
-    
-    return { accent, titleColor, backgroundImage, backgroundSize };
+
+    const palette = {
+      empire: {
+        titleColor: '#6d5122',
+        background: 'linear-gradient(135deg, rgba(255, 249, 236, 0.94) 0%, rgba(247, 233, 199, 0.92) 100%)',
+        border: '1.5px solid rgba(201,168,87,0.55)',
+        shadow: '0 16px 32px rgba(98, 72, 28, 0.12)',
+        text: '#4a3b25',
+      },
+      greed: {
+        titleColor: '#f1ffe0',
+        background: 'linear-gradient(135deg, rgba(16, 76, 46, 0.97) 0%, rgba(9, 53, 33, 0.95) 100%)',
+        border: '1.5px solid rgba(244,217,97,0.45)',
+        shadow: '0 18px 34px rgba(12, 46, 29, 0.28)',
+        text: 'rgba(235, 245, 235, 0.9)',
+      },
+      power: {
+        titleColor: '#f7e7c0',
+        background: 'linear-gradient(140deg, rgba(13, 38, 63, 0.97) 0%, rgba(7, 20, 33, 0.96) 100%)',
+        border: '1.5px solid rgba(235,210,144,0.45)',
+        shadow: '0 18px 34px rgba(9, 24, 40, 0.32)',
+        text: 'rgba(247, 235, 206, 0.92)',
+      },
+      pride: {
+        titleColor: '#f1d0a0',
+        background: 'linear-gradient(135deg, rgba(48, 34, 22, 0.96) 0%, rgba(36, 22, 12, 0.95) 100%)',
+        border: '1.5px solid rgba(212,175,126,0.45)',
+        shadow: '0 18px 32px rgba(36, 20, 10, 0.3)',
+        text: 'rgba(245, 232, 212, 0.9)',
+      },
+      wolfpack: {
+        titleColor: '#e5edff',
+        background: 'linear-gradient(140deg, rgba(54, 76, 115, 0.97) 0%, rgba(40, 56, 86, 0.96) 100%)',
+        border: '1.5px solid rgba(109,139,177,0.45)',
+        shadow: '0 18px 32px rgba(40, 56, 86, 0.3)',
+        text: 'rgba(235, 241, 255, 0.92)',
+      },
+    };
+
+    const selected = palette[family.theme] || {
+      titleColor: accent,
+      background: 'rgba(255, 255, 255, 0.9)',
+      border: `1.5px solid ${accent}55`,
+      shadow: '0 14px 28px rgba(50, 33, 15, 0.12)',
+      text: '#4a3b25',
+    };
+
+    return { accent, titleColor: selected.titleColor, cardStyle: selected };
   }, [family.theme]);
 
   // Calculate animation delay based on index (staggered fade-in)
