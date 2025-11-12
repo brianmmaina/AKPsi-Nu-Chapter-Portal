@@ -124,6 +124,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       : 'UNDECLARED';
 
     const statusLabel = statusLabelForBrother(brother);
+    const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
 
     return (
       <div
@@ -175,6 +176,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           >
             {statusLabel}
           </div>
+          {classLabel && (
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'rgba(59, 43, 22, 0.62)',
+                letterSpacing: '0.2px',
+              }}
+            >
+              {classLabel}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -675,6 +687,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             >
               {statusLabel}
               </div>
+            {brother.graduation_year && (
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'rgba(248, 245, 239, 0.6)',
+                  letterSpacing: '0.3px',
+                }}
+              >
+                {`Class of ${brother.graduation_year}`}
+              </div>
+            )}
           </div>
         );
       } else if (familyKey === 'empire') {
@@ -722,6 +745,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             >
               {statusLabel}
             </div>
+            {brother.graduation_year && (
+              <div
+                style={{
+                  fontSize: '10px',
+                  color:
+                    familyKey === 'power'
+                      ? 'rgba(247, 235, 206, 0.68)'
+                      : familyKey === 'greed'
+                        ? 'rgba(235, 245, 235, 0.68)'
+                        : familyKey === 'wolfpack'
+                          ? 'rgba(44, 63, 95, 0.6)'
+                          : 'rgba(59, 43, 22, 0.6)',
+                  letterSpacing: '0.2px',
+                }}
+              >
+                {`Class of ${brother.graduation_year}`}
+              </div>
+            )}
           </div>
         );
       }
