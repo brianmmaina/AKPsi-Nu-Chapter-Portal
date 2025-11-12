@@ -1187,8 +1187,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       // Build node label based on family theme
       let nodeLabel;
-      if (!theme) {
-        // Fallback if theme not ready
+      // Ensure all required functions are initialized before calling them
+      const hasRenderFunctions = 
+        renderEmpireNodeContent && 
+        renderPowerNodeContent && 
+        renderGreedNodeContent && 
+        renderWolfpackNodeContent && 
+        renderPrideNodeContent && 
+        renderDefaultNodeContent &&
+        renderNodeTemplate;
+      
+      if (!theme || !hasRenderFunctions) {
+        // Fallback if theme or render functions not ready
         nodeLabel = <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
       } else {
         try {
