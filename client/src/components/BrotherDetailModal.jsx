@@ -79,6 +79,86 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
     }
   };
 
+  const palette = useMemo(() => {
+    const base = {
+      heading: theme?.nodeText || '#1f1f1f',
+      bodyText: theme?.nodeText || '#1f1f1f',
+      label: 'rgba(31, 31, 31, 0.72)',
+      panelBg: theme?.background || '#f8f7f3',
+      accentPanel: hexToRgba(theme?.accent || '#c9a857', 0.12),
+      fieldBorder: theme?.nodeBorder || '#d4c9b3',
+      buttonBg: theme?.accent || '#c9a857',
+      connectBg: theme?.background || '#f8f7f3',
+      connectBorder: hexToRgba(theme?.accent || '#c9a857', 0.7),
+      linkGlow: '0 6px 16px rgba(0,0,0,0.25)',
+    };
+
+    const accent = (theme?.accent || '').toLowerCase();
+    const background = (theme?.background || '').toLowerCase();
+
+    if (accent === '#ebd290') {
+      return {
+        ...base,
+        heading: '#fef3d8',
+        bodyText: 'rgba(249, 238, 205, 0.94)',
+        label: 'rgba(247, 235, 206, 0.85)',
+        panelBg: 'linear-gradient(135deg, rgba(18,30,46,0.92) 0%, rgba(10,22,38,0.88) 100%)',
+        accentPanel: 'rgba(243,220,166,0.18)',
+        fieldBorder: 'rgba(50,74,110,0.82)',
+        connectBg: 'rgba(17, 30, 48, 0.92)',
+        connectBorder: 'rgba(243,220,166,0.58)',
+        linkGlow: '0 6px 18px rgba(8,16,24,0.45)',
+      };
+    }
+
+    if (accent === '#f4d961') {
+      return {
+        ...base,
+        heading: '#0b2517',
+        bodyText: '#123220',
+        label: 'rgba(10, 35, 23, 0.72)',
+        panelBg: 'linear-gradient(135deg, rgba(246,252,244,0.95) 0%, rgba(236,248,233,0.9) 100%)',
+        accentPanel: 'rgba(244,217,97,0.2)',
+        fieldBorder: 'rgba(182,215,138,0.82)',
+        connectBg: 'rgba(241,250,233,0.95)',
+        connectBorder: 'rgba(244,217,97,0.62)',
+        linkGlow: '0 6px 16px rgba(12,35,23,0.22)',
+      };
+    }
+
+    if (accent === '#ffffff' && background.includes('#364c73')) {
+      return {
+        ...base,
+        heading: '#f0f5ff',
+        bodyText: 'rgba(214,223,240,0.88)',
+        label: 'rgba(200,212,235,0.75)',
+        panelBg: 'linear-gradient(135deg, rgba(33,45,69,0.9) 0%, rgba(24,34,54,0.88) 100%)',
+        accentPanel: 'rgba(156,184,234,0.18)',
+        fieldBorder: 'rgba(118,144,198,0.8)',
+        connectBg: 'rgba(34,47,71,0.9)',
+        connectBorder: 'rgba(156,184,234,0.6)',
+        linkGlow: '0 6px 16px rgba(26,37,58,0.32)',
+      };
+    }
+
+    if (accent === '#d4af7e') {
+      return {
+        ...base,
+        heading: '#f9e8c8',
+        bodyText: 'rgba(248, 236, 220, 0.9)',
+        label: 'rgba(245, 225, 205, 0.7)',
+        panelBg: 'linear-gradient(135deg, rgba(34,24,16,0.92) 0%, rgba(26,18,12,0.9) 100%)',
+        accentPanel: 'rgba(212,175,126,0.2)',
+        fieldBorder: 'rgba(196,155,101,0.82)',
+        connectBg: 'rgba(32,22,15,0.88)',
+        connectBorder: 'rgba(212,175,126,0.6)',
+        linkGlow: '0 6px 18px rgba(0,0,0,0.35)',
+      };
+    }
+
+    return base;
+  }, [theme]);
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-modal"
@@ -242,12 +322,12 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   textAlign: 'center', 
                   marginBottom: 'var(--space-6)',
                   padding: 'var(--space-4)',
-                  backgroundColor: theme?.background || '#f8f7f3',
-                  border: `1px solid ${theme?.nodeBorder || '#d4c9b3'}`,
+                  background: palette.panelBg,
+                  border: `1px solid ${palette.fieldBorder}`,
                   borderRadius: '0px',
                 }}>
                   <p style={{ 
-                    color: theme?.nodeText || 'var(--text)', 
+                    color: palette.bodyText, 
                     fontSize: 'var(--text-base)', 
                     fontWeight: '500',
                     margin: 0,
@@ -262,14 +342,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
                   padding: 'var(--space-5)',
-                  backgroundColor: theme?.background || '#f8f7f3',
-                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  background: palette.panelBg,
+                  border: `2px solid ${palette.connectBorder}`,
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
                     fontSize: '12px', 
                     fontWeight: '700', 
-                    color: theme?.nodeText || 'var(--text)',
+                    color: palette.heading,
                     marginBottom: 'var(--space-3)',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -277,7 +357,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                     Career Aspirations
                   </h3>
                   <p style={{ 
-                    color: theme?.nodeText || 'var(--text)', 
+                    color: palette.bodyText, 
                     lineHeight: '1.7',
                     fontSize: '15px',
                     margin: 0,
@@ -292,14 +372,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
                   padding: 'var(--space-5)',
-                  backgroundColor: theme?.background || '#f8f7f3',
-                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  background: palette.panelBg,
+                  border: `2px solid ${palette.connectBorder}`,
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
                     fontSize: '12px', 
                     fontWeight: '700', 
-                    color: theme?.nodeText || 'var(--text)',
+                    color: palette.heading,
                     marginBottom: 'var(--space-3)',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -307,7 +387,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                     About
                   </h3>
                   <p style={{ 
-                    color: theme?.nodeText || 'var(--text)', 
+                    color: palette.bodyText, 
                     lineHeight: '1.7',
                     fontSize: '15px',
                     margin: 0,
@@ -322,14 +402,14 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
                   padding: '16px 20px',
-                  backgroundColor: theme?.background || '#f8f7f3',
-                  border: `2px solid ${theme?.accent || '#c9a857'}`,
+                  background: palette.connectBg,
+                  border: `2px solid ${palette.connectBorder}`,
                   borderRadius: '0px',
                 }}>
                   <h3 style={{ 
                     fontSize: '12px', 
                     fontWeight: '700', 
-                    color: theme?.nodeText || 'var(--text)',
+                    color: palette.heading,
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -352,16 +432,18 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                           color: 'white',
                           borderRadius: '0px',
                           textDecoration: 'none',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
                           cursor: 'pointer',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,119,181,0.4)';
+                          e.currentTarget.style.boxShadow = palette.linkGlow;
+                          e.currentTarget.style.filter = 'brightness(1.05)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.filter = 'brightness(1)';
                         }}
                         title="LinkedIn"
                       >
@@ -385,16 +467,18 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                           color: 'white',
                           borderRadius: '0px',
                           textDecoration: 'none',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
                           cursor: 'pointer',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(225,48,108,0.4)';
+                          e.currentTarget.style.boxShadow = palette.linkGlow;
+                          e.currentTarget.style.filter = 'brightness(1.05)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.filter = 'brightness(1)';
                         }}
                         title="Instagram"
                       >
@@ -591,7 +675,9 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                   style={{
                     padding: 'var(--space-1) var(--space-2)',
                     borderRadius: 'var(--radius-sm)',
-                    backgroundColor: brother.status === 'studying' ? 'var(--success)' : 'var(--text-muted)',
+                    backgroundColor: brother.status === 'studying'
+                      ? (theme?.accent || 'var(--success)')
+                      : hexToRgba(palette.heading, 0.25),
                     color: 'white',
                     fontSize: 'var(--text-xs)',
                     fontWeight: 'var(--weight-medium)',
