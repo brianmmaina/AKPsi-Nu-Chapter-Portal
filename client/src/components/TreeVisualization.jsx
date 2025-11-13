@@ -34,6 +34,8 @@ import { useLineageHighlight } from '../hooks/useLineageHighlight';
  */
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
+  // All hooks MUST be called in the same order every render (Rules of Hooks)
+  // Cannot have conditional returns before hooks
   const [selectedBrother, setSelectedBrother] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -50,6 +52,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const reactFlowInstance = useReactFlow();
 
   // Use custom hooks for data loading, search, and lineage highlighting
+  // These hooks must handle undefined family gracefully
   const { brothers, relationships, loading, error, isTreeReady, reloadTreeData } = useTreeData(family, onToast);
   
   const showToast = useCallback((message, type = 'info') => {
@@ -64,7 +67,90 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   const lineageHighlight = useLineageHighlight(relationships, selectedBrother);
 
-  // Define focusBrotherNode before useSearch hook
+  // Memoize theme IMMEDIATELY after hooks (before any other dependent code)
+  // Must handle undefined family gracefully - always return a valid theme object
+  const theme = useMemo(() => {
+    try {
+      // Always ensure we have a valid theme object to prevent uninitialized variable errors
+      let themeToLoad = 'wolfpack'; // Default fallback (getThemeStyles returns wolfpack for invalid themes)
+      
+      if (family && family.theme) {
+        themeToLoad = String(family.theme).toLowerCase();
+      }
+      
+      const themeResult = getThemeStyles(themeToLoad);
+      
+      // Validate theme has required properties - ensure all required fields exist
+      if (!themeResult || typeof themeResult !== 'object') {
+        console.warn('Theme result is not an object, using wolfpack fallback');
+        return getThemeStyles('wolfpack');
+      }
+      
+      // Ensure all required properties exist with fallback values
+      const safeTheme = {
+        background: themeResult.background || '#364c73',
+        backgroundGrid: themeResult.backgroundGrid || '#2a3a5c',
+        backgroundTexture: themeResult.backgroundTexture || undefined,
+        nodeStudying: themeResult.nodeStudying || '#f7faff',
+        nodeGraduated: themeResult.nodeGraduated || '#f7faff',
+        nodeBorder: themeResult.nodeBorder || '#d6e4ff',
+        nodeText: themeResult.nodeText || '#1e2c45',
+        edgeColor: themeResult.edgeColor || '#f0f6ff',
+        minimapNode: themeResult.minimapNode || '#ffffff',
+        minimapBg: themeResult.minimapBg || '#2a3a5c',
+        modalBg: themeResult.modalBg || 'rgba(54, 76, 115, 0.95)',
+        accent: themeResult.accent || '#ffffff',
+        titleFont: themeResult.titleFont || 'Russo One, sans-serif',
+        bodyFont: themeResult.bodyFont || 'Montserrat, system-ui, sans-serif',
+        nodeRadius: themeResult.nodeRadius !== undefined ? themeResult.nodeRadius : 0,
+        edgeType: themeResult.edgeType || 'smoothstep',
+        edgeAnimated: themeResult.edgeAnimated !== undefined ? themeResult.edgeAnimated : false,
+        backgroundVariant: themeResult.backgroundVariant || 'dots',
+      };
+      
+      return safeTheme;
+    } catch (error) {
+      console.error('Error loading theme, using fallback:', error);
+      // Return a completely safe fallback theme
+      return getThemeStyles('wolfpack');
+    }
+  }, [family?.theme]);
+  
+  const familyKey = useMemo(() => {
+    if (!family || !family.theme) return 'wolfpack'; // Use wolfpack as default, not 'default'
+    const key = String(family.theme).toLowerCase();
+    // Ensure key is valid
+    const validKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
+    return validKeys.includes(key) ? key : 'wolfpack';
+  }, [family?.theme]);
+  
+  // Define presentation and flags after theme is initialized (before early return)
+  // These must be defined even if family is undefined, to maintain hook order
+  const presentation = useMemo(() => {
+    try {
+      if (!familyKey || familyKey === 'default') {
+        return FAMILY_PRESENTATION.empire || {};
+      }
+      const presentationData = FAMILY_PRESENTATION[familyKey];
+      if (presentationData) {
+        return presentationData;
+      }
+      // Fallback to empire if familyKey doesn't exist
+      console.warn(`Presentation not found for familyKey: ${familyKey}, using empire`);
+      return FAMILY_PRESENTATION.empire || {};
+    } catch (error) {
+      console.warn('Error loading presentation, using empty object:', error);
+      return FAMILY_PRESENTATION.empire || {};
+    }
+  }, [familyKey]);
+  
+  const isEmpire = familyKey === 'empire';
+  const isPower = familyKey === 'power';
+  const isGreed = familyKey === 'greed';
+  const isPride = familyKey === 'pride';
+  const isWolfpack = familyKey === 'wolfpack';
+  
+  // Define focusBrotherNode AFTER theme and familyKey are initialized
   const focusBrotherNode = useCallback(
     (brotherId) => {
       if (!brotherId || !nodes || !Array.isArray(nodes)) {
@@ -103,15 +189,43 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     [nodes, reactFlowInstance, lineageHighlight],
   );
 
-  // Use search hook (handleSearchSubmit is returned from this hook)
+  // Use search hook (must be called AFTER focusBrotherNode is defined)
   const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
     family,
     brothers,
     focusBrotherNode,
     onToast || showToast,
   );
-
-  // Safety check: ensure family prop exists (after hooks)
+  
+  const defaultViewport = useMemo(() => {
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.6 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.73 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.74 };
+    return { x: 0, y: 0, zoom: 0.75 };
+  }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
+  
+  const minZoom = isEmpire ? 0.12 : 0.18;
+  const maxZoom = isEmpire ? 1.4 : 2;
+  
+  const composedBackground = useMemo(() => {
+    try {
+      const layers = [];
+      if (presentation && presentation.backgroundLayers && Array.isArray(presentation.backgroundLayers) && presentation.backgroundLayers.length > 0) {
+        layers.push(...presentation.backgroundLayers);
+      }
+      if (theme && theme.backgroundTexture) {
+        layers.push(theme.backgroundTexture);
+      }
+      return layers.length > 0 ? layers.join(', ') : undefined;
+    } catch (error) {
+      console.warn('Error composing background:', error);
+      return theme?.backgroundTexture || undefined;
+    }
+  }, [presentation?.backgroundLayers, theme?.backgroundTexture]);
+  
+  // NOW we can do the early return check AFTER all hooks and dependent values
   if (!family || !family.theme) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
@@ -122,66 +236,54 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
-  // Memoize theme to prevent infinite re-renders
-  const theme = useMemo(() => {
-    if (!family || !family.theme) return getThemeStyles('default');
-    return getThemeStyles(family.theme);
-  }, [family?.theme]);
-  const familyKey = family?.theme || 'default';
-  const presentation = useMemo(
-    () => FAMILY_PRESENTATION[familyKey] || FAMILY_PRESENTATION.default,
-    [familyKey],
-  );
-  const isEmpire = familyKey === 'empire';
-  const isPower = familyKey === 'power';
-  const isGreed = familyKey === 'greed';
-  const isPride = familyKey === 'pride';
-  const isWolfpack = familyKey === 'wolfpack';
-  const defaultViewport = useMemo(() => {
-    if (isEmpire) return { x: 0, y: 0, zoom: 0.6 };
-    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
-    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
-    if (isPride) return { x: 0, y: 0, zoom: 0.73 };
-    if (isWolfpack) return { x: 0, y: 0, zoom: 0.74 };
-    return { x: 0, y: 0, zoom: 0.75 };
-  }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
-  const minZoom = isEmpire ? 0.12 : 0.18;
-  const maxZoom = isEmpire ? 1.4 : 2;
-  const composedBackground = useMemo(() => {
-    const layers = [];
-    if (presentation.backgroundLayers?.length) {
-      layers.push(...presentation.backgroundLayers);
-    }
-    if (theme.backgroundTexture) {
-      layers.push(theme.backgroundTexture);
-    }
-    return layers.join(', ');
-  }, [presentation.backgroundLayers, theme.backgroundTexture]);
-
   const containerStyle = useMemo(() => {
-    const sizeValue = isEmpire
-      ? theme.backgroundTexture
-        ? '100% 100%, 100% 100%, 280px 280px'
-        : '100% 100%, 100% 100%'
-      : theme.backgroundTexture
-        ? '280px 280px'
-        : undefined;
+    // Safety checks: ensure theme is fully initialized
+    if (!theme || typeof theme !== 'object' || !theme.background) {
+      return {
+        width: '100%',
+        height: '100vh',
+        backgroundColor: '#f5f5f5',
+        pointerEvents: 'auto',
+        position: 'relative',
+        overflow: 'hidden',
+      };
+    }
+    
+    try {
+      const sizeValue = isEmpire
+        ? theme.backgroundTexture
+          ? '100% 100%, 100% 100%, 280px 280px'
+          : '100% 100%, 100% 100%'
+        : theme.backgroundTexture
+          ? '280px 280px'
+          : undefined;
 
-    return {
-      width: '100%',
-      height: '100vh',
-      backgroundColor: theme.background,
-      backgroundImage: composedBackground || undefined,
-      backgroundSize: sizeValue,
-      backgroundPosition: 'center',
-      pointerEvents: 'auto',
-      opacity: isTreeReady ? 1 : 0,
-      transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
-      transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
-      position: 'relative',
-      overflow: 'hidden',
-    };
-  }, [theme.background, composedBackground, isEmpire, isTreeReady, theme.backgroundTexture]);
+      return {
+        width: '100%',
+        height: '100vh',
+        backgroundColor: theme.background || '#f5f5f5',
+        backgroundImage: composedBackground || undefined,
+        backgroundSize: sizeValue,
+        backgroundPosition: 'center',
+        pointerEvents: 'auto',
+        opacity: isTreeReady ? 1 : 0,
+        transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
+        position: 'relative',
+        overflow: 'hidden',
+      };
+    } catch (error) {
+      console.warn('Error computing container style:', error);
+      return {
+        width: '100%',
+        height: '100vh',
+        backgroundColor: theme?.background || '#f5f5f5',
+        pointerEvents: 'auto',
+        position: 'relative',
+        overflow: 'hidden',
+      };
+    }
+  }, [theme, composedBackground, isEmpire, isTreeReady]);
   const layoutSettings = useMemo(() => {
     const base = {
       horizontalSpacing: 235,
@@ -234,18 +336,27 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
 
   // Single node renderer using extracted palette utility
+  // Must be defined AFTER theme and familyKey are initialized
   const renderNodeContent = useCallback((brother) => {
     // Safety check: handle null/undefined brother
     if (!brother) {
       return <div style={{ color: '#333' }}>Unassigned</div>;
     }
     
-    if (!theme) {
+    // Safety check: ensure theme and familyKey are available
+    if (!theme || !familyKey) {
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
+    
     try {
+      // Ensure theme object has required properties
+      if (typeof theme !== 'object' || !theme.nodeStudying || !theme.nodeGraduated) {
+        console.warn('Theme not fully initialized, using fallback');
+        return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
+      }
+      
       const palette = getNodePalette(familyKey, theme);
-      const themeToUse = theme || getThemeStyles('default');
+      const themeToUse = theme;
       const rawPledge = brother.pledge_class || 'Unassigned';
       const pledgeLabel = rawPledge.toUpperCase();
       const statusLabel = statusLabelForBrother(brother);

@@ -104,15 +104,41 @@ export const NODE_PALETTES = {
  * @returns {Object} Node palette
  */
 export const getNodePalette = (familyKey, theme) => {
-  return NODE_PALETTES[familyKey] || {
+  // Safety check: ensure familyKey is a string and theme exists
+  if (!familyKey || typeof familyKey !== 'string') {
+    familyKey = 'empire'; // Default fallback
+  }
+  if (!theme || typeof theme !== 'object') {
+    // Return a safe default palette if theme is invalid
+    return {
+      bodyColor: '#3b2b16',
+      badgeBg: 'rgba(212, 176, 103, 0.22)',
+      badgeColor: '#3b2b16',
+      transferColor: 'rgba(80,80,80,0.65)',
+      nameColor: '#3b2b16',
+      statusColor: 'rgba(58, 43, 22, 0.82)',
+      classColor: 'rgba(58, 43, 22, 0.7)',
+      placeholderColor: 'rgba(212, 176, 103, 0.7)',
+      supportsTransfer: true,
+    };
+  }
+  
+  // Try to get palette for the family key
+  const palette = NODE_PALETTES[familyKey];
+  if (palette) {
+    return palette;
+  }
+  
+  // Fallback to a safe default palette
+  return {
     bodyColor: theme?.nodeText || '#3b2b16',
-    badgeBg: `rgba(212, 176, 103, 0.22)`,
+    badgeBg: 'rgba(212, 176, 103, 0.22)',
     badgeColor: theme?.nodeText || '#3b2b16',
     transferColor: 'rgba(80,80,80,0.65)',
     nameColor: theme?.nodeText || '#3b2b16',
-    statusColor: `rgba(58, 43, 22, 0.82)`,
-    classColor: `rgba(58, 43, 22, 0.7)`,
-    placeholderColor: `rgba(212, 176, 103, 0.7)`,
+    statusColor: 'rgba(58, 43, 22, 0.82)',
+    classColor: 'rgba(58, 43, 22, 0.7)',
+    placeholderColor: 'rgba(212, 176, 103, 0.7)',
     supportsTransfer: true,
   };
 };
