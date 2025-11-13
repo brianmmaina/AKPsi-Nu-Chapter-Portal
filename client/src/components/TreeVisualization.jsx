@@ -74,6 +74,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, []);
 
   const lineageHighlight = useLineageHighlight(relationships, selectedBrother);
+  
+  // Extract lineageHighlightSet into a stable value for dependency array
+  // This prevents "Cannot access uninitialized variable" errors in production
+  // Access the property directly after ensuring lineageHighlight is initialized
+  const lineageHighlightSet = (lineageHighlight && lineageHighlight.lineageHighlightSet) 
+    ? lineageHighlight.lineageHighlightSet 
+    : new Set();
 
   // Memoize theme IMMEDIATELY after hooks (before any other dependent code)
   // Must handle undefined family gracefully - always return a valid theme object
@@ -556,7 +563,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         theme,
         layoutSettings,
       highlightBrotherId,
-      lineageHighlightSet: (lineageHighlight && lineageHighlight.lineageHighlightSet) ? lineageHighlight.lineageHighlightSet : new Set(),
+      lineageHighlightSet: lineageHighlightSet,
       renderNodeContent,
       isEmpire,
         onTreeBounds: (bounds) => {
@@ -589,7 +596,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     familyKey,
     layoutSettings,
     highlightBrotherId,
-    lineageHighlight,
+    lineageHighlightSet,
     theme,
     renderNodeContent,
     loading,
@@ -734,7 +741,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
     initialViewportRef.current = targetViewport;
     hasFitRef.current = false;
-  }, [family.id, defaultViewport, reactFlowInstance]);
+  }, [safeFamily?.id, defaultViewport, reactFlowInstance]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -838,7 +845,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               marginBottom: 'var(--space-4)',
             }}
           >
-            {family.name} Family Tree
+            {safeFamily?.name || 'Family Tree'}
           </h2>
           <p
             className="mb-6"
@@ -881,7 +888,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               marginBottom: 'var(--space-4)',
             }}
           >
-            {family.name} Family Tree
+            {safeFamily?.name || 'Family Tree'}
           </h2>
           <p
             className="mb-6"
@@ -1370,7 +1377,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       {selectedBrother && (
         <BrotherDetailModal
           brother={selectedBrother}
-          familyId={family.id}
+          familyId={safeFamily?.id}
           onClose={() => closeProfile(true)}
           onUpdate={handleNodeUpdate}
           theme={theme}

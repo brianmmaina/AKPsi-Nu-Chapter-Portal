@@ -18,6 +18,9 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
   
   // Safety check: ensure brothers is an array
   const safeBrothers = Array.isArray(brothers) ? brothers : [];
+  
+  // Safety check: ensure family is an object or null, never undefined
+  const safeFamily = family && typeof family === 'object' ? family : null;
 
   const normalizeSearchValue = useCallback(
     (value) =>
@@ -97,7 +100,7 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
         }
         return;
       }
-      if (!family || !family.id) {
+      if (!safeFamily || !safeFamily.id) {
         if (onToast) {
           onToast({ message: 'Family not loaded. Please wait.', type: 'warning' });
         }
@@ -107,7 +110,7 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
       setIsSearching(true);
       try {
         // Use safeBrothers instead of brothers to ensure it's always an array
-        updateIndexWithFamily(family.id, family.name || `Family ${family.id}`, safeBrothers);
+        updateIndexWithFamily(safeFamily.id, safeFamily.name || `Family ${safeFamily.id}`, safeBrothers);
         await buildGlobalIndex();
         const matches = searchIndexRef.current.filter((entry) =>
           entry.normalized.includes(normalizedQuery),
@@ -125,7 +128,7 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
           return exact || list[0];
         };
 
-        const currentMatches = matches.filter((entry) => entry.familyId === family.id);
+        const currentMatches = matches.filter((entry) => entry.familyId === safeFamily?.id);
         if (currentMatches.length) {
           const target = chooseBestMatch(currentMatches);
           // Safety check: ensure target.brother exists and has an id
@@ -166,15 +169,15 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
         setIsSearching(false);
       }
     },
-    [searchTerm, normalizeSearchValue, updateIndexWithFamily, family, safeBrothers, buildGlobalIndex, onFocusNode, onToast],
+    [searchTerm, normalizeSearchValue, updateIndexWithFamily, safeFamily, safeBrothers, buildGlobalIndex, onFocusNode, onToast],
   );
 
   // Update index when brothers change
   useEffect(() => {
-    if (family && family.id && safeBrothers.length > 0) {
-      updateIndexWithFamily(family.id, family.name || `Family ${family.id}`, safeBrothers);
+    if (safeFamily && safeFamily.id && safeBrothers.length > 0) {
+      updateIndexWithFamily(safeFamily.id, safeFamily.name || `Family ${safeFamily.id}`, safeBrothers);
     }
-  }, [family?.id, family?.name, safeBrothers, updateIndexWithFamily]);
+  }, [safeFamily?.id, safeFamily?.name, safeBrothers, updateIndexWithFamily]);
 
   return {
     searchTerm,
