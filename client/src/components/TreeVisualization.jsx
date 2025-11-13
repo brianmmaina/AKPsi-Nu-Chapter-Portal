@@ -19,6 +19,7 @@ import { calculateTreeLayout } from '../utils/treeLayout';
 import { useTreeData } from '../hooks/useTreeData';
 import { useSearch } from '../hooks/useSearch';
 import { useLineageHighlight } from '../hooks/useLineageHighlight';
+import { getPledgeLevel, getCanonicalPledge } from '../utils/pledgeClass';
 
 /**
  * TreeVisualizationInner Component
@@ -30,10 +31,12 @@ import { useLineageHighlight } from '../hooks/useLineageHighlight';
  * @param {Object} props.family - Family object with id, name, and theme
  * @param {Function} props.onToast - Callback function to show toast notifications
  * @param {Function} props.onChangeFamily - Callback to change the selected family
+ * @param {Function} props.onSwitchFamily - Callback to switch to another family (for search)
+ * @param {Array} props.allFamilies - List of all families (for search)
  * @returns {JSX.Element} React Flow tree visualization
  */
 
-const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
+const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamily, allFamilies }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
   
@@ -42,6 +45,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const safeFamily = family && typeof family === 'object' ? family : null;
   const safeOnToast = onToast && typeof onToast === 'function' ? onToast : null;
   const safeOnChangeFamily = onChangeFamily && typeof onChangeFamily === 'function' ? onChangeFamily : null;
+  const safeOnSwitchFamily = onSwitchFamily && typeof onSwitchFamily === 'function' ? onSwitchFamily : null;
+  const safeAllFamilies = Array.isArray(allFamilies) ? allFamilies : null;
   const familyThemeRaw = safeFamily && safeFamily.theme ? String(safeFamily.theme).toLowerCase().trim() : null;
   const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
   const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
@@ -229,11 +234,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // Ensure focusBrotherNode is always a function
   const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
   const safeShowToast = safeOnToast || showToast;
-  const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
+  const { searchTerm, setSearchTerm, searchField, setSearchField, isSearching, handleSearchSubmit } = useSearch(
     safeFamily,
     brothers,
     safeFocusBrotherNode,
     safeShowToast,
+    safeOnSwitchFamily,
+    safeAllFamilies,
   );
   
   const defaultViewport = useMemo(() => {
@@ -268,22 +275,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [presentation, theme]);
   
-  // NOW we can do the early return check AFTER all hooks and dependent values
-  // Use safeFamily instead of family to avoid accessing potentially uninitialized variable
-  if (!safeFamily || !safeFamily.theme) {
-    return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ fontSize: '1.2rem', color: '#666' }}>Family data not available. Please select a family.</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // After early return check, safeFamily is guaranteed to be valid
-  // Use safeFamily instead of family for all subsequent references
-  const currentFamily = safeFamily;
-
   const containerStyle = useMemo(() => {
     // Safety checks: ensure theme is fully initialized
     if (!theme || typeof theme !== 'object' || !theme.background) {
@@ -895,6 +886,149 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     });
   }, [isTreeReady, nodes, reactFlowInstance, isEmpire, safeFitTreeView]);
 
+  // Cleanup effect - must be called before any conditional returns
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  // Search palette - must be called before any conditional returns
+  const searchIsDark = ['power', 'pride', 'wolfpack'].includes(familyKey);
+  const searchPalette = useMemo(
+    () => ({
+      background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
+      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
+      border: hexToRgba(theme.accent || '#c9a857', 0.35),
+      buttonBg: theme.accent || '#c9a857',
+      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
+    }),
+    [familyKey, theme.accent, searchIsDark],
+  );
+
+  // Export handler - must be called before any conditional returns
+  const handleExportTree = useCallback(async () => {
+    setIsPreparingExport(true);
+    showToast('Preparing export…');
+    
+    try {
+      // Fit view to show entire tree
+      fitTreeView();
+      
+      // Wait for view to settle
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Add print-specific class to body for print styles
+      document.body.classList.add('printing-tree');
+      
+      // Trigger print dialog
+      window.print();
+      
+      // Clean up after print dialog closes
+      setTimeout(() => {
+        document.body.classList.remove('printing-tree');
+        setIsPreparingExport(false);
+        showToast('Export ready. Use browser print dialog to save as PDF.');
+      }, 100);
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('Export failed. Please try again.');
+      setIsPreparingExport(false);
+    }
+  }, [fitTreeView, showToast]);
+
+  // Milestone markers - must be called before any conditional returns
+  const milestoneMarkers = useMemo(() => {
+    if (!isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
+      return [];
+    }
+    
+    try {
+      // Debug: log pledge classes found
+      const foundClasses = new Set();
+      nodes.forEach((node) => {
+        if (node && node.data && node.data.brother && node.data.brother.pledge_class) {
+          foundClasses.add(node.data.brother.pledge_class.trim().toUpperCase());
+        }
+      });
+      
+      // Group nodes by pledge class and calculate average Y position
+      const pledgeGroups = new Map();
+      nodes.forEach((node) => {
+        if (!node || !node.data || !node.data.brother) return;
+        const brother = node.data.brother;
+        if (!brother.pledge_class) return;
+        const pledgeClass = brother.pledge_class.trim().toUpperCase();
+        if (!pledgeClass) return;
+        const y = node.position?.y;
+        if (typeof y !== 'number') return;
+        if (!pledgeGroups.has(pledgeClass)) {
+          pledgeGroups.set(pledgeClass, []);
+        }
+        pledgeGroups.get(pledgeClass).push(y);
+      });
+      
+      // Create markers for each pledge class
+      const markers = Array.from(pledgeGroups.entries())
+        .map(([pledgeClass, yPositions]) => {
+          if (!yPositions || yPositions.length === 0) return null;
+          const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
+          const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
+          
+          // Get canonical pledge class name for display (e.g., "one" -> "omega")
+          const canonical = getCanonicalPledge(pledgeClass);
+          const displayName = canonical ? canonical.toUpperCase() : String(pledgeClass || '').toUpperCase();
+          
+          return {
+            pledgeClass: displayName,
+            avgY: avgY,
+            pledgeLevel: pledgeLevel,
+            isNewest: false,
+          };
+        })
+        .filter(Boolean);
+      
+      // Sort by pledge level first (to maintain Greek letter order), then by Y position as tiebreaker
+      markers.sort((a, b) => {
+        if (a.pledgeLevel !== b.pledgeLevel) {
+          return a.pledgeLevel - b.pledgeLevel;
+        }
+        return a.avgY - b.avgY;
+      });
+      
+      if (markers.length > 0) {
+        const newestLevel = Math.max(...markers.map((marker) => marker.pledgeLevel ?? -Infinity));
+        markers.forEach((marker) => {
+          if (marker.pledgeLevel === newestLevel) {
+            marker.isNewest = true;
+          }
+        });
+      }
+      
+      // Return all pledge classes that exist in the tree, sorted by Greek letter order
+      // Debug: log the markers being returned
+      if (markers.length > 0) {
+        console.log('Milestone markers calculated:', markers.map(m => ({ 
+          pledgeClass: m.pledgeClass, 
+          avgY: m.avgY, 
+          level: m.pledgeLevel,
+          isNewest: m.isNewest 
+        })));
+      }
+      
+      return markers;
+    } catch (error) {
+      console.warn('Error calculating milestone markers:', error);
+      return [];
+    }
+  }, [isTreeReady, nodes]);
+
   // Remove loading state - tree will fade in instead
 
   // Error state
@@ -989,151 +1123,21 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
-
-  useEffect(
-    () => () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current);
-      }
-    },
-    [],
-  );
-
-  const searchIsDark = ['power', 'pride', 'wolfpack'].includes(familyKey);
-  const searchPalette = useMemo(
-    () => ({
-      background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
-      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
-      border: hexToRgba(theme.accent || '#c9a857', 0.35),
-      buttonBg: theme.accent || '#c9a857',
-      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
-    }),
-    [familyKey, theme.accent, searchIsDark],
-  );
-
-  const handleExportTree = useCallback(async () => {
-    setIsPreparingExport(true);
-    showToast('Preparing export…');
-    
-    try {
-      // Fit view to show entire tree
-      fitTreeView();
-      
-      // Wait for view to settle
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Add print-specific class to body for print styles
-      document.body.classList.add('printing-tree');
-      
-      // Trigger print dialog
-      window.print();
-      
-      // Clean up after print dialog closes
-      setTimeout(() => {
-        document.body.classList.remove('printing-tree');
-        setIsPreparingExport(false);
-        showToast('Export ready. Use browser print dialog to save as PDF.');
-      }, 100);
-    } catch (error) {
-      console.error('Export failed:', error);
-      showToast('Export failed. Please try again.');
-      setIsPreparingExport(false);
-    }
-  }, [fitTreeView, showToast]);
-
-  const milestoneMarkers = useMemo(() => {
-    if (!isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
-      return [];
-    }
-    
-    try {
-      // Debug: log pledge classes found
-      const foundClasses = new Set();
-      nodes.forEach(node => {
-        if (node?.data?.brother?.pledge_class) {
-          foundClasses.add(node.data.brother.pledge_class);
-        }
-      });
-      if (foundClasses.size > 0) {
-        console.log('Pledge classes found in tree:', Array.from(foundClasses).sort());
-      }
-      
-      // Group nodes by pledge class and find their average Y position
-      const pledgeGroups = new Map();
-      nodes.forEach(node => {
-        if (!node || !node.data || !node.data.brother) return;
-        const pledgeClass = node.data.brother.pledge_class;
-        if (pledgeClass && node.position && typeof node.position.y === 'number') {
-          if (!pledgeGroups.has(pledgeClass)) {
-            pledgeGroups.set(pledgeClass, []);
-          }
-          pledgeGroups.get(pledgeClass).push(node.position.y);
-        }
-      });
-
-      if (pledgeGroups.size === 0) return [];
-
-      // Calculate average Y for each pledge class and get pledge level for sorting
-      const markers = Array.from(pledgeGroups.entries())
-        .map(([pledgeClass, yPositions]) => {
-          if (!yPositions || yPositions.length === 0) return null;
-          const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
-          const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
-          
-          // Get canonical pledge class name for display (e.g., "one" -> "omega")
-          const canonical = getCanonicalPledge(pledgeClass);
-          const displayName = canonical ? canonical.toUpperCase() : String(pledgeClass || '').toUpperCase();
-          
-          return {
-            pledgeClass: displayName,
-            avgY: avgY,
-            pledgeLevel: pledgeLevel,
-            isNewest: false,
-          };
-        })
-        .filter(Boolean);
-      
-      // Sort by pledge level first (to maintain Greek letter order), then by Y position as tiebreaker
-      markers.sort((a, b) => {
-        if (a.pledgeLevel !== b.pledgeLevel) {
-          return a.pledgeLevel - b.pledgeLevel;
-        }
-        return a.avgY - b.avgY;
-      });
-      
-      if (markers.length > 0) {
-        const newestLevel = Math.max(...markers.map((marker) => marker.pledgeLevel ?? -Infinity));
-        markers.forEach((marker, index) => {
-          if (marker.pledgeLevel === newestLevel) {
-            marker.isNewest = true;
-          }
-        });
-      }
-      
-      // Return all pledge classes that exist in the tree, sorted by Greek letter order
-      // Debug: log the markers being returned
-      if (markers.length > 0) {
-        console.log('Milestone markers calculated:', markers.map(m => ({ 
-          class: m.pledgeClass, 
-          level: m.pledgeLevel, 
-          y: m.avgY.toFixed(0),
-          newest: m.isNewest || false,
-        })));
-      }
-      return markers;
-    } catch (error) {
-      console.warn('Error calculating milestone markers:', error);
-      return [];
-    }
-  }, [isTreeReady, nodes]);
-
   // Header height constant - minimal height, just enough for buttons
   // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
   const SEARCH_BAR_HEIGHT = 38;
   const TOP_NAV_HEIGHT = 38; // Matches the top nav bar height
+
+  // Handle null family case after all hooks
+  if (!safeFamily || !safeFamily.theme) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ fontSize: '1.2rem', color: '#666' }}>Family data not available. Please select a family.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative" style={containerStyle}>
@@ -1171,17 +1175,60 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           }}
         >
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search brothers"
-            aria-label="Search brothers"
+          {/* Search field selector */}
+          <select
+            value={searchField}
+            onChange={(e) => setSearchField(e.target.value)}
             style={{
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              width: 180,
+              color: searchPalette.inputColor,
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: '2px 4px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+            aria-label="Search field"
+            title="Search field"
+          >
+            <option value="all" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+              All
+            </option>
+            <option value="name" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+              Name
+            </option>
+            <option value="pledge_class" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+              Pledge
+            </option>
+            <option value="major" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+              Major
+            </option>
+            <option value="graduation_year" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+              Year
+            </option>
+          </select>
+          <div
+            style={{
+              width: '1px',
+              height: '20px',
+              background: searchPalette.border,
+              opacity: 0.5,
+            }}
+          />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder={searchField === 'all' ? 'Search all fields' : `Search by ${searchField.replace('_', ' ')}`}
+            aria-label={`Search by ${searchField}`}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              width: 160,
               color: searchPalette.inputColor,
               fontSize: '14px',
             }}
@@ -1201,6 +1248,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               opacity: isSearching ? 0.65 : 1,
               transition: 'transform 0.2s ease',
             }}
+            title="Search"
           >
             {isSearching ? 'Searching…' : 'Search'}
           </button>
@@ -1461,7 +1509,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.45);
               const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.6);
               const textColor = theme.nodeText || '#2b2314';
               const newestTagColor = marker.isNewest ? hexToRgba(theme.accent || '#c9a857', 0.85) : null;
@@ -1581,10 +1628,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   );
 };
 
-const TreeVisualization = ({ family, onToast, onChangeFamily }) => {
+const TreeVisualization = ({ family, onToast, onChangeFamily, onSwitchFamily, allFamilies }) => {
   return (
     <ReactFlowProvider>
-      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} />
+      <TreeVisualizationInner 
+        family={family} 
+        onToast={onToast} 
+        onChangeFamily={onChangeFamily}
+        onSwitchFamily={onSwitchFamily}
+        allFamilies={allFamilies}
+      />
     </ReactFlowProvider>
   );
 };

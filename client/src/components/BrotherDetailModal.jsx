@@ -18,7 +18,7 @@ import { hexToRgba } from '../utils/color';
  * @param {Function} props.onToast - Toast notification handler
  * @returns {JSX.Element} Modal component
  */
-const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToast }) => {
+const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
   const [isEditing, setIsEditing] = useState(false);
   // Password no longer needed - using JWT tokens for authentication
   const [formData, setFormData] = useState({
@@ -72,15 +72,6 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
   };
 
   // Add Little functionality removed - site is read-only
-
-  if (!brother) return null;
-
-  const handleBackdropClick = (e) => {
-    // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget) {
-    onClose();
-    }
-  };
 
   const palette = useMemo(() => {
     const base = {
@@ -161,6 +152,15 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
 
     return base;
   }, [theme]);
+
+  if (!brother) return null;
+
+  const handleBackdropClick = (e) => {
+    // Only close if clicking the backdrop itself, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
     <div

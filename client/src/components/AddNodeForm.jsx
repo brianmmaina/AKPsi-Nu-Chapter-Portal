@@ -76,7 +76,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
             big_id: bigIdToUse,
             little_id: newBrotherId,
           });
-        } catch (relError) {
+        } catch {
           // Relationship creation failed, but brother was created
           // This is okay - relationship can be added later
         }
@@ -93,7 +93,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
             onSuccess();
           } catch (refreshError) {
             // Silent error - user already got success message
-            if (process.env.NODE_ENV === 'development') {
+            if (import.meta.env.DEV) {
               console.error('Error refreshing tree:', refreshError);
             }
           }
@@ -101,8 +101,8 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
       }
     } catch (error) {
       // Log error in development only
-      if (process.env.NODE_ENV === 'development') {
-      console.error('Error adding brother:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error adding brother:', error);
       }
       const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please try again.';
       onToast?.({ 

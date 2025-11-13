@@ -48,12 +48,12 @@ function App() {
       const response = await families.getAll();
       setFamiliesList(response.data);
       return response.data;
-    } catch (error) {
+    } catch (err) {
       // Log error but don't show toast on initial load (will show if retry fails)
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load families:', error);
+      if (import.meta.env.DEV) {
+        console.error('Failed to load families:', err);
       }
-      throw error; // Re-throw so caller can handle
+      throw err; // Re-throw so caller can handle
     }
   }, []);
 
@@ -77,7 +77,7 @@ function App() {
           }
           setLoading(false);
         })
-        .catch((error) => {
+        .catch(() => {
           // Show error toast if loading fails
           setToast({ 
             message: 'Session expired or failed to load families. Please login again.', 
@@ -121,7 +121,7 @@ function App() {
         try {
           const familiesData = await loadFamilies();
           setFamiliesList(familiesData);
-        } catch (familyError) {
+        } catch {
           setToast({ 
             message: 'Login successful, but failed to load families. Please refresh.', 
             type: 'error' 
