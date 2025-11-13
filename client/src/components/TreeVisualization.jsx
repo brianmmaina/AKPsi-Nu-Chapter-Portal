@@ -1372,12 +1372,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              // Theme-aware divider line opacity for good contrast
-              // Power theme (dark bg + light accent) works well at 0.12
-              // For light backgrounds (Empire), we need higher opacity for visibility
-              // For dark backgrounds (others), 0.12-0.15 provides good contrast
-              const isLightTheme = familyKey === 'empire';
-              const lineOpacity = isLightTheme ? 0.18 : 0.12; // Slightly more visible on light backgrounds
+              // Use the same divider line opacity for all themes (works well on Power and all others)
+              const lineOpacity = 0.12; // Same opacity for all themes
               const lineAccent = hexToRgba(theme.accent || '#c9a857', lineOpacity);
               
               // Text color for pledge class markers - darker for better contrast
@@ -1398,32 +1394,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                   // Returns position relative to ReactFlow's pane element (accounts for zoom/pan)
                   const projected = project({ x: 0, y: marker.avgY });
                   screenY = projected.y;
-                  
-                  // For Empire theme, markers may be slightly misaligned due to different default zoom
-                  // Add small adjustment if needed (Empire uses 0.45 zoom vs 0.5+ for others)
-                  if (familyKey === 'empire') {
-                    // Small adjustment to align markers properly - may need fine-tuning
-                    screenY = screenY + 2; // Adjust down by 2px for Empire
-                  }
                 } catch (error) {
                   // Fallback to manual calculation if project() fails
                   console.warn('project() failed, using manual calculation:', error);
                   // Manual calc: account for viewport transform
                   // screenY = (flowY * zoom) + viewportY
                   screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
-                  // Add Empire adjustment for manual calc too
-                  if (familyKey === 'empire') {
-                    screenY = screenY + 2;
-                  }
                 }
               } else {
                 // Manual calculation as fallback when project() is not available
                 // This may not be perfectly accurate but should be close
                 screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
-                // Add Empire adjustment for manual calc too
-                if (familyKey === 'empire') {
-                  screenY = screenY + 2;
-                }
               }
               
               return (
