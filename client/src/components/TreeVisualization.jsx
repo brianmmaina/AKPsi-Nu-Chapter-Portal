@@ -32,12 +32,10 @@ import { getPledgeLevel, getCanonicalPledge } from '../utils/pledgeClass';
  * @param {Object} props.family - Family object with id, name, and theme
  * @param {Function} props.onToast - Callback function to show toast notifications
  * @param {Function} props.onChangeFamily - Callback to change the selected family
- * @param {Function} props.onSwitchFamily - Callback to switch to another family (for search)
- * @param {Array} props.allFamilies - List of all families (for search)
  * @returns {JSX.Element} React Flow tree visualization
  */
 
-const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamily, allFamilies }) => {
+const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
   
@@ -46,8 +44,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
   const safeFamily = family && typeof family === 'object' ? family : null;
   const safeOnToast = onToast && typeof onToast === 'function' ? onToast : null;
   const safeOnChangeFamily = onChangeFamily && typeof onChangeFamily === 'function' ? onChangeFamily : null;
-  const safeOnSwitchFamily = onSwitchFamily && typeof onSwitchFamily === 'function' ? onSwitchFamily : null;
-  const safeAllFamilies = Array.isArray(allFamilies) ? allFamilies : null;
   const familyThemeRaw = safeFamily && safeFamily.theme ? String(safeFamily.theme).toLowerCase().trim() : null;
   const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
   const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
@@ -235,13 +231,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
   // Ensure focusBrotherNode is always a function
   const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
   const safeShowToast = safeOnToast || showToast;
-  const { searchTerm, setSearchTerm, searchField, setSearchField, isSearching, handleSearchSubmit } = useSearch(
+  const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
     safeFamily,
     brothers,
     safeFocusBrotherNode,
     safeShowToast,
-    safeOnSwitchFamily,
-    safeAllFamilies,
   );
   
   const defaultViewport = useMemo(() => {
@@ -298,16 +292,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           ? '280px 280px'
           : undefined;
 
-      // Header heights - top nav bar + search bar (no gap)
-      const TOP_NAV_HEIGHT = 38;
-      const SEARCH_BAR_HEIGHT = 38;
-      const TOTAL_HEADER_HEIGHT = TOP_NAV_HEIGHT + SEARCH_BAR_HEIGHT;
+      // Header height for calculating tree container height
+      const HEADER_HEIGHT = 38;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
       const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
-      // Use calc to account for both headers, safe area insets, and bottom buffer
+      // Use calc to account for header, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
-      const treeHeight = `calc(100vh - ${TOTAL_HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
+      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
       const headerTop = `env(safe-area-inset-top, 0px)`;
       
       return {
@@ -326,7 +318,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        marginTop: `calc(${TOTAL_HEADER_HEIGHT}px + ${headerTop})`, // Push content below both fixed headers + safe area
+        marginTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
         paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`, // Add padding for bottom safe area + buffer
       };
     } catch (error) {
@@ -954,109 +946,83 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
     try {
       // Debug: log pledge classes found
       const foundClasses = new Set();
-      nodes.forEach((node) => {
-        if (node && node.data && node.data.brother && node.data.brother.pledge_class) {
-          foundClasses.add(node.data.brother.pledge_class.trim().toUpperCase());
+      nodes.forEach(node => {
+        if (node?.data?.brother?.pledge_class) {
+          foundClasses.add(node.data.brother.pledge_class);
         }
       });
+      if (foundClasses.size > 0) {
+        console.log('Pledge classes found in tree:', Array.from(foundClasses).sort());
+      }
       
-      // Group nodes by tree level (Y position rounded to nearest level spacing)
-      // TreeLayout positions nodes at: y = level * pledgeVerticalSpacing
-      // Round Y to nearest level to group nodes at the same tree level
-      const pledgeVerticalSpacing = layoutSettings?.pledgeVerticalSpacing || 130;
-      const levelGroups = new Map(); // levelY -> Set of pledge classes at this level
-      const pledgeClassCounts = new Map(); // levelY -> Map(pledgeClass -> count)
-      const levelYPositions = new Map(); // levelY -> list of exact Y positions (for averaging)
-      
-      // Group nodes by tree level (round Y to nearest multiple of pledgeVerticalSpacing)
-      nodes.forEach((node) => {
+      // Group nodes by pledge class and find their average Y position
+      const pledgeGroups = new Map();
+      nodes.forEach(node => {
         if (!node || !node.data || !node.data.brother) return;
-        const brother = node.data.brother;
-        const y = node.position?.y;
-        if (typeof y !== 'number') return;
-        
-        // Round to nearest tree level (multiple of pledgeVerticalSpacing)
-        // This groups nodes that are at the same tree level
-        const levelY = Math.round(y / pledgeVerticalSpacing) * pledgeVerticalSpacing;
-        
-        if (!levelGroups.has(levelY)) {
-          levelGroups.set(levelY, new Set());
-          pledgeClassCounts.set(levelY, new Map());
-          levelYPositions.set(levelY, []);
-        }
-        
-        // Track exact Y positions for this level (for more accurate marker positioning)
-        levelYPositions.get(levelY).push(y);
-        
-        if (brother.pledge_class) {
-          const pledgeClass = brother.pledge_class.trim().toUpperCase();
-          if (pledgeClass) {
-            levelGroups.get(levelY).add(pledgeClass);
-            const counts = pledgeClassCounts.get(levelY);
-            counts.set(pledgeClass, (counts.get(pledgeClass) || 0) + 1);
+        const pledgeClass = node.data.brother.pledge_class;
+        if (pledgeClass && node.position && typeof node.position.y === 'number') {
+          if (!pledgeGroups.has(pledgeClass)) {
+            pledgeGroups.set(pledgeClass, []);
           }
+          pledgeGroups.get(pledgeClass).push(node.position.y);
         }
       });
-      
-      // Create markers for each unique tree level with the most common pledge class
-      const markers = Array.from(levelGroups.entries())
-        .map(([levelY, pledgeClasses]) => {
-          if (pledgeClasses.size === 0) return null;
+
+      if (pledgeGroups.size === 0) return [];
+
+      // Calculate average Y for each pledge class and get pledge level for sorting
+      const markers = Array.from(pledgeGroups.entries())
+        .map(([pledgeClass, yPositions]) => {
+          if (!yPositions || yPositions.length === 0) return null;
+          const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
+          const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
           
-          // Find the most common pledge class at this level
-          const counts = pledgeClassCounts.get(levelY) || new Map();
-          let mostCommonPledgeClass = null;
-          let maxCount = 0;
-          
-          counts.forEach((count, pledgeClass) => {
-            if (count > maxCount) {
-              maxCount = count;
-              mostCommonPledgeClass = pledgeClass;
-            }
-          });
-          
-          // Fallback to first pledge class if no counts
-          if (!mostCommonPledgeClass) {
-            mostCommonPledgeClass = Array.from(pledgeClasses)[0];
-          }
-          
-          // Calculate average Y position for this level (more accurate than rounded levelY)
-          const yPositions = levelYPositions.get(levelY) || [];
-          const avgY = yPositions.length > 0 
-            ? yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length
-            : levelY;
-          
-          const pledgeLevel = getPledgeLevel(mostCommonPledgeClass, 9999);
-          const canonical = getCanonicalPledge(mostCommonPledgeClass);
-          const displayName = canonical ? canonical.toUpperCase() : String(mostCommonPledgeClass || '').toUpperCase();
+          // Get canonical pledge class name for display (e.g., "one" -> "omega")
+          const canonical = getCanonicalPledge(pledgeClass);
+          const displayName = canonical ? canonical.toUpperCase() : String(pledgeClass || '').toUpperCase();
           
           return {
             pledgeClass: displayName,
-            avgY: avgY, // Use average Y position for accurate marker placement
+            avgY: avgY,
             pledgeLevel: pledgeLevel,
             isNewest: false,
           };
         })
         .filter(Boolean);
       
-      // Sort by Y position (tree level) - markers should appear in tree order
-      markers.sort((a, b) => a.avgY - b.avgY);
+      // Sort by pledge level first (to maintain Greek letter order), then by Y position as tiebreaker
+      markers.sort((a, b) => {
+        if (a.pledgeLevel !== b.pledgeLevel) {
+          return a.pledgeLevel - b.pledgeLevel;
+        }
+        return a.avgY - b.avgY;
+      });
       
       if (markers.length > 0) {
         const newestLevel = Math.max(...markers.map((marker) => marker.pledgeLevel ?? -Infinity));
-        markers.forEach((marker) => {
+        markers.forEach((marker, index) => {
           if (marker.pledgeLevel === newestLevel) {
             marker.isNewest = true;
           }
         });
       }
       
+      // Return all pledge classes that exist in the tree, sorted by Greek letter order
+      // Debug: log the markers being returned
+      if (markers.length > 0) {
+        console.log('Milestone markers calculated:', markers.map(m => ({ 
+          class: m.pledgeClass, 
+          level: m.pledgeLevel, 
+          y: m.avgY.toFixed(0),
+          newest: m.isNewest || false,
+        })));
+      }
       return markers;
     } catch (error) {
       console.warn('Error calculating milestone markers:', error);
       return [];
     }
-  }, [isTreeReady, nodes, layoutSettings]);
+  }, [isTreeReady, nodes]);
 
   // Remove loading state - tree will fade in instead
 
@@ -1152,9 +1118,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
     );
   }
 
-  // Header height constant - matches the theme
-  const SEARCH_BAR_HEIGHT = 38;
-  const TOP_NAV_HEIGHT = 38;
+  // Header height constant - minimal height, just enough for buttons
+  // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
+  const HEADER_HEIGHT = 38;
 
   // Handle null family case after all hooks
   if (!safeFamily || !safeFamily.theme) {
@@ -1169,14 +1135,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
 
   return (
     <div className="w-full relative" style={containerStyle}>
-      {/* Fixed translucent search/action bar - directly attached to top bar with no gap */}
+      {/* Fixed translucent header bar */}
       <div
         style={{
           position: 'fixed',
-          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Directly attached - no gap
+          top: 'env(safe-area-inset-top, 0px)', // Account for notch/safe area at top
           left: 0,
           right: 0,
-          height: `${SEARCH_BAR_HEIGHT}px`,
+          height: `${HEADER_HEIGHT}px`,
           zIndex: 20,
           background: hexToRgba(theme.background || '#f5f5f5', 0.85),
           backdropFilter: 'blur(12px) saturate(180%)',
@@ -1189,7 +1155,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        {/* Search form - larger, more prominent */}
+        {/* Search form */}
         <form
           onSubmit={handleSearchSubmit}
           style={{
@@ -1203,60 +1169,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           }}
         >
-          {/* Search field selector */}
-          <select
-            value={searchField}
-            onChange={(e) => setSearchField(e.target.value)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: searchPalette.inputColor,
-              fontSize: '11px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              padding: '2px 4px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-            aria-label="Search field"
-            title="Search field"
-          >
-            <option value="all" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
-              All
-            </option>
-            <option value="name" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
-              Name
-            </option>
-            <option value="pledge_class" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
-              Pledge
-            </option>
-            <option value="major" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
-              Major
-            </option>
-            <option value="graduation_year" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
-              Year
-            </option>
-          </select>
-          <div
-            style={{
-              width: '1px',
-              height: '20px',
-              background: searchPalette.border,
-              opacity: 0.5,
-            }}
-          />
           <input
             type="text"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search brothers"
-            aria-label={`Search by ${searchField}`}
+            aria-label="Search brothers"
             style={{
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              width: 160,
+              width: 180,
               color: searchPalette.inputColor,
               fontSize: '14px',
             }}
@@ -1276,13 +1199,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
               opacity: isSearching ? 0.65 : 1,
               transition: 'transform 0.2s ease',
             }}
-            title="Search"
           >
             {isSearching ? 'Searching…' : 'Search'}
           </button>
         </form>
 
-        {/* Right side controls - larger, more prominent */}
+        {/* Right side controls */}
         <div
           style={{
             display: 'flex',
@@ -1492,13 +1414,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         }}
         style={{ 
           width: '100%', 
-          height: '100%',
+          height: '100%', // Fill parent container
           minHeight: '100%',
           maxHeight: '100%',
           background: theme.background, 
           fontFamily: theme.bodyFont, 
           pointerEvents: isModalOpen ? 'none' : 'auto',
-          position: 'relative',
+          zIndex: 1,
         }}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -1519,9 +1441,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         />
       </ReactFlow>
 
-      {/* Milestone Markers - Pledge Class Guides with divider lines */}
-      {/* Render markers inside ReactFlow using custom edges or as overlay */}
-      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && reactFlowInstance && (
+      {/* Milestone Markers - Pledge Class Guides (positioned to follow viewport) */}
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
         <div
           style={{
             position: 'absolute',
@@ -1530,65 +1451,44 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            zIndex: 1, // Behind nodes, above background
-            overflow: 'hidden',
+            zIndex: 10, // Higher z-index to ensure visibility above ReactFlow
+            overflow: 'visible', // Allow markers to be visible
           }}
         >
           {milestoneMarkers.map((marker, idx) => {
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              // Use ReactFlow's project() method to convert flow coordinates to screen coordinates
-              // This ensures markers follow the viewport transform correctly
-              const flowY = marker.avgY;
+              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.45);
+              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.6);
+              const textColor = theme.nodeText || '#2b2314';
+              const newestTagColor = marker.isNewest ? hexToRgba(theme.accent || '#c9a857', 0.85) : null;
               
-              // ReactFlow's project() converts flow coordinates to screen coordinates
-              // project({ x, y }) returns { x: screenX, y: screenY }
-              let screenY = flowY;
+              // Get current viewport - use state if available, otherwise default
+              const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
               
-              if (project && typeof project === 'function') {
-                try {
-                  // Convert flow coordinate to screen coordinate
-                  const screenPos = project({ x: 0, y: flowY });
-                  screenY = screenPos.y;
-                } catch (projectError) {
-                  // Fallback to manual calculation if project() fails
-                  console.warn('Error using project(), falling back to manual calculation:', projectError);
-                  const currentViewport = reactFlowInstance.getViewport ? reactFlowInstance.getViewport() : (viewport || defaultViewport);
-                  const container = document.querySelector('.react-flow')?.parentElement;
-                  const containerHeight = container?.clientHeight || window.innerHeight;
-                  const centerY = containerHeight / 2;
-                  const zoom = currentViewport.zoom || 1;
-                  const viewportY = currentViewport.y || 0;
-                  screenY = centerY + (flowY - centerY) * zoom + viewportY;
-                }
-              } else {
-                // Fallback: manual calculation using viewport
-                const currentViewport = reactFlowInstance.getViewport ? reactFlowInstance.getViewport() : (viewport || defaultViewport);
-                const container = document.querySelector('.react-flow')?.parentElement;
-                const containerHeight = container?.clientHeight || window.innerHeight;
-                const centerY = containerHeight / 2;
-                const zoom = currentViewport.zoom || 1;
-                const viewportY = currentViewport.y || 0;
-                screenY = centerY + (flowY - centerY) * zoom + viewportY;
-              }
+              // ReactFlow's coordinate system: the pane has transform: translate(viewport.x, viewport.y) scale(viewport.zoom)
+              // To position an overlay element at a flow coordinate, we need to apply the same transform
+              // Screen Y = (Flow Y * zoom) + viewport.y
+              // But we need to account for the ReactFlow pane's position
+              const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
               
               return (
                 <div
                   key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-                  style={{
-                    position: 'absolute',
+        style={{
+          position: 'absolute',
                     left: 0,
                     top: `${screenY}px`,
                     width: '100%',
                     height: '3px',
-                    background: `linear-gradient(90deg, transparent 0%, ${hexToRgba(theme.accent || '#c9a857', 0.6)} 8%, ${hexToRgba(theme.accent || '#c9a857', 0.6)} 92%, transparent 100%)`,
+                    background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
                     pointerEvents: 'none',
                     transform: 'translateY(-50%)',
-                    zIndex: 1,
+                    zIndex: 10,
                   }}
                 >
-                  {/* Label on the left side - prominent with background */}
+                  {/* Label on the left side */}
                   <div
                     style={{
                       position: 'absolute',
@@ -1599,7 +1499,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
                       fontWeight: 800,
                       letterSpacing: '0.2em',
                       textTransform: 'uppercase',
-                      color: theme.nodeText || '#2b2314',
+                      color: textColor,
                       background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.86) 100%)',
                       padding: marker.isNewest ? '6px 16px' : '5px 14px',
                       borderRadius: 8,
@@ -1609,7 +1509,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: marker.isNewest ? 10 : 0,
-                      fontFamily: theme.bodyFont || 'Montserrat, system-ui, sans-serif',
                     }}
                   >
                     <span>{marker.pledgeClass || ''}</span>
@@ -1621,7 +1520,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
                           textTransform: 'uppercase',
                           fontWeight: 800,
                           padding: '4px 8px',
-                          background: hexToRgba(theme.accent || '#c9a857', 0.85),
+                          background: newestTagColor || hexToRgba('#000000', 0.1),
                           color: theme.nodeText || '#2b2314',
                           borderRadius: 999,
                           boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
@@ -1680,16 +1579,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
   );
 };
 
-const TreeVisualization = ({ family, onToast, onChangeFamily, onSwitchFamily, allFamilies }) => {
+const TreeVisualization = ({ family, onToast, onChangeFamily }) => {
   return (
     <ReactFlowProvider>
-      <TreeVisualizationInner 
-        family={family} 
-        onToast={onToast} 
-        onChangeFamily={onChangeFamily}
-        onSwitchFamily={onSwitchFamily}
-        allFamilies={allFamilies}
-      />
+      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} />
     </ReactFlowProvider>
   );
 };
