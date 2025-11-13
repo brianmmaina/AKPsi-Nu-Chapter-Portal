@@ -53,6 +53,11 @@ const PLEDGE_SYNONYMS = {
   'alphapsi': 'alpha psi',
   'alpha omega': 'alpha omega',
   'alphaomega': 'alpha omega',
+  // Handle "ONE" variants for OMEGA
+  'one': 'omega',
+  'one ea': 'omega',
+  'oneea': 'omega',
+  'one-ea': 'omega',
 };
 
 const LETTER_TO_GREEK = {

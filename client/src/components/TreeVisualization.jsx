@@ -1037,19 +1037,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       if (pledgeGroups.size === 0) return [];
 
-      // Calculate average Y for each pledge class
-      return Array.from(pledgeGroups.entries())
+      // Calculate average Y for each pledge class and get pledge level for sorting
+      const markers = Array.from(pledgeGroups.entries())
         .map(([pledgeClass, yPositions]) => {
           if (!yPositions || yPositions.length === 0) return null;
           const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
+          const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
           return {
             pledgeClass: String(pledgeClass || '').toUpperCase(),
             avgY: avgY,
+            pledgeLevel: pledgeLevel,
           };
         })
-        .filter(Boolean)
-        .sort((a, b) => a.avgY - b.avgY)
-        .slice(0, 8); // Limit to 8 most prominent markers
+        .filter(Boolean);
+      
+      // Sort by pledge level first (to maintain Greek letter order), then by Y position as tiebreaker
+      markers.sort((a, b) => {
+        if (a.pledgeLevel !== b.pledgeLevel) {
+          return a.pledgeLevel - b.pledgeLevel;
+        }
+        return a.avgY - b.avgY;
+      });
+      
+      return markers.slice(0, 8); // Limit to 8 most prominent markers
     } catch (error) {
       console.warn('Error calculating milestone markers:', error);
       return [];
