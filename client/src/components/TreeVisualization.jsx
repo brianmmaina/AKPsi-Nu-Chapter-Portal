@@ -512,36 +512,77 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return; // Still loading, don't process yet
     }
 
-    // Ensure theme is initialized before proceeding
-    if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
+    // CRITICAL: Ensure theme and familyKey are fully initialized before proceeding
+    // This prevents "Cannot access uninitialized variable" errors in production
+    if (!theme || typeof theme !== 'object') {
+      console.warn('Theme not initialized, skipping layout calculation');
+      return;
+    }
+    
+    if (!theme.nodeStudying || typeof theme.nodeStudying === 'undefined') {
+      console.warn('Theme missing nodeStudying, skipping layout calculation');
+      return;
+    }
+    
+    if (!theme.nodeGraduated || typeof theme.nodeGraduated === 'undefined') {
+      console.warn('Theme missing nodeGraduated, skipping layout calculation');
+      return;
+    }
+    
+    if (!familyKey || typeof familyKey !== 'string') {
+      console.warn('FamilyKey not initialized, skipping layout calculation');
+      return;
+    }
+    
+    // Ensure renderNodeContent is a valid function
+    if (!renderNodeContent || typeof renderNodeContent !== 'function') {
+      console.warn('renderNodeContent is not a function, skipping layout calculation');
       return;
     }
 
-    // Use extracted layout calculation utility
-    const { nodes: layoutNodes, edges: layoutEdges } = calculateTreeLayout({
-      brothers,
-      relationships,
-      familyKey,
-      theme,
-      layoutSettings,
+    try {
+      // Use extracted layout calculation utility
+      const layoutResult = calculateTreeLayout({
+        brothers,
+        relationships,
+        familyKey,
+        theme,
+        layoutSettings,
       highlightBrotherId,
-      lineageHighlightSet: lineageHighlight.lineageHighlightSet,
+      lineageHighlightSet: lineageHighlight?.lineageHighlightSet || new Set(),
       renderNodeContent,
       isEmpire,
-      onTreeBounds: (bounds) => {
-        treeBoundsRef.current = bounds;
-      },
-    });
+        onTreeBounds: (bounds) => {
+          if (bounds && typeof bounds === 'object') {
+            treeBoundsRef.current = bounds;
+          }
+        },
+      });
 
-    setNodes(layoutNodes);
-    setEdges(layoutEdges);
+      // Validate layout result before setting
+      if (layoutResult && layoutResult.nodes && layoutResult.edges) {
+        if (Array.isArray(layoutResult.nodes) && Array.isArray(layoutResult.edges)) {
+          setNodes(layoutResult.nodes);
+          setEdges(layoutResult.edges);
+        } else {
+          console.warn('Layout result invalid, nodes or edges are not arrays');
+        }
+      } else {
+        console.warn('Layout result missing nodes or edges');
+      }
+    } catch (error) {
+      console.error('Error calculating tree layout:', error);
+      // Set empty arrays on error to prevent rendering issues
+      setNodes([]);
+      setEdges([]);
+    }
   }, [
     brothers,
     relationships,
     familyKey,
     layoutSettings,
     highlightBrotherId,
-    lineageHighlight.lineageHighlightSet,
+    lineageHighlight,
     theme,
     renderNodeContent,
     loading,
