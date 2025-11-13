@@ -1087,6 +1087,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             pledgeClass: displayName,
             avgY: avgY,
             pledgeLevel: pledgeLevel,
+            isNewest: false,
           };
         })
         .filter(Boolean);
@@ -1099,13 +1100,23 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         return a.avgY - b.avgY;
       });
       
+      if (markers.length > 0) {
+        const newestLevel = Math.max(...markers.map((marker) => marker.pledgeLevel ?? -Infinity));
+        markers.forEach((marker, index) => {
+          if (marker.pledgeLevel === newestLevel) {
+            marker.isNewest = true;
+          }
+        });
+      }
+      
       // Return all pledge classes that exist in the tree, sorted by Greek letter order
       // Debug: log the markers being returned
       if (markers.length > 0) {
         console.log('Milestone markers calculated:', markers.map(m => ({ 
           class: m.pledgeClass, 
           level: m.pledgeLevel, 
-          y: m.avgY.toFixed(0) 
+          y: m.avgY.toFixed(0),
+          newest: m.isNewest || false,
         })));
       }
       return markers;
@@ -1445,8 +1456,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.25);
-              const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.9);
+              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.45);
+              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.6);
+              const textColor = theme.nodeText || '#2b2314';
+              const newestTagColor = marker.isNewest ? hexToRgba(theme.accent || '#c9a857', 0.85) : null;
               
               // Get current viewport - use state if available, otherwise default
               const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
@@ -1465,8 +1478,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                     left: 0,
                     top: `${screenY}px`,
                     width: '100%',
-                    height: '2px',
-                    background: `linear-gradient(90deg, transparent 0%, ${accentColor} 10%, ${accentColor} 90%, transparent 100%)`,
+                    height: '3px',
+                    background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
                     pointerEvents: 'none',
                     transform: 'translateY(-50%)',
                     zIndex: 10,
@@ -1476,23 +1489,43 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                   <div
                     style={{
                       position: 'absolute',
-                      left: 20,
+                      left: 'calc(18px + env(safe-area-inset-left, 0px))',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      letterSpacing: '0.15em',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      letterSpacing: '0.2em',
                       textTransform: 'uppercase',
                       color: textColor,
-                      background: hexToRgba(presentation.legend?.panelBg || theme.background || '#ffffff', 0.95),
-                      padding: '5px 12px',
-                      borderRadius: 6,
-                      border: `1.5px solid ${hexToRgba(theme.accent || '#c9a857', 0.4)}`,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.86) 100%)',
+                      padding: marker.isNewest ? '6px 16px' : '5px 14px',
+                      borderRadius: 8,
+                      border: `2px solid ${hexToRgba(theme.accent || '#c9a857', marker.isNewest ? 0.8 : 0.55)}`,
+                      boxShadow: '0 8px 22px rgba(0,0,0,0.22)',
                       whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: marker.isNewest ? 10 : 0,
                     }}
                   >
-                    {marker.pledgeClass || ''}
+                    <span>{marker.pledgeClass || ''}</span>
+                    {marker.isNewest && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          letterSpacing: '0.18em',
+                          textTransform: 'uppercase',
+                          fontWeight: 800,
+                          padding: '4px 8px',
+                          background: newestTagColor || hexToRgba('#000000', 0.1),
+                          color: theme.nodeText || '#2b2314',
+                          borderRadius: 999,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        Newest
+                      </span>
+                    )}
                   </div>
                 </div>
               );
