@@ -259,7 +259,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         onToast={onToast} 
         onChangeFamily={onChangeFamily} 
       />
-    </div>
   );
 };
 
