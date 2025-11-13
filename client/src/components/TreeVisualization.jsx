@@ -1066,12 +1066,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         return a.avgY - b.avgY;
       });
       
-      // Only show the oldest (first) and youngest (last) pledge classes in the tree
-      if (markers.length === 0) return [];
-      if (markers.length === 1) return markers; // Only one pledge class, show it
-      
-      // Return oldest and youngest
-      return [markers[0], markers[markers.length - 1]];
+      // Return all pledge classes that exist in the tree, sorted by Greek letter order
+      return markers;
     } catch (error) {
       console.warn('Error calculating milestone markers:', error);
       return [];
