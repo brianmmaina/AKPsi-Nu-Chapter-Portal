@@ -361,8 +361,8 @@ export const calculateTreeLayout = ({
   // Create edges - only if both nodes exist
   // Make edges subtle - lighter, thinner, lower opacity, no shadow
   const edgeColor = theme.edgeColor || theme.accent || '#666666';
-  const edgeBaseColor = hexToRgba(edgeColor, 0.5); // Visible but subtle - 50% opacity
-  const edgeStrokeWidth = 2; // Slightly thicker for visibility - 2px
+  const edgeBaseColor = hexToRgba(edgeColor, 1.0); // Full opacity - 100%
+  const edgeStrokeWidth = 1; // Thin edges - 1px
   
   relationships.forEach(rel => {
     if (!rel || !rel.big_id || !rel.little_id) return;
@@ -380,8 +380,8 @@ export const calculateTreeLayout = ({
         lineageHighlightSet.has(String(rel.big_id)) &&
         lineageHighlightSet.has(String(rel.little_id));
       
-      // Lineage edges are slightly more visible but still subtle
-      const edgeOpacity = isLineageEdge ? 0.7 : 0.5;
+      // Lineage edges use full opacity, normal edges also use full opacity
+      const edgeOpacity = isLineageEdge ? 1.0 : 1.0;
       const edgeStroke = isLineageEdge ? 2.5 : edgeStrokeWidth;
       const edgeStrokeColor = isLineageEdge 
         ? hexToRgba(theme.accent || edgeColor, edgeOpacity)

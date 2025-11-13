@@ -52,102 +52,40 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         transition: 'background-color 400ms ease',
       }}
     >
-      <div 
-        style={{
-          position: 'fixed',
-          top: 'env(safe-area-inset-top, 0px)',
-          left: 0,
-          right: 0,
-          height: '38px',
-          zIndex: 21,
-          backgroundColor: hexToRgba(themeBackground, 0.85),
-          backdropFilter: 'blur(12px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-          borderBottom: `1px solid ${hexToRgba(themeAccent, 0.2)}`,
-          transition: 'background-color 400ms ease, border-bottom-color 400ms ease',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 20px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div style={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: '16px',
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px' }}>
-              <div 
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  border: `1px solid ${hexToRgba(themeAccent, 0.4)}`,
-                  backgroundColor: hexToRgba(themeAccent, 0.15),
-                  color: themeAccent,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                  transition: 'all 400ms ease',
-                }}
-              >
-                {selectedFamily.name.charAt(0)}
-              </div>
-              <h1
-                style={{
-                  fontSize: '16px',
-                  fontFamily: 'Russo One, sans-serif',
-                  fontWeight: 700,
-                  color: themeAccent,
-                  letterSpacing: '0.5px',
-                  margin: 0,
-                  transition: 'color 400ms ease',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {selectedFamily.name}
-              </h1>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+      <TreeVisualization 
+        family={selectedFamily} 
+        onToast={onToast} 
+        onChangeFamily={onChangeFamily}
+        renderCombinedHeader={(headerProps) => (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 'env(safe-area-inset-top, 0px)',
+              left: 0,
+              right: 0,
+              height: '38px',
+              zIndex: 21,
+              backgroundColor: '#f5f5f0',
+              backdropFilter: 'blur(12px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+              borderBottom: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              gap: '16px',
+            }}
+          >
+            {/* Family tabs on the left */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               {families.map((family) => {
                 const isActive = selectedFamily.id === family.id;
                 const familyTheme = getThemeStyles(family.theme);
-                // Use primary/accent color from corrected theme specs
-                const familyPrimary = familyTheme?.accent || '#D3AF37';
+                const familyPrimary = familyTheme?.accent || '#c9a857';
                 
-                // Determine inactive tab color based on CURRENTLY SELECTED family's background
-                // This ensures proper contrast when light backgrounds (like EMPIRE) are selected
-                let inactiveColor;
-                if (!isActive) {
-                  if (selectedFamily.theme === 'empire') {
-                    // When EMPIRE (light cream) is selected, use dark color for all inactive tabs
-                    inactiveColor = '#4a4a4a'; // Dark gray for good contrast on light background
-                  } else if (family.theme === 'empire') {
-                    // When EMPIRE tab is inactive on dark background, use lighter variant
-                    inactiveColor = '#999999'; // Medium gray
-                  } else if (family.theme === 'wolfpack') {
-                    // WOLFPACK tab should always be white when inactive
-                    inactiveColor = '#ffffff'; // Full white for WOLFPACK
-                  } else {
-                    // Default: semi-transparent white for dark backgrounds
-                    inactiveColor = 'rgba(255, 255, 255, 0.5)';
-                  }
-                }
-                
-                // For active tabs: WOLFPACK always uses white text, others use accent
-                const activeTextColor = family.theme === 'wolfpack' ? '#ffffff' : familyPrimary;
-                const activeBgColor = family.theme === 'wolfpack' 
-                  ? hexToRgba('#3d5373', 0.3) // Dark blue-gray background for white text
-                  : hexToRgba(familyPrimary, 0.2);
-                const activeBorderColor = family.theme === 'wolfpack'
-                  ? hexToRgba('#3d5373', 0.4)
-                  : hexToRgba(familyPrimary, 0.3);
+                const activeBgColor = isActive ? hexToRgba('#c9a857', 0.3) : 'transparent';
+                const textColor = isActive ? familyPrimary : '#4a4a4a';
                 
                 return (
                   <button
@@ -156,31 +94,20 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     style={{
                       position: 'relative',
                       padding: '4px 12px',
-                      borderRadius: '6px',
-                      // Always reserve space for border to prevent shifting
-                      border: '1px solid',
-                      borderColor: isActive ? activeBorderColor : 'transparent',
-                      backgroundColor: isActive ? activeBgColor : 'transparent',
-                      transition: 'background-color 200ms ease, border-color 200ms ease',
+                      borderRadius: '4px',
+                      backgroundColor: activeBgColor,
+                      border: 'none',
                       cursor: 'pointer',
-                      // Reserve space for underline to prevent shifting
-                      paddingBottom: isActive ? '10px' : '4px',
+                      transition: 'background-color 200ms ease',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        // Ensure hover state is visible - use family's accent with appropriate opacity
-                        const hoverBg = selectedFamily.theme === 'empire' 
-                          ? hexToRgba(familyPrimary, 0.15) // More visible on light background
-                          : hexToRgba(familyPrimary, 0.1);
-                        const hoverBorder = hexToRgba(familyPrimary, 0.3);
-                        e.currentTarget.style.backgroundColor = hoverBg;
-                        e.currentTarget.style.borderColor = hoverBorder;
+                        e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.12);
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'transparent';
                       }
                     }}
                     aria-label={`Switch to ${family.name} family`}
@@ -188,17 +115,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   >
                     <span 
                       style={{
-                        whiteSpace: 'nowrap',
-                        position: 'relative',
-                        zIndex: 10,
                         fontSize: '12px',
                         fontFamily: 'Russo One, sans-serif',
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? activeTextColor : inactiveColor,
+                        fontWeight: 700,
+                        color: textColor,
                         letterSpacing: '0.5px',
-                        transition: 'color 200ms ease, font-weight 200ms ease',
-                        display: 'inline-block',
-                        minWidth: 'fit-content',
+                        whiteSpace: 'nowrap',
+                        transition: 'color 200ms ease',
                       }}
                     >
                       {family.name}
@@ -207,14 +130,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       <span
                         style={{
                           position: 'absolute',
-                          bottom: '-6px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          height: '2px',
-                          width: '60%',
-                          backgroundColor: activeTextColor,
+                          bottom: '0',
+                          left: '0',
+                          right: '0',
+                          height: '1.5px',
+                          backgroundColor: familyPrimary,
                           borderRadius: '999px',
-                          boxShadow: `0 0 4px ${hexToRgba(activeTextColor, 0.5)}`,
+                          opacity: 0.6,
                         }}
                       />
                     )}
@@ -223,40 +145,131 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               })}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: '80px' }}>
+            {/* Search and controls in the middle */}
+            {headerProps && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', justifyContent: 'center', maxWidth: '600px' }}>
+                {/* Search form */}
+                <form
+                  onSubmit={headerProps.handleSearchSubmit}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: headerProps.searchPalette.background,
+                    border: `1px solid ${headerProps.searchPalette.border}`,
+                    borderRadius: 999,
+                    padding: '6px 12px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={headerProps.searchTerm}
+                    onChange={(event) => headerProps.setSearchTerm(event.target.value)}
+                    placeholder="Search brothers"
+                    aria-label="Search brothers"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      width: 180,
+                      color: headerProps.searchPalette.inputColor,
+                      fontSize: '14px',
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={headerProps.isSearching || !headerProps.searchTerm.trim()}
+                    style={{
+                      background: headerProps.searchPalette.buttonBg,
+                      color: headerProps.searchPalette.buttonText,
+                      border: 'none',
+                      borderRadius: 999,
+                      padding: '6px 12px',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: headerProps.isSearching ? 'wait' : 'pointer',
+                      opacity: headerProps.isSearching ? 0.65 : 1,
+                      transition: 'transform 0.2s ease',
+                    }}
+                  >
+                    {headerProps.isSearching ? 'Searching…' : 'Search'}
+                  </button>
+                </form>
+
+                {/* Controls */}
+                <select
+                  value={headerProps.safeLineageHighlight.lineageHighlightMode}
+                  onChange={(event) => headerProps.safeLineageHighlight.setLineageHighlightMode(event.target.value)}
+                  style={{
+                    background: headerProps.searchPalette.background,
+                    color: headerProps.searchPalette.inputColor,
+                    border: `1px solid ${headerProps.searchPalette.border}`,
+                    borderRadius: 999,
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    cursor: 'pointer',
+                    appearance: 'none',
+                  }}
+                >
+                  <option value="off">Highlight: Off</option>
+                  <option value="ancestors">Highlight: Ancestors</option>
+                  <option value="descendants">Highlight: Descendants</option>
+                  <option value="both">Highlight: Lineage</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={headerProps.handleExportTree}
+                  disabled={headerProps.isPreparingExport}
+                  style={{
+                    background: headerProps.theme.accent || '#c9a857',
+                    color: headerProps.familyKey === 'power' || headerProps.familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: 999,
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: headerProps.isPreparingExport ? 'wait' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    opacity: headerProps.isPreparingExport ? 0.65 : 1,
+                  }}
+                >
+                  {headerProps.isPreparingExport ? 'Preparing…' : 'Export / Print'}
+                </button>
+              </div>
+            )}
+
+            {/* Back button on the right */}
+            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               <button
                 onClick={onChangeFamily}
                 style={{
                   padding: '4px 12px',
                   fontSize: '12px',
-                  borderRadius: '6px',
-                  backgroundColor: hexToRgba(themeAccent, 0.15),
-                  border: `1px solid ${hexToRgba(themeAccent, 0.3)}`,
-                  color: themeAccent,
-                  transition: 'all 400ms ease',
-                  whiteSpace: 'nowrap',
+                  borderRadius: '999px',
+                  backgroundColor: hexToRgba('#c9a857', 0.2),
+                  border: 'none',
+                  color: '#c9a857',
                   cursor: 'pointer',
                   fontWeight: 500,
+                  transition: 'background-color 200ms ease',
+                  whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
-                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.3);
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.15);
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.2);
                 }}
               >
                 Back
               </button>
             </div>
           </div>
-        </div>
-      <div style={{ height: '38px' }}></div>
-      <TreeVisualization 
-        family={selectedFamily} 
-        onToast={onToast} 
-        onChangeFamily={onChangeFamily}
+        )}
       />
     </div>
   );

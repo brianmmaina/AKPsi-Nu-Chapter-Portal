@@ -35,7 +35,7 @@ import { getPledgeLevel, getCanonicalPledge } from '../utils/pledgeClass';
  * @returns {JSX.Element} React Flow tree visualization
  */
 
-const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
+const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
   
@@ -1118,8 +1118,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
-  // Header height constant - minimal height, just enough for buttons
-  // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
+  // Header height constant - single combined bar
+  // Combined bar with family tabs, search, and controls in one row
   const HEADER_HEIGHT = 38;
 
   // Handle null family case after all hooks
@@ -1133,128 +1133,28 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     );
   }
 
-  return (
-    <div className="w-full relative" style={containerStyle}>
-      {/* Fixed translucent header bar */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 'env(safe-area-inset-top, 0px)', // Account for notch/safe area at top
-          left: 0,
-          right: 0,
-          height: `${HEADER_HEIGHT}px`,
-          zIndex: 20,
-          background: hexToRgba(theme.background || '#f5f5f5', 0.85),
-          backdropFilter: 'blur(12px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.2)}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 20px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-      >
-        {/* Search form */}
-        <form
-          onSubmit={handleSearchSubmit}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: searchPalette.background,
-            border: `1px solid ${searchPalette.border}`,
-            borderRadius: 999,
-            padding: '6px 12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          }}
-        >
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search brothers"
-            aria-label="Search brothers"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              width: 180,
-              color: searchPalette.inputColor,
-              fontSize: '14px',
-            }}
-          />
-          <button
-            type="submit"
-            disabled={isSearching || !searchTerm.trim()}
-            style={{
-              background: searchPalette.buttonBg,
-              color: searchPalette.buttonText,
-              border: 'none',
-              borderRadius: 999,
-              padding: '6px 12px',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: isSearching ? 'wait' : 'pointer',
-              opacity: isSearching ? 0.65 : 1,
-              transition: 'transform 0.2s ease',
-            }}
-          >
-            {isSearching ? 'Searching…' : 'Search'}
-          </button>
-        </form>
+  // Render combined header if provided by parent
+  const headerProps = useMemo(() => {
+    if (!renderCombinedHeader) return null;
+    return {
+      searchTerm,
+      setSearchTerm,
+      isSearching,
+      handleSearchSubmit,
+      searchPalette,
+      safeLineageHighlight,
+      handleExportTree,
+      isPreparingExport,
+      theme,
+      familyKey,
+    };
+  }, [renderCombinedHeader, searchTerm, setSearchTerm, isSearching, handleSearchSubmit, searchPalette, safeLineageHighlight, handleExportTree, isPreparingExport, theme, familyKey]);
 
-        {/* Right side controls */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
-        >
-          <select
-            value={safeLineageHighlight.lineageHighlightMode}
-            onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
-            style={{
-              background: searchPalette.background,
-              color: searchPalette.inputColor,
-              border: `1px solid ${searchPalette.border}`,
-              borderRadius: 999,
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              cursor: 'pointer',
-              appearance: 'none',
-            }}
-          >
-            <option value="off">Highlight: Off</option>
-            <option value="ancestors">Highlight: Ancestors</option>
-            <option value="descendants">Highlight: Descendants</option>
-            <option value="both">Highlight: Lineage</option>
-          </select>
-          <button
-            type="button"
-            onClick={handleExportTree}
-            disabled={isPreparingExport}
-            style={{
-              background: theme.accent || '#c9a857',
-              color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: 999,
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: isPreparingExport ? 'wait' : 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              opacity: isPreparingExport ? 0.65 : 1,
-            }}
-          >
-            {isPreparingExport ? 'Preparing…' : 'Export / Print'}
-          </button>
-        </div>
-      </div>
+  return (
+    <>
+      {/* Combined header rendered by parent */}
+      {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
+      <div className="w-full relative" style={containerStyle}>
 
       {toast && (
         <div
@@ -1461,8 +1361,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             try {
               // Very faint divider line - barely visible
               const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.12);
-              // Faint text color for pledge class markers
-              const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.4);
+              // Text color for pledge class markers with 0.7 opacity
+              const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.7);
               
               // Get current viewport - use state if available, otherwise default
               const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
@@ -1488,7 +1388,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                     zIndex: 1,
                   }}
                 >
-                  {/* Faint text label on the left side - no button styling */}
+                  {/* Text label on the left side - no button styling */}
                   <div
                     style={{
                       position: 'absolute',
@@ -1501,7 +1401,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                       textTransform: 'uppercase',
                       color: textColor,
                       whiteSpace: 'nowrap',
-                      opacity: 0.5,
                     }}
                   >
                     {marker.pledgeClass || ''}
@@ -1551,14 +1450,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           onToast={onToast}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
-const TreeVisualization = ({ family, onToast, onChangeFamily }) => {
+const TreeVisualization = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   return (
     <ReactFlowProvider>
-      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} />
+      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} renderCombinedHeader={renderCombinedHeader} />
     </ReactFlowProvider>
   );
 };
