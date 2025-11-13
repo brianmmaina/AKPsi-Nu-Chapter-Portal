@@ -307,10 +307,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           : undefined;
 
       // Header height for calculating tree container height
-      const HEADER_HEIGHT = 64;
-      // Use calc to account for header, ensuring no scrolling
-      // Safari-safe: use 100vh with calc instead of 100dvh
-      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px)`;
+      const HEADER_HEIGHT = 44;
+      // Use calc to account for header and safe area insets
+      // Safe area insets prevent content from being cut off on devices with notches/home indicators
+      // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
+      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))`;
+      const headerTop = `env(safe-area-inset-top, 0px)`;
       
       return {
         width: '100%',
@@ -328,7 +330,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        marginTop: `${HEADER_HEIGHT}px`, // Push content below fixed header
+        marginTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)', // Add padding for bottom safe area
       };
     } catch (error) {
       console.warn('Error computing container style:', error);
@@ -1112,8 +1115,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [isTreeReady, nodes]);
 
-  // Header height constant
-  const HEADER_HEIGHT = 64;
+  // Header height constant - just a couple pixels larger than button height
+  // Buttons are ~36px (padding 8px + content), so header should be ~44px
+  const HEADER_HEIGHT = 44;
 
   return (
     <div className="w-full relative" style={containerStyle}>
@@ -1121,7 +1125,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       <div
         style={{
           position: 'fixed',
-          top: 0,
+          top: 'env(safe-area-inset-top, 0px)', // Account for notch/safe area at top
           left: 0,
           right: 0,
           height: `${HEADER_HEIGHT}px`,
