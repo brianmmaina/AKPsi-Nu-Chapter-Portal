@@ -67,18 +67,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   const lineageHighlight = useLineageHighlight(relationships, selectedBrother);
 
+  // Compute stable family theme value FIRST to avoid optional chaining issues
+  // This must be a simple computation, not a hook, to ensure it's always available
+  const familyThemeValue = family && family.theme ? String(family.theme).toLowerCase() : 'wolfpack';
+  
+  // Validate family theme value
+  const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
+  const safeFamilyTheme = validThemeKeys.includes(familyThemeValue) ? familyThemeValue : 'wolfpack';
+
   // Memoize theme IMMEDIATELY after hooks (before any other dependent code)
   // Must handle undefined family gracefully - always return a valid theme object
   const theme = useMemo(() => {
     try {
-      // Always ensure we have a valid theme object to prevent uninitialized variable errors
-      let themeToLoad = 'wolfpack'; // Default fallback (getThemeStyles returns wolfpack for invalid themes)
-      
-      if (family && family.theme) {
-        themeToLoad = String(family.theme).toLowerCase();
-      }
-      
-      const themeResult = getThemeStyles(themeToLoad);
+      const themeResult = getThemeStyles(safeFamilyTheme);
       
       // Validate theme has required properties - ensure all required fields exist
       if (!themeResult || typeof themeResult !== 'object') {
@@ -114,41 +115,37 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       // Return a completely safe fallback theme
       return getThemeStyles('wolfpack');
     }
-  }, [family?.theme]);
+  }, [safeFamilyTheme]);
   
-  const familyKey = useMemo(() => {
-    if (!family || !family.theme) return 'wolfpack'; // Use wolfpack as default, not 'default'
-    const key = String(family.theme).toLowerCase();
-    // Ensure key is valid
-    const validKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
-    return validKeys.includes(key) ? key : 'wolfpack';
-  }, [family?.theme]);
+  // Use the safe family theme as familyKey
+  const familyKey = safeFamilyTheme;
   
   // Define presentation and flags after theme is initialized (before early return)
   // These must be defined even if family is undefined, to maintain hook order
+  // Use stable computed values to avoid uninitialized variable errors
   const presentation = useMemo(() => {
     try {
-      if (!familyKey || familyKey === 'default') {
-        return FAMILY_PRESENTATION.empire || {};
-      }
-      const presentationData = FAMILY_PRESENTATION[familyKey];
-      if (presentationData) {
+      // Use safeFamilyTheme directly instead of familyKey to avoid potential issues
+      const keyToUse = safeFamilyTheme || 'empire';
+      const presentationData = FAMILY_PRESENTATION[keyToUse];
+      if (presentationData && typeof presentationData === 'object') {
         return presentationData;
       }
-      // Fallback to empire if familyKey doesn't exist
-      console.warn(`Presentation not found for familyKey: ${familyKey}, using empire`);
-      return FAMILY_PRESENTATION.empire || {};
+      // Fallback to empire if presentation doesn't exist
+      console.warn(`Presentation not found for key: ${keyToUse}, using empire`);
+      return FAMILY_PRESENTATION.empire || FAMILY_PRESENTATION.default || {};
     } catch (error) {
-      console.warn('Error loading presentation, using empty object:', error);
-      return FAMILY_PRESENTATION.empire || {};
+      console.warn('Error loading presentation, using empire fallback:', error);
+      return FAMILY_PRESENTATION.empire || FAMILY_PRESENTATION.default || {};
     }
-  }, [familyKey]);
+  }, [safeFamilyTheme]);
   
-  const isEmpire = familyKey === 'empire';
-  const isPower = familyKey === 'power';
-  const isGreed = familyKey === 'greed';
-  const isPride = familyKey === 'pride';
-  const isWolfpack = familyKey === 'wolfpack';
+  // Compute boolean flags using stable values (no hooks, just computed values)
+  const isEmpire = safeFamilyTheme === 'empire';
+  const isPower = safeFamilyTheme === 'power';
+  const isGreed = safeFamilyTheme === 'greed';
+  const isPride = safeFamilyTheme === 'pride';
+  const isWolfpack = safeFamilyTheme === 'wolfpack';
   
   // Define focusBrotherNode AFTER theme and familyKey are initialized
   const focusBrotherNode = useCallback(
@@ -212,18 +209,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const composedBackground = useMemo(() => {
     try {
       const layers = [];
-      if (presentation && presentation.backgroundLayers && Array.isArray(presentation.backgroundLayers) && presentation.backgroundLayers.length > 0) {
-        layers.push(...presentation.backgroundLayers);
+      // Access properties directly without optional chaining in dependency array
+      const bgLayers = presentation && presentation.backgroundLayers;
+      if (bgLayers && Array.isArray(bgLayers) && bgLayers.length > 0) {
+        layers.push(...bgLayers);
       }
-      if (theme && theme.backgroundTexture) {
-        layers.push(theme.backgroundTexture);
+      const bgTexture = theme && theme.backgroundTexture;
+      if (bgTexture) {
+        layers.push(bgTexture);
       }
       return layers.length > 0 ? layers.join(', ') : undefined;
     } catch (error) {
       console.warn('Error composing background:', error);
-      return theme?.backgroundTexture || undefined;
+      const bgTexture = theme && theme.backgroundTexture;
+      return bgTexture || undefined;
     }
-  }, [presentation?.backgroundLayers, theme?.backgroundTexture]);
+  }, [presentation, theme]);
   
   // NOW we can do the early return check AFTER all hooks and dependent values
   if (!family || !family.theme) {
@@ -549,7 +550,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         theme,
         layoutSettings,
       highlightBrotherId,
-      lineageHighlightSet: lineageHighlight?.lineageHighlightSet || new Set(),
+      lineageHighlightSet: (lineageHighlight && lineageHighlight.lineageHighlightSet) ? lineageHighlight.lineageHighlightSet : new Set(),
       renderNodeContent,
       isEmpire,
         onTreeBounds: (bounds) => {
