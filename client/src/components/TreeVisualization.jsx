@@ -7,7 +7,6 @@ import ReactFlow, {
   useEdgesState,
   useReactFlow,
   ReactFlowProvider,
-  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import BrotherDetailModal from './BrotherDetailModal';
@@ -885,8 +884,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             <button onClick={reloadTreeData} className="btn btn-primary">
               Retry
             </button>
-            {onChangeFamily && (
-              <button onClick={onChangeFamily} className="btn btn-secondary">
+            {safeOnChangeFamily && (
+              <button onClick={safeOnChangeFamily} className="btn btn-secondary">
                 Back to Families
               </button>
             )}
@@ -925,9 +924,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               This family tree is empty. Contact an administrator to add brothers to this family.
           </p>
           <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-            {onChangeFamily && (
+            {safeOnChangeFamily && (
               <button 
-                onClick={onChangeFamily} 
+                onClick={safeOnChangeFamily} 
                 className="btn"
                 style={{
                   backgroundColor: 'transparent',
