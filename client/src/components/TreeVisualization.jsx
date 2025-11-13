@@ -233,17 +233,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     [nodes, reactFlowInstance, safeLineageHighlight],
   );
 
-  // Use search hook (must be called AFTER focusBrotherNode is defined)
-  // Pass safeFamily instead of family to avoid potential uninitialized variable errors
-  // Ensure focusBrotherNode is always a function
-  const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
-  const safeShowToast = safeOnToast || showToast;
-  const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
-    safeFamily,
-    brothers,
-    safeFocusBrotherNode,
-    safeShowToast,
-  );
+  // Search is deactivated for now - will be implemented later
+  // const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
+  // const safeShowToast = safeOnToast || showToast;
+  // const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
+  //   safeFamily,
+  //   brothers,
+  //   safeFocusBrotherNode,
+  //   safeShowToast,
+  // );
+  
+  // Placeholder values for search (deactivated)
+  const searchTerm = '';
+  const setSearchTerm = () => {};
+  const isSearching = false;
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    // Search is deactivated
+  };
   
   const defaultViewport = useMemo(() => {
     if (isEmpire) return { x: 0, y: 0, zoom: 0.45 };

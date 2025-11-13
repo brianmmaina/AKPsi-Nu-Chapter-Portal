@@ -452,7 +452,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                       alignItems: 'center',
 
-                      justifyContent: 'space-between',
+                      justifyContent: 'flex-end', // Changed from 'space-between' to 'flex-end' since search is removed
 
                       padding: '10px 20px 12px 20px',
 
@@ -464,125 +464,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                   >
 
-                    {/* Search Input + Button (Left) */}
-
-                    <form
-
-                      onSubmit={headerProps.handleSearchSubmit}
-
-                      style={{
-
-                        display: 'flex',
-
-                        alignItems: 'center',
-
-                        gap: '8px',
-
-                        flexShrink: 0,
-
-                      }}
-
-                    >
-
-                      <div
-
-                        style={{
-
-                          display: 'flex',
-
-                          alignItems: 'center',
-
-                          gap: '8px',
-
-                          background: 'rgba(255, 255, 255, 0.65)',
-
-                          backdropFilter: 'blur(10px)',
-
-                          WebkitBackdropFilter: 'blur(10px)',
-
-                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
-
-                          borderRadius: '20px',
-
-                          padding: '6px 14px',
-
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-
-                        }}
-
-                      >
-
-                        <input
-
-                          type="text"
-
-                          value={headerProps.searchTerm}
-
-                          onChange={(event) => headerProps.setSearchTerm(event.target.value)}
-
-                          placeholder="Search brothers"
-
-                          aria-label="Search brothers"
-
-                          style={{
-
-                            background: 'transparent',
-
-                            border: 'none',
-
-                            outline: 'none',
-
-                            width: '160px',
-
-                            color: headerProps.searchPalette.inputColor || '#3b2b16',
-
-                            fontSize: '13px',
-
-                          }}
-
-                        />
-
-                        <button
-
-                          type="submit"
-
-                          disabled={headerProps.isSearching || !headerProps.searchTerm.trim()}
-
-                          style={{
-
-                            background: headerProps.searchPalette.buttonBg || '#c9a857',
-
-                            color: headerProps.searchPalette.buttonText || '#2b2314',
-
-                            border: 'none',
-
-                            borderRadius: '999px',
-
-                            padding: '6px 14px',
-
-                            fontWeight: 600,
-
-                            fontSize: '12px',
-
-                            cursor: headerProps.isSearching ? 'wait' : 'pointer',
-
-                            opacity: headerProps.isSearching ? 0.65 : 1,
-
-                            transition: 'all 200ms ease',
-
-                            whiteSpace: 'nowrap',
-
-                          }}
-
-                        >
-
-                          {headerProps.isSearching ? 'Searching…' : 'Search'}
-
-                        </button>
-
-                      </div>
-
-                    </form>
+                    {/* Search Input + Button (Left) - Deactivated */}
+                    {/* Search functionality is deactivated for now - will be implemented later */}
 
                     {/* Controls (Right) */}
 
