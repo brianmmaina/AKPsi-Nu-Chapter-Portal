@@ -1384,15 +1384,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.2);
-              const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.8);
+              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.25);
+              const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.9);
               
               // Get current viewport - use state if available, otherwise default
               const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
               
-              // Transform marker position: ReactFlow applies translate(x, y) scale(zoom) to the pane
-              // So we need to transform the flow coordinate to screen coordinate
+              // ReactFlow's coordinate system: the pane has transform: translate(viewport.x, viewport.y) scale(viewport.zoom)
+              // To position an overlay element at a flow coordinate, we need to apply the same transform
               // Screen Y = (Flow Y * zoom) + viewport.y
+              // But we need to account for the ReactFlow pane's position
               const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
               
               return (
@@ -1404,7 +1405,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                     top: `${screenY}px`,
                     width: '100%',
                     height: '2px',
-                    background: `linear-gradient(90deg, transparent 0%, ${accentColor} 8%, ${accentColor} 92%, transparent 100%)`,
+                    background: `linear-gradient(90deg, transparent 0%, ${accentColor} 10%, ${accentColor} 90%, transparent 100%)`,
                     pointerEvents: 'none',
                     transform: 'translateY(-50%)',
                     zIndex: 10,
@@ -1414,7 +1415,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                   <div
                     style={{
                       position: 'absolute',
-                      left: 16,
+                      left: 20,
                       top: '50%',
                       transform: 'translateY(-50%)',
                       fontSize: '11px',
@@ -1422,11 +1423,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                       letterSpacing: '0.15em',
                       textTransform: 'uppercase',
                       color: textColor,
-                      background: hexToRgba(presentation.legend?.panelBg || theme.background || '#ffffff', 0.9),
-                      padding: '4px 10px',
+                      background: hexToRgba(presentation.legend?.panelBg || theme.background || '#ffffff', 0.95),
+                      padding: '5px 12px',
                       borderRadius: 6,
-                      border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.3)}`,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      border: `1.5px solid ${hexToRgba(theme.accent || '#c9a857', 0.4)}`,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                       whiteSpace: 'nowrap',
                     }}
                   >
