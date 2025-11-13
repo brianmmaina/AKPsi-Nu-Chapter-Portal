@@ -54,6 +54,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const [isPreparingExport, setIsPreparingExport] = useState(false);
   const [toast, setToast] = useState(null);
   const [highlightBrotherId, setHighlightBrotherId] = useState(null);
+  const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const initialViewportRef = useRef(null);
   const treeBoundsRef = useRef({ width: 0, height: 0 });
   const toastTimeoutRef = useRef(null);
