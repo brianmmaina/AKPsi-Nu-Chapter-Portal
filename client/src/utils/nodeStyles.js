@@ -102,6 +102,31 @@ export const getBaseNodeStyle = (familyKey, theme, nodeWidth, nodeHeight, status
     };
   }
   
+  // Check if family has custom palette first - these take priority
+  const familyStyle = NODE_PALETTES[familyKey];
+  if (familyStyle) {
+    // Family styles have fixed backgrounds and are designed to work for both statuses
+    // Create a complete style object with family-specific overrides
+    const familyStyleCopy = { ...familyStyle };
+    return {
+      background: familyStyleCopy.background || (status === 'studying' ? theme.nodeStudying : theme.nodeGraduated),
+      color: familyStyleCopy.color || theme.nodeText || '#333333',
+      border: familyStyleCopy.border || `2px solid ${theme.nodeBorder || '#cccccc'}`,
+      borderRadius: familyStyleCopy.borderRadius || `${theme.nodeRadius || 8}px`,
+      padding: familyStyleCopy.padding || '10px',
+      width: nodeWidth,
+      minHeight: familyStyleCopy.minHeight || nodeHeight,
+      fontSize: '12px',
+      fontWeight: '600',
+      boxShadow: familyStyleCopy.boxShadow || '0 8px 24px rgba(0,0,0,0.25)',
+      backgroundImage: familyStyleCopy.backgroundImage || undefined,
+      backgroundSize: familyStyleCopy.backgroundSize || undefined,
+      backgroundRepeat: familyStyleCopy.backgroundRepeat || undefined,
+      backgroundPosition: familyStyleCopy.backgroundPosition || undefined,
+    };
+  }
+
+  // Fallback to base theme styles if no family palette
   const baseStyle = {
     background: status === 'studying' ? theme.nodeStudying : theme.nodeGraduated,
     color: theme.nodeText || '#333333',
@@ -114,16 +139,6 @@ export const getBaseNodeStyle = (familyKey, theme, nodeWidth, nodeHeight, status
     fontWeight: '600',
     boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
   };
-
-  // Apply family-specific styles if available (these override base styles)
-  const familyStyle = NODE_PALETTES[familyKey];
-  if (familyStyle) {
-    // Create a copy of family style to avoid mutating the original
-    const familyStyleCopy = { ...familyStyle };
-    // Family styles have fixed backgrounds, so use them as-is
-    // They're designed to work for both statuses
-    return { ...baseStyle, ...familyStyleCopy };
-  }
 
   return baseStyle;
 };

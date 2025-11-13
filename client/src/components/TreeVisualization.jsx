@@ -308,8 +308,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       return {
         width: '100%',
-        height: '100dvh', // Use dynamic viewport height for better mobile support
-        minHeight: '-webkit-fill-available', // Better mobile support
+        height: '100vh', // Use viewport height
+        minHeight: '100vh', // Ensure minimum height
+        maxHeight: '100vh', // Prevent overflow
         backgroundColor: theme.background || '#f5f5f5',
         backgroundImage: composedBackground || undefined,
         backgroundSize: sizeValue,
@@ -799,19 +800,30 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [nodes, reactFlowInstance]);
 
+  // Auto-center and fit tree when family changes
   useEffect(() => {
-    const targetViewport = defaultViewport;
-    try {
-      if (reactFlowInstance?.setViewport) {
-        reactFlowInstance.setViewport(targetViewport, { duration: 300 });
-      }
-    } catch (e) {
-      // ignore viewport errors
-      console.warn('Failed to set viewport:', e);
+    if (!isTreeReady || !nodes || nodes.length === 0) {
+      return;
     }
-    initialViewportRef.current = targetViewport;
-    hasFitRef.current = false;
-  }, [safeFamily?.id, defaultViewport, reactFlowInstance]);
+    
+    // Small delay to ensure ReactFlow is ready
+    const timer = setTimeout(() => {
+      try {
+        if (safeFitTreeView && typeof safeFitTreeView === 'function') {
+          safeFitTreeView(undefined, 400);
+        } else if (reactFlowInstance?.fitView) {
+          reactFlowInstance.fitView({
+            padding: 50,
+            duration: 400,
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to fit view on family change:', e);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [safeFamily?.id, isTreeReady, nodes.length, safeFitTreeView, reactFlowInstance]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -1359,8 +1371,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         }}
         style={{ 
           width: '100%', 
-          height: '100%',
-          minHeight: '100%',
+          height: '100vh',
+          minHeight: '100vh',
+          maxHeight: '100vh',
           background: theme.background, 
           fontFamily: theme.bodyFont, 
           pointerEvents: isModalOpen ? 'none' : 'auto',
@@ -1384,7 +1397,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
-      
+
       {/* Milestone Markers - Pledge Class Guides (positioned to follow viewport) */}
       {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
         <div
@@ -1418,8 +1431,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               return (
                 <div
                   key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-                  style={{
-                    position: 'absolute',
+        style={{
+          position: 'absolute',
                     left: 0,
                     top: `${screenY}px`,
                     width: '100%',
