@@ -52,7 +52,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         transition: 'background-color 400ms ease',
       }}
     >
-      {/* Minimalist Header - Themed */}
       <div 
         style={{
           position: 'fixed',
@@ -79,7 +78,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           alignItems: 'center',
           gap: '16px',
         }}>
-            {/* Left: Compact family name - fixed width to prevent shifting */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px' }}>
               <div 
                 style={{
@@ -116,7 +114,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               </h1>
             </div>
 
-            {/* Center: Compact Family Tabs - Using corrected theme colors with more spacing */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
               {families.map((family) => {
                 const isActive = selectedFamily.id === family.id;
@@ -226,7 +223,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               })}
             </div>
 
-            {/* Right: Back button - aligned to the right */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: '80px' }}>
               <button
                 onClick={onChangeFamily}
