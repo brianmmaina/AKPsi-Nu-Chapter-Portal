@@ -298,8 +298,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           : undefined;
 
       // Header heights - top nav bar + search bar
-      const TOP_NAV_HEIGHT = 38;
-      const SEARCH_BAR_HEIGHT = 38;
+      const TOP_NAV_HEIGHT = 48; // Slightly taller for better proportions
+      const SEARCH_BAR_HEIGHT = 32; // Smaller, more compact search bar
       const TOTAL_HEADER_HEIGHT = TOP_NAV_HEIGHT + SEARCH_BAR_HEIGHT;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
       const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
@@ -899,18 +899,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
     [],
   );
 
-  // Search palette - must be called before any conditional returns
-  const searchIsDark = ['power', 'pride', 'wolfpack'].includes(familyKey);
-  const searchPalette = useMemo(
-    () => ({
-      background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
-      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
-      border: hexToRgba(theme.accent || '#c9a857', 0.35),
-      buttonBg: theme.accent || '#c9a857',
-      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
-    }),
-    [familyKey, theme.accent, searchIsDark],
-  );
+  // Search palette removed - using theme directly for better matching
 
   // Export handler - must be called before any conditional returns
   const handleExportTree = useCallback(async () => {
@@ -1123,10 +1112,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
     );
   }
 
-  // Header height constant - minimal height, just enough for buttons
-  // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
-  const SEARCH_BAR_HEIGHT = 38;
-  const TOP_NAV_HEIGHT = 38; // Matches the top nav bar height
+  // Header height constant - matches the theme
+  const SEARCH_BAR_HEIGHT = 32; // Smaller, more compact search bar
+  const TOP_NAV_HEIGHT = 48; // Slightly taller for better proportions
 
   // Handle null family case after all hooks
   if (!safeFamily || !safeFamily.theme) {
@@ -1141,38 +1129,39 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
 
   return (
     <div className="w-full relative" style={containerStyle}>
-      {/* Fixed translucent search/action bar */}
+      {/* Fixed translucent search/action bar - attached to top bar */}
       <div
         style={{
           position: 'fixed',
-          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Below the top nav bar
+          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Attached directly to top nav bar
           left: 0,
           right: 0,
           height: `${SEARCH_BAR_HEIGHT}px`,
           zIndex: 20,
-          background: hexToRgba(theme.background || '#f5f5f5', 0.85),
-          backdropFilter: 'blur(12px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.2)}`,
+          background: hexToRgba(theme.background || '#f5f5f5', 0.92),
+          backdropFilter: 'blur(8px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+          borderTop: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.15)}`,
+          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.15)}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 20px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '0 16px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         }}
       >
-        {/* Search form */}
+        {/* Search form - compact and theme-matched */}
         <form
           onSubmit={handleSearchSubmit}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            background: searchPalette.background,
-            border: `1px solid ${searchPalette.border}`,
-            borderRadius: 999,
-            padding: '6px 12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            gap: 6,
+            background: hexToRgba(theme.background || '#f5f5f5', 0.6),
+            border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.25)}`,
+            borderRadius: 6,
+            padding: '4px 8px',
+            boxShadow: 'none',
           }}
         >
           {/* Search field selector */}
@@ -1183,70 +1172,69 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: searchPalette.inputColor,
-              fontSize: '11px',
-              fontWeight: 600,
+              color: theme.nodeText || '#2b2314',
+              fontSize: '10px',
+              fontWeight: 500,
               cursor: 'pointer',
               padding: '2px 4px',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
+              letterSpacing: '0.3px',
             }}
             aria-label="Search field"
             title="Search field"
           >
-            <option value="all" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+            <option value="all" style={{ background: theme.background, color: theme.nodeText }}>
               All
             </option>
-            <option value="name" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+            <option value="name" style={{ background: theme.background, color: theme.nodeText }}>
               Name
             </option>
-            <option value="pledge_class" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+            <option value="pledge_class" style={{ background: theme.background, color: theme.nodeText }}>
               Pledge
             </option>
-            <option value="major" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+            <option value="major" style={{ background: theme.background, color: theme.nodeText }}>
               Major
             </option>
-            <option value="graduation_year" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
+            <option value="graduation_year" style={{ background: theme.background, color: theme.nodeText }}>
               Year
             </option>
           </select>
           <div
             style={{
               width: '1px',
-              height: '20px',
-              background: searchPalette.border,
-              opacity: 0.5,
+              height: '14px',
+              background: hexToRgba(theme.accent || '#c9a857', 0.3),
             }}
           />
           <input
             type="text"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder={searchField === 'all' ? 'Search all fields' : `Search by ${searchField.replace('_', ' ')}`}
+            placeholder="Search brothers"
             aria-label={`Search by ${searchField}`}
             style={{
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              width: 160,
-              color: searchPalette.inputColor,
-              fontSize: '14px',
+              width: 140,
+              color: theme.nodeText || '#2b2314',
+              fontSize: '13px',
             }}
           />
           <button
             type="submit"
             disabled={isSearching || !searchTerm.trim()}
             style={{
-              background: searchPalette.buttonBg,
-              color: searchPalette.buttonText,
+              background: hexToRgba(theme.accent || '#c9a857', 0.7),
+              color: theme.nodeText || '#2b2314',
               border: 'none',
-              borderRadius: 999,
-              padding: '6px 12px',
-              fontWeight: 600,
-              fontSize: '12px',
+              borderRadius: 4,
+              padding: '4px 10px',
+              fontWeight: 500,
+              fontSize: '11px',
               cursor: isSearching ? 'wait' : 'pointer',
-              opacity: isSearching ? 0.65 : 1,
-              transition: 'transform 0.2s ease',
+              opacity: isSearching || !searchTerm.trim() ? 0.5 : 1,
+              transition: 'opacity 0.2s ease',
             }}
             title="Search"
           >
@@ -1254,11 +1242,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           </button>
         </form>
 
-        {/* Right side controls */}
+        {/* Right side controls - compact and theme-matched */}
         <div
           style={{
             display: 'flex',
-            gap: 8,
+            gap: 6,
             alignItems: 'center',
           }}
         >
@@ -1266,42 +1254,43 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
             value={safeLineageHighlight.lineageHighlightMode}
             onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
             style={{
-              background: searchPalette.background,
-              color: searchPalette.inputColor,
-              border: `1px solid ${searchPalette.border}`,
-              borderRadius: 999,
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
+              background: hexToRgba(theme.background || '#f5f5f5', 0.6),
+              color: theme.nodeText || '#2b2314',
+              border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.25)}`,
+              borderRadius: 6,
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontWeight: 500,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.3px',
               cursor: 'pointer',
               appearance: 'none',
             }}
           >
-            <option value="off">Highlight: Off</option>
-            <option value="ancestors">Highlight: Ancestors</option>
-            <option value="descendants">Highlight: Descendants</option>
-            <option value="both">Highlight: Lineage</option>
+            <option value="off" style={{ background: theme.background, color: theme.nodeText }}>Off</option>
+            <option value="ancestors" style={{ background: theme.background, color: theme.nodeText }}>Ancestors</option>
+            <option value="descendants" style={{ background: theme.background, color: theme.nodeText }}>Descendants</option>
+            <option value="both" style={{ background: theme.background, color: theme.nodeText }}>Lineage</option>
           </select>
           <button
             type="button"
             onClick={handleExportTree}
             disabled={isPreparingExport}
             style={{
-              background: theme.accent || '#c9a857',
-              color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+              background: hexToRgba(theme.accent || '#c9a857', 0.7),
+              color: theme.nodeText || '#2b2314',
               border: 'none',
-              padding: '8px 16px',
-              borderRadius: 999,
-              fontWeight: 600,
-              fontSize: '12px',
+              padding: '4px 10px',
+              borderRadius: 6,
+              fontWeight: 500,
+              fontSize: '10px',
               cursor: isPreparingExport ? 'wait' : 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              opacity: isPreparingExport ? 0.65 : 1,
+              opacity: isPreparingExport ? 0.5 : 1,
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
             }}
           >
-            {isPreparingExport ? 'Preparing…' : 'Export / Print'}
+            {isPreparingExport ? '...' : 'Export'}
           </button>
         </div>
       </div>
@@ -1446,6 +1435,105 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           </div>
         )}
       </div>
+      {/* Milestone Markers - Pledge Class Guides (very subtle, rendered BEFORE ReactFlow to be behind) */}
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1, // Behind ReactFlow
+            overflow: 'hidden',
+          }}
+        >
+          {milestoneMarkers.map((marker, idx) => {
+            if (!marker || typeof marker.avgY !== 'number') return null;
+            
+            try {
+              // Use ReactFlow's viewport to transform coordinates
+              // ReactFlow applies transforms to its internal pane
+              // For overlay markers, we need to account for the container's position
+              // The markers container is positioned absolutely within the ReactFlow container
+              // ReactFlow's pane uses CSS transforms: translate(x, y) scale(zoom)
+              // We need to apply similar transform accounting for the container offset
+              const currentViewport = (viewport && viewport.x !== undefined && viewport.y !== undefined && viewport.zoom !== undefined) 
+                ? viewport 
+                : (defaultViewport || { x: 0, y: 0, zoom: 1 });
+              
+              // Get viewport dimensions for center calculation
+              // ReactFlow typically uses center as transform origin
+              // For simplicity, we'll position relative to the flow coordinate system
+              // Since markers are in a fixed overlay, we'll use a simpler approach:
+              // Position at the Y coordinate in flow space, accounting for zoom
+              // The container already accounts for the header offset via marginTop
+              
+              // Calculate position - ReactFlow transforms flow coordinates to screen
+              // Flow Y -> Screen Y: (flowY * zoom) + viewportY + containerCenterY
+              // For overlay, we approximate: flowY position scaled by zoom
+              const flowY = marker.avgY;
+              const zoom = currentViewport.zoom || 1;
+              const viewportY = currentViewport.y || 0;
+              
+              // Simple approach: position marker at flow Y coordinate
+              // The ReactFlow container handles the transform, so we position relative to it
+              // Since we're in an absolute overlay, we need to account for ReactFlow's internal transform
+              // But ReactFlow's transform is applied to its pane, not the container
+              // So we position markers in the same coordinate space as ReactFlow nodes
+              
+              // For now, use a fixed position approach - markers will follow viewport via React
+              // The key is they should be behind nodes (lower z-index) and very subtle
+              return (
+                <div
+                  key={`milestone-${marker.pledgeClass || idx}-${idx}`}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: `${marker.avgY}px`, // Use flow coordinate directly - will be transformed by ReactFlow's parent
+                    width: '100%',
+                    height: '1px',
+                    background: `linear-gradient(90deg, transparent 0%, ${hexToRgba(theme.accent || '#c9a857', 0.12)} 8px, ${hexToRgba(theme.accent || '#c9a857', 0.12)} calc(100% - 8px), transparent 100%)`,
+                    pointerEvents: 'none',
+                    transform: 'translateY(-50%)',
+                  }}
+                >
+                  {/* Label on the left side - very subtle, text only, no styling */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '8px',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: hexToRgba(theme.nodeText || '#2b2314', 0.4),
+                      background: 'transparent',
+                      padding: 0,
+                      margin: 0,
+                      border: 'none',
+                      boxShadow: 'none',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      fontFamily: theme.bodyFont || 'Montserrat, system-ui, sans-serif',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {marker.pledgeClass || ''}
+                  </span>
+                </div>
+              );
+            } catch (error) {
+              console.warn('Error rendering milestone marker:', error);
+              return null;
+            }
+          })}
+        </div>
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1464,13 +1552,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         }}
         style={{ 
           width: '100%', 
-          height: '100%', // Fill parent container
+          height: '100%',
           minHeight: '100%',
           maxHeight: '100%',
           background: theme.background, 
           fontFamily: theme.bodyFont, 
           pointerEvents: isModalOpen ? 'none' : 'auto',
-          zIndex: 1,
+          position: 'relative',
+          zIndex: 2, // Above markers (zIndex: 1)
         }}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -1490,104 +1579,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
-
-      {/* Milestone Markers - Pledge Class Guides (positioned to follow viewport) */}
-      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 10, // Higher z-index to ensure visibility above ReactFlow
-            overflow: 'visible', // Allow markers to be visible
-          }}
-        >
-          {milestoneMarkers.map((marker, idx) => {
-            if (!marker || typeof marker.avgY !== 'number') return null;
-            
-            try {
-              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.6);
-              const textColor = theme.nodeText || '#2b2314';
-              const newestTagColor = marker.isNewest ? hexToRgba(theme.accent || '#c9a857', 0.85) : null;
-              
-              // Get current viewport - use state if available, otherwise default
-              const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
-              
-              // ReactFlow's coordinate system: the pane has transform: translate(viewport.x, viewport.y) scale(viewport.zoom)
-              // To position an overlay element at a flow coordinate, we need to apply the same transform
-              // Screen Y = (Flow Y * zoom) + viewport.y
-              // But we need to account for the ReactFlow pane's position
-              const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
-              
-              return (
-                <div
-                  key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-        style={{
-          position: 'absolute',
-                    left: 0,
-                    top: `${screenY}px`,
-                    width: '100%',
-                    height: '3px',
-                    background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
-                    pointerEvents: 'none',
-                    transform: 'translateY(-50%)',
-                    zIndex: 10,
-                  }}
-                >
-                  {/* Label on the left side */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 'calc(18px + env(safe-area-inset-left, 0px))',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      letterSpacing: '0.2em',
-                      textTransform: 'uppercase',
-                      color: textColor,
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.86) 100%)',
-                      padding: marker.isNewest ? '6px 16px' : '5px 14px',
-                      borderRadius: 8,
-                      border: `2px solid ${hexToRgba(theme.accent || '#c9a857', marker.isNewest ? 0.8 : 0.55)}`,
-                      boxShadow: '0 8px 22px rgba(0,0,0,0.22)',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: marker.isNewest ? 10 : 0,
-                    }}
-                  >
-                    <span>{marker.pledgeClass || ''}</span>
-                    {marker.isNewest && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          letterSpacing: '0.18em',
-                          textTransform: 'uppercase',
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          background: newestTagColor || hexToRgba('#000000', 0.1),
-                          color: theme.nodeText || '#2b2314',
-                          borderRadius: 999,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        Newest
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            } catch (error) {
-              console.warn('Error rendering milestone marker:', error);
-              return null;
-            }
-          })}
-        </div>
-      )}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (

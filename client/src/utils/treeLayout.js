@@ -359,8 +359,10 @@ export const calculateTreeLayout = ({
   }
 
   // Create edges - only if both nodes exist
+  // Make edges subtle - lighter, thinner, lower opacity, no shadow
   const edgeColor = theme.edgeColor || theme.accent || '#666666';
-  const edgeStrokeWidth = 4;
+  const edgeBaseColor = hexToRgba(edgeColor, 0.35); // Much more subtle - 35% opacity
+  const edgeStrokeWidth = 1.5; // Thinner - 1.5px instead of 4-5px
   
   relationships.forEach(rel => {
     if (!rel || !rel.big_id || !rel.little_id) return;
@@ -378,6 +380,13 @@ export const calculateTreeLayout = ({
         lineageHighlightSet.has(String(rel.big_id)) &&
         lineageHighlightSet.has(String(rel.little_id));
       
+      // Lineage edges are slightly more visible but still subtle
+      const edgeOpacity = isLineageEdge ? 0.6 : 0.35;
+      const edgeStroke = isLineageEdge ? 2.5 : edgeStrokeWidth;
+      const edgeStrokeColor = isLineageEdge 
+        ? hexToRgba(theme.accent || edgeColor, edgeOpacity)
+        : edgeBaseColor;
+      
       const edge = {
         id: `e${rel.big_id}-${rel.little_id}`,
         source: String(rel.big_id),
@@ -385,15 +394,16 @@ export const calculateTreeLayout = ({
         type: edgeType,
         animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
         style: {
-          stroke: isLineageEdge ? hexToRgba(theme.accent || edgeColor, 0.9) : edgeColor,
-          strokeWidth: isLineageEdge ? edgeStrokeWidth + 2 : edgeStrokeWidth + 1,
-          opacity: 0.97,
+          stroke: edgeStrokeColor,
+          strokeWidth: edgeStroke,
+          opacity: edgeOpacity,
           strokeLinecap: 'round',
           strokeLinejoin: 'round',
-          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))',
-          borderRadius: isSingleChild ? 16 : undefined,
+          // No shadow - edges should blend into background
+          zIndex: 0, // Behind nodes
         },
         markerEnd: MarkerType.ArrowClosed,
+        markerEndColor: edgeStrokeColor, // Match arrow color to edge
         data: {
           isSingleChild,
         },

@@ -58,17 +58,17 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           top: 'env(safe-area-inset-top, 0px)',
           left: 0,
           right: 0,
-          height: '38px',
+          height: '48px', // Match TreeVisualization TOP_NAV_HEIGHT
           zIndex: 21,
-          backgroundColor: hexToRgba(themeBackground, 0.85),
-          backdropFilter: 'blur(12px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          backgroundColor: hexToRgba(themeBackground, 0.95),
+          backdropFilter: 'blur(10px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(150%)',
           borderBottom: `1px solid ${hexToRgba(themeAccent, 0.2)}`,
           transition: 'background-color 400ms ease, border-bottom-color 400ms ease',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 20px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '0 24px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}
       >
         <div style={{
@@ -100,11 +100,11 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               </div>
               <h1
                 style={{
-                  fontSize: '16px',
-                  fontFamily: 'Russo One, sans-serif',
-                  fontWeight: 700,
+                  fontSize: '18px',
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  fontWeight: 600,
                   color: themeAccent,
-                  letterSpacing: '0.5px',
+                  letterSpacing: '-0.01em',
                   margin: 0,
                   transition: 'color 400ms ease',
                   whiteSpace: 'nowrap',
@@ -191,11 +191,11 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         whiteSpace: 'nowrap',
                         position: 'relative',
                         zIndex: 10,
-                        fontSize: '12px',
-                        fontFamily: 'Russo One, sans-serif',
-                        fontWeight: isActive ? 700 : 500,
+                        fontSize: '13px',
+                        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                        fontWeight: isActive ? 600 : 500,
                         color: isActive ? activeTextColor : inactiveColor,
-                        letterSpacing: '0.5px',
+                        letterSpacing: '-0.01em',
                         transition: 'color 200ms ease, font-weight 200ms ease',
                         display: 'inline-block',
                         minWidth: 'fit-content',
@@ -227,24 +227,25 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               <button
                 onClick={onChangeFamily}
                 style={{
-                  padding: '4px 12px',
-                  fontSize: '12px',
+                  padding: '6px 14px',
+                  fontSize: '13px',
                   borderRadius: '6px',
-                  backgroundColor: hexToRgba(themeAccent, 0.15),
-                  border: `1px solid ${hexToRgba(themeAccent, 0.3)}`,
+                  backgroundColor: hexToRgba(themeAccent, 0.12),
+                  border: `1px solid ${hexToRgba(themeAccent, 0.25)}`,
                   color: themeAccent,
-                  transition: 'all 400ms ease',
+                  transition: 'all 200ms ease',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
                   fontWeight: 500,
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
-                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.2);
+                  e.currentTarget.style.borderColor = hexToRgba(themeAccent, 0.35);
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.15);
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.12);
+                  e.currentTarget.style.borderColor = hexToRgba(themeAccent, 0.25);
                 }}
               >
                 Back
@@ -252,7 +253,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
             </div>
           </div>
         </div>
-      <div style={{ height: '38px' }}></div>
+      <div style={{ height: '48px' }}></div>
       <TreeVisualization 
         family={selectedFamily} 
         onToast={onToast} 
