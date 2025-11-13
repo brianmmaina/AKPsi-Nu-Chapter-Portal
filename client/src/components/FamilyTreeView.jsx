@@ -48,9 +48,17 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
   return (
     <div 
       style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         minHeight: '100vh',
+        height: '100vh',
         backgroundColor: themeBackground,
         transition: 'background-color 400ms ease',
+        overflow: 'hidden',
+        zIndex: 1,
       }}
     >
       <TreeVisualization 
@@ -59,6 +67,16 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         onChangeFamily={onChangeFamily}
         renderCombinedHeader={(headerProps) => {
           const presentation = FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
+          const themeAccent = selectedTheme?.accent || '#c9a857';
+          
+          // Determine glass background based on theme (darker themes need darker glass, lighter themes need lighter glass)
+          // Empire is the only light theme (cream), all others are dark
+          const isDarkTheme = selectedFamily.theme !== 'empire';
+          const glassBackground = isDarkTheme 
+            ? presentation.header?.panelBg || 'rgba(16, 34, 54, 0.75)'
+            : 'rgba(255, 255, 255, 0.45)';
+          const glassBorder = hexToRgba(themeAccent, 0.15);
+          const glassShadow = presentation.header?.shadow || '0 4px 12px rgba(0, 0, 0, 0.10)';
           
           return (
             <div
@@ -77,10 +95,10 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                 style={{
                   backdropFilter: 'blur(12px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                  background: 'rgba(255, 255, 255, 0.45)',
+                  background: glassBackground,
                   borderRadius: '18px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
-                  border: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
+                  boxShadow: glassShadow,
+                  border: `1px solid ${glassBorder}`,
                   pointerEvents: 'auto', // Re-enable clicks on container
                 }}
               >
@@ -141,6 +159,22 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       const isActive = selectedFamily.id === family.id;
                       const familyTheme = getThemeStyles(family.theme);
                       const familyPrimary = familyTheme?.accent || '#c9a857';
+                      const familyPresentation = FAMILY_PRESENTATION[family.theme] || FAMILY_PRESENTATION.default;
+                      const isFamilyDark = family.theme !== 'empire';
+                      
+                      // Theme-aware tab colors
+                      const activeTabBg = isFamilyDark 
+                        ? hexToRgba(familyPrimary, 0.25)
+                        : hexToRgba(familyPrimary, 0.30);
+                      const inactiveTabBg = isFamilyDark
+                        ? hexToRgba(familyPrimary, 0.15)
+                        : 'rgba(255, 230, 170, 0.25)';
+                      const inactiveTabHoverBg = isFamilyDark
+                        ? hexToRgba(familyPrimary, 0.20)
+                        : 'rgba(255, 230, 170, 0.35)';
+                      const tabTextColor = isActive 
+                        ? familyPrimary 
+                        : (isFamilyDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(74, 74, 74, 0.85)');
                       
                       return (
                         <button
@@ -150,9 +184,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                             position: 'relative',
                             padding: '8px 20px',
                             borderRadius: '18px',
-                            background: isActive 
-                              ? 'rgba(199, 165, 92, 0.30)' 
-                              : 'rgba(255, 230, 170, 0.25)',
+                            background: isActive ? activeTabBg : inactiveTabBg,
                             backdropFilter: 'blur(8px)',
                             WebkitBackdropFilter: 'blur(8px)',
                             border: 'none',
@@ -160,17 +192,17 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                             transition: 'all 200ms ease',
                             fontWeight: 600,
                             fontSize: '13px',
-                            color: isActive ? familyPrimary : 'rgba(74, 74, 74, 0.85)',
+                            color: tabTextColor,
                             letterSpacing: '0.02em',
                           }}
                           onMouseEnter={(e) => {
                             if (!isActive) {
-                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                              e.currentTarget.style.background = inactiveTabHoverBg;
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!isActive) {
-                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                              e.currentTarget.style.background = inactiveTabBg;
                             }
                           }}
                           aria-label={`Switch to ${family.name} family`}
@@ -186,7 +218,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                                 transform: 'translateX(-50%)',
                                 width: '60%',
                                 height: '3px',
-                                backgroundColor: '#C7A55C',
+                                backgroundColor: familyPrimary,
                                 borderRadius: '999px',
                               }}
                             />
@@ -204,21 +236,27 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         padding: '8px 18px',
                         fontSize: '13px',
                         borderRadius: '18px',
-                        background: 'rgba(255, 230, 170, 0.25)',
+                        background: isDarkTheme 
+                          ? hexToRgba(themeAccent, 0.15)
+                          : 'rgba(255, 230, 170, 0.25)',
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
                         border: 'none',
-                        color: '#c9a857',
+                        color: themeAccent,
                         cursor: 'pointer',
                         fontWeight: 600,
                         transition: 'all 200ms ease',
                         whiteSpace: 'nowrap',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                        e.currentTarget.style.background = isDarkTheme 
+                          ? hexToRgba(themeAccent, 0.20)
+                          : 'rgba(255, 230, 170, 0.35)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                        e.currentTarget.style.background = isDarkTheme 
+                          ? hexToRgba(themeAccent, 0.15)
+                          : 'rgba(255, 230, 170, 0.25)';
                       }}
                     >
                       Back
@@ -235,7 +273,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       justifyContent: 'space-between',
                       padding: '10px 20px 12px 20px',
                       gap: '10px',
-                      borderTop: `1px solid ${hexToRgba('#c9a857', 0.08)}`,
+                      borderTop: `1px solid ${hexToRgba(themeAccent, 0.08)}`,
                     }}
                   >
                     {/* Search Input + Button (Left) */}
@@ -253,10 +291,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
-                          background: 'rgba(255, 255, 255, 0.65)',
+                          background: isDarkTheme 
+                            ? 'rgba(255, 255, 255, 0.15)'
+                            : 'rgba(255, 255, 255, 0.65)',
                           backdropFilter: 'blur(10px)',
                           WebkitBackdropFilter: 'blur(10px)',
-                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
+                          border: `1px solid ${hexToRgba(themeAccent, 0.20)}`,
                           borderRadius: '20px',
                           padding: '6px 14px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -306,11 +346,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         value={headerProps.safeLineageHighlight.lineageHighlightMode}
                         onChange={(event) => headerProps.safeLineageHighlight.setLineageHighlightMode(event.target.value)}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.65)',
+                          background: isDarkTheme 
+                            ? 'rgba(255, 255, 255, 0.15)'
+                            : 'rgba(255, 255, 255, 0.65)',
                           backdropFilter: 'blur(10px)',
                           WebkitBackdropFilter: 'blur(10px)',
-                          color: headerProps.searchPalette.inputColor || '#3b2b16',
-                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
+                          color: headerProps.searchPalette.inputColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : '#3b2b16'),
+                          border: `1px solid ${hexToRgba(themeAccent, 0.20)}`,
                           borderRadius: '20px',
                           padding: '6px 14px',
                           fontSize: '12px',

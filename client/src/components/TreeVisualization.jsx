@@ -296,7 +296,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       // New unified glass header: top panel (~68px) + bottom panel (~50px) + outer padding (~24px) = ~142px
       const HEADER_HEIGHT = 136;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
-      const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
+      const BOTTOM_BUFFER = 4; // Reduced by 80% (from 20 to 4) for minimal spacing
       // Use calc to account for header, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
@@ -305,10 +305,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       
       return {
         width: '100%',
-        height: treeHeight,
-        minHeight: treeHeight,
-        maxHeight: treeHeight,
-        backgroundColor: theme.background || '#f5f5f5',
+        height: '100vh',
+        minHeight: '100vh',
+        backgroundColor: theme.background || '#f5f5f5', // Base background color extends behind header
         backgroundImage: composedBackground || undefined,
         backgroundSize: sizeValue,
         backgroundPosition: 'center',
@@ -316,10 +315,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         opacity: isTreeReady ? 1 : 0,
         transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
         transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
-        position: 'relative',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
-        marginTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
+        paddingTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
         paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`, // Add padding for bottom safe area + buffer
       };
     } catch (error) {
@@ -1369,9 +1371,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              // Very faint divider line - barely visible
-              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.12);
+              // Theme-aware divider line opacity for good contrast
+              // Power theme (dark bg + light accent) works well at 0.12
+              // For light backgrounds (Empire), we need higher opacity for visibility
+              // For dark backgrounds (others), 0.12-0.15 provides good contrast
+              const isLightTheme = familyKey === 'empire';
+              const lineOpacity = isLightTheme ? 0.18 : 0.12; // Slightly more visible on light backgrounds
+              const lineAccent = hexToRgba(theme.accent || '#c9a857', lineOpacity);
+              
               // Text color for pledge class markers with 0.7 opacity
+              // Ensures good contrast with background
               const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.7);
               
               // Get current viewport - use state if available, otherwise default
