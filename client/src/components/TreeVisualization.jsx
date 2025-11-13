@@ -1451,7 +1451,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
-            zIndex: 10, // Higher z-index to ensure visibility above ReactFlow
+            zIndex: 1, // Behind nodes, above background
             overflow: 'visible', // Allow markers to be visible
           }}
         >
@@ -1459,10 +1459,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             if (!marker || typeof marker.avgY !== 'number') return null;
             
             try {
-              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.45);
-              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.6);
-              const textColor = theme.nodeText || '#2b2314';
-              const newestTagColor = marker.isNewest ? hexToRgba(theme.accent || '#c9a857', 0.85) : null;
+              // Very faint divider line - barely visible
+              const lineAccent = hexToRgba(theme.accent || '#c9a857', 0.12);
+              // Faint text color for pledge class markers
+              const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.4);
               
               // Get current viewport - use state if available, otherwise default
               const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
@@ -1481,54 +1481,30 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                     left: 0,
                     top: `${screenY}px`,
                     width: '100%',
-                    height: '3px',
+                    height: '1px',
                     background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
                     pointerEvents: 'none',
                     transform: 'translateY(-50%)',
-                    zIndex: 10,
+                    zIndex: 1,
                   }}
                 >
-                  {/* Label on the left side */}
+                  {/* Faint text label on the left side - no button styling */}
                   <div
                     style={{
                       position: 'absolute',
-                      left: 'calc(18px + env(safe-area-inset-left, 0px))',
+                      left: 'calc(12px + env(safe-area-inset-left, 0px))',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      letterSpacing: '0.2em',
+                      fontSize: '9px',
+                      fontWeight: 500,
+                      letterSpacing: '0.15em',
                       textTransform: 'uppercase',
                       color: textColor,
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.86) 100%)',
-                      padding: marker.isNewest ? '6px 16px' : '5px 14px',
-                      borderRadius: 8,
-                      border: `2px solid ${hexToRgba(theme.accent || '#c9a857', marker.isNewest ? 0.8 : 0.55)}`,
-                      boxShadow: '0 8px 22px rgba(0,0,0,0.22)',
                       whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: marker.isNewest ? 10 : 0,
+                      opacity: 0.5,
                     }}
                   >
-                    <span>{marker.pledgeClass || ''}</span>
-                    {marker.isNewest && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          letterSpacing: '0.18em',
-                          textTransform: 'uppercase',
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          background: newestTagColor || hexToRgba('#000000', 0.1),
-                          color: theme.nodeText || '#2b2314',
-                          borderRadius: 999,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        Newest
-                      </span>
-                    )}
+                    {marker.pledgeClass || ''}
                   </div>
                 </div>
               );
