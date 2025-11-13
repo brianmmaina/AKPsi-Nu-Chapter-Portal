@@ -1112,112 +1112,130 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [isTreeReady, nodes]);
 
+  // Header height constant
+  const HEADER_HEIGHT = 64;
+
   return (
     <div className="w-full relative" style={containerStyle}>
-      <form
-        onSubmit={handleSearchSubmit}
-        style={{
-          position: 'absolute',
-          top: 24,
-          left: 24,
-          zIndex: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: searchPalette.background,
-          border: `1px solid ${searchPalette.border}`,
-          borderRadius: 999,
-          padding: '6px 12px',
-          boxShadow: '0 12px 24px rgba(0,0,0,0.12)',
-        }}
-      >
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search brothers"
-          aria-label="Search brothers"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            width: 180,
-            color: searchPalette.inputColor,
-            fontSize: '14px',
-          }}
-        />
-        <button
-          type="submit"
-          disabled={isSearching || !searchTerm.trim()}
-          style={{
-            background: searchPalette.buttonBg,
-            color: searchPalette.buttonText,
-            border: 'none',
-            borderRadius: 999,
-            padding: '6px 12px',
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: isSearching ? 'wait' : 'pointer',
-            opacity: isSearching ? 0.65 : 1,
-            transition: 'transform 0.2s ease',
-          }}
-        >
-          {isSearching ? 'Searching…' : 'Search'}
-        </button>
-      </form>
-
+      {/* Fixed translucent header bar */}
       <div
-      style={{
-          position: 'absolute',
-          top: 24,
-          right: 24,
-          zIndex: 12,
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: `${HEADER_HEIGHT}px`,
+          zIndex: 20,
+          background: hexToRgba(theme.background || '#f5f5f5', 0.85),
+          backdropFilter: 'blur(12px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.2)}`,
           display: 'flex',
-          gap: 8,
           alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        <select
-          value={safeLineageHighlight.lineageHighlightMode}
-          onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
+        {/* Search form */}
+        <form
+          onSubmit={handleSearchSubmit}
           style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
             background: searchPalette.background,
-            color: searchPalette.inputColor,
             border: `1px solid ${searchPalette.border}`,
             borderRadius: 999,
             padding: '6px 12px',
-            fontSize: '12px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            cursor: 'pointer',
-            appearance: 'none',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           }}
         >
-          <option value="off">Highlight: Off</option>
-          <option value="ancestors">Highlight: Ancestors</option>
-          <option value="descendants">Highlight: Descendants</option>
-          <option value="both">Highlight: Lineage</option>
-        </select>
-        <button
-          type="button"
-          onClick={handleExportTree}
-          disabled={isPreparingExport}
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search brothers"
+            aria-label="Search brothers"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              width: 180,
+              color: searchPalette.inputColor,
+              fontSize: '14px',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={isSearching || !searchTerm.trim()}
+            style={{
+              background: searchPalette.buttonBg,
+              color: searchPalette.buttonText,
+              border: 'none',
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: isSearching ? 'wait' : 'pointer',
+              opacity: isSearching ? 0.65 : 1,
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            {isSearching ? 'Searching…' : 'Search'}
+          </button>
+        </form>
+
+        {/* Right side controls */}
+        <div
           style={{
-            background: theme.accent || '#c9a857',
-            color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: 999,
-            fontWeight: 600,
-            fontSize: '12px',
-            cursor: isPreparingExport ? 'wait' : 'pointer',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
-            opacity: isPreparingExport ? 0.65 : 1,
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
           }}
         >
-          {isPreparingExport ? 'Preparing…' : 'Export / Print'}
-        </button>
+          <select
+            value={safeLineageHighlight.lineageHighlightMode}
+            onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
+            style={{
+              background: searchPalette.background,
+              color: searchPalette.inputColor,
+              border: `1px solid ${searchPalette.border}`,
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              cursor: 'pointer',
+              appearance: 'none',
+            }}
+          >
+            <option value="off">Highlight: Off</option>
+            <option value="ancestors">Highlight: Ancestors</option>
+            <option value="descendants">Highlight: Descendants</option>
+            <option value="both">Highlight: Lineage</option>
+          </select>
+          <button
+            type="button"
+            onClick={handleExportTree}
+            disabled={isPreparingExport}
+            style={{
+              background: theme.accent || '#c9a857',
+              color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: isPreparingExport ? 'wait' : 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              opacity: isPreparingExport ? 0.65 : 1,
+            }}
+          >
+            {isPreparingExport ? 'Preparing…' : 'Export / Print'}
+          </button>
+        </div>
       </div>
 
       {toast && (
