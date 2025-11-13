@@ -37,9 +37,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
   
-  // CRITICAL: Normalize family prop immediately to prevent uninitialized variable errors
-  // This must be done BEFORE any hooks to ensure it's always available
+  // CRITICAL: Normalize ALL props immediately to prevent uninitialized variable errors
+  // This must be done BEFORE any hooks to ensure they're always available
   const safeFamily = family && typeof family === 'object' ? family : null;
+  const safeOnToast = onToast && typeof onToast === 'function' ? onToast : null;
+  const safeOnChangeFamily = onChangeFamily && typeof onChangeFamily === 'function' ? onChangeFamily : null;
   const familyThemeRaw = safeFamily && safeFamily.theme ? String(safeFamily.theme).toLowerCase().trim() : null;
   const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
   const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
@@ -61,7 +63,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   // Use custom hooks for data loading, search, and lineage highlighting
   // Pass safeFamily (can be null) - hooks must handle this gracefully
-  const { brothers, relationships, loading, error, isTreeReady, reloadTreeData } = useTreeData(safeFamily, onToast);
+  // Ensure brothers and relationships are always arrays
+  const { brothers: rawBrothers, relationships: rawRelationships, loading, error, isTreeReady, reloadTreeData } = useTreeData(safeFamily, safeOnToast);
+  const brothers = Array.isArray(rawBrothers) ? rawBrothers : [];
+  const relationships = Array.isArray(rawRelationships) ? rawRelationships : [];
   
   const showToast = useCallback((message, type = 'info') => {
     if (toastTimeoutRef.current) {
@@ -78,8 +83,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // Extract lineageHighlightSet into a stable value for dependency array
   // This prevents "Cannot access uninitialized variable" errors in production
   // Access the property directly after ensuring lineageHighlight is initialized
-  const lineageHighlightSet = (lineageHighlight && lineageHighlight.lineageHighlightSet) 
-    ? lineageHighlight.lineageHighlightSet 
+  // Ensure lineageHighlight is always an object with required properties
+  const safeLineageHighlight = lineageHighlight && typeof lineageHighlight === 'object' ? lineageHighlight : {
+    lineageHighlightMode: 'off',
+    setLineageHighlightMode: () => {},
+    lineageSourceId: null,
+    setLineageSourceId: () => {},
+    lineageHighlightSet: new Set(),
+    setSourceFromBrotherId: () => {},
+    parentMap: new Map(),
+    childMap: new Map(),
+  };
+  const lineageHighlightSet = (safeLineageHighlight && safeLineageHighlight.lineageHighlightSet) 
+    ? safeLineageHighlight.lineageHighlightSet 
     : new Set();
 
   // Memoize theme IMMEDIATELY after hooks (before any other dependent code)
@@ -185,21 +201,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
       setHighlightBrotherId(String(brotherId));
       highlightTimeoutRef.current = setTimeout(() => setHighlightBrotherId(null), 2600);
-      if (lineageHighlight && lineageHighlight.lineageHighlightMode !== 'off' && lineageHighlight.setSourceFromBrotherId) {
-        lineageHighlight.setSourceFromBrotherId(brotherId);
+      if (safeLineageHighlight && safeLineageHighlight.lineageHighlightMode !== 'off' && safeLineageHighlight.setSourceFromBrotherId) {
+        safeLineageHighlight.setSourceFromBrotherId(brotherId);
       }
       return true;
     },
-    [nodes, reactFlowInstance, lineageHighlight],
+    [nodes, reactFlowInstance, safeLineageHighlight],
   );
 
   // Use search hook (must be called AFTER focusBrotherNode is defined)
   // Pass safeFamily instead of family to avoid potential uninitialized variable errors
+  // Ensure focusBrotherNode is always a function
+  const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
+  const safeShowToast = safeOnToast || showToast;
   const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
     safeFamily,
     brothers,
-    focusBrotherNode,
-    onToast || showToast,
+    safeFocusBrotherNode,
+    safeShowToast,
   );
   
   const defaultViewport = useMemo(() => {
@@ -674,8 +693,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         try {
           if (targetViewport && reactFlowInstance?.setViewport) {
             reactFlowInstance.setViewport(targetViewport, { duration: 300 });
-          } else if (fitTreeView) {
-            fitTreeView(isEmpire ? 0.15 : undefined, 400);
+          } else if (safeFitTreeView) {
+            safeFitTreeView(isEmpire ? 0.15 : undefined, 400);
           }
         } catch (e) {
           console.warn('Failed to restore viewport:', e);
@@ -692,7 +711,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       reactFlowInstance,
       isEmpire,
       restorePointerEvents,
-      fitTreeView,
+      safeFitTreeView,
     ],
   );
 
@@ -752,7 +771,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
       if (event.key === '0') {
         event.preventDefault();
-        fitTreeView(isEmpire ? 0.15 : undefined, 450);
+        safeFitTreeView(isEmpire ? 0.15 : undefined, 450);
         return;
       }
 
@@ -791,7 +810,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     requestAnimationFrame(() => {
       try {
-        fitTreeView();
+        safeFitTreeView();
         hasFitRef.current = true;
       } catch (err) {
         console.warn('Failed to fit view:', err);
@@ -1083,8 +1102,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         }}
       >
         <select
-          value={lineageHighlight.lineageHighlightMode}
-          onChange={(event) => lineageHighlight.setLineageHighlightMode(event.target.value)}
+          value={safeLineageHighlight.lineageHighlightMode}
+          onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
           style={{
             background: searchPalette.background,
             color: searchPalette.inputColor,
