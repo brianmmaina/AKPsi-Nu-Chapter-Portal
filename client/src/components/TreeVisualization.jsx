@@ -306,14 +306,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           ? '280px 280px'
           : undefined;
 
-      // Header height for calculating tree container height
-      const HEADER_HEIGHT = 38;
+      // Header heights - top nav bar + search bar
+      const TOP_NAV_HEIGHT = 38;
+      const SEARCH_BAR_HEIGHT = 38;
+      const TOTAL_HEADER_HEIGHT = TOP_NAV_HEIGHT + SEARCH_BAR_HEIGHT;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
       const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
-      // Use calc to account for header, safe area insets, and bottom buffer
+      // Use calc to account for both headers, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
-      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
+      const treeHeight = `calc(100vh - ${TOTAL_HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
       const headerTop = `env(safe-area-inset-top, 0px)`;
       
       return {
@@ -332,7 +334,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        marginTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
+        marginTop: `calc(${TOTAL_HEADER_HEIGHT}px + ${headerTop})`, // Push content below both fixed headers + safe area
         paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`, // Add padding for bottom safe area + buffer
       };
     } catch (error) {
@@ -1130,18 +1132,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
   // Header height constant - minimal height, just enough for buttons
   // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
-  const HEADER_HEIGHT = 38;
+  const SEARCH_BAR_HEIGHT = 38;
+  const TOP_NAV_HEIGHT = 38; // Matches the top nav bar height
 
   return (
     <div className="w-full relative" style={containerStyle}>
-      {/* Fixed translucent header bar */}
+      {/* Fixed translucent search/action bar */}
       <div
         style={{
           position: 'fixed',
-          top: 'env(safe-area-inset-top, 0px)', // Account for notch/safe area at top
+          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Below the top nav bar
           left: 0,
           right: 0,
-          height: `${HEADER_HEIGHT}px`,
+          height: `${SEARCH_BAR_HEIGHT}px`,
           zIndex: 20,
           background: hexToRgba(theme.background || '#f5f5f5', 0.85),
           backdropFilter: 'blur(12px) saturate(180%)',

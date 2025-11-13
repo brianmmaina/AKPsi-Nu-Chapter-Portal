@@ -54,24 +54,33 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
     >
       {/* Minimalist Header - Themed */}
       <div 
-        className="sticky top-0 z-sticky border-b"
         style={{
-          backgroundColor: hexToRgba(themeBackground, 0.95),
+          position: 'fixed',
+          top: 'env(safe-area-inset-top, 0px)',
+          left: 0,
+          right: 0,
+          height: '38px',
+          zIndex: 21, // Above the search bar
+          backgroundColor: hexToRgba(themeBackground, 0.85),
           backdropFilter: 'blur(12px) saturate(180%)',
           WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-          borderBottomColor: hexToRgba(themeAccent, 0.2),
+          borderBottom: `1px solid ${hexToRgba(themeAccent, 0.2)}`,
           transition: 'background-color 400ms var(--ease-standard), border-bottom-color 400ms var(--ease-standard)',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        <div className="container">
-          <div className="grid grid-cols-3 items-center" style={{ 
-            paddingTop: 'var(--space-2)', 
-            paddingBottom: 'var(--space-2)',
-            gridTemplateColumns: '1fr auto 1fr',
-            gap: 'var(--space-4)',
-          }}>
+        <div style={{ 
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: '16px',
+        }}>
             {/* Left: Compact family name - fixed width to prevent shifting */}
-            <div className="flex items-center" style={{ gap: 'var(--space-2)', minWidth: '200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px' }}>
               <div 
                 className="family-crest active"
                 style={{
@@ -103,7 +112,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
             </div>
 
             {/* Center: Compact Family Tabs - Using corrected theme colors with more spacing */}
-            <div className="flex items-center justify-center" style={{ gap: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
               {families.map((family) => {
                 const isActive = selectedFamily.id === family.id;
                 const familyTheme = getThemeStyles(family.theme);
@@ -212,7 +221,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
             </div>
 
             {/* Right: Back button - aligned to the right */}
-            <div className="flex justify-end" style={{ minWidth: '80px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: '80px' }}>
               <button
                 onClick={onChangeFamily}
                 className="btn"
@@ -241,6 +250,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           </div>
         </div>
       </div>
+      {/* Spacer to push content below fixed header */}
+      <div style={{ height: '38px' }} />
       <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
     </div>
   );
