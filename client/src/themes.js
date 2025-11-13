@@ -22,14 +22,16 @@ export const getThemeStyles = (themeName) => {
       edgeAnimated: false,
       backgroundVariant: 'lines',
     },
-    // POWER - Very dark navy with champagne gold accents, hexagon shapes
+    // POWER - Very dark navy with champagne gold accents
     // From family-tree-corrected.md: #101a26 dark navy, #ebd290 champagne gold
+    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
     power: {
       background: '#101a26',
       backgroundGrid: '#0d151f',
+      backgroundTexture: 'radial-gradient(closest-side, rgba(235,210,144,0.08), rgba(0,0,0,0) 60%)',
       nodeStudying: 'rgba(17, 30, 48, 0.96)', // solid cards
       nodeGraduated: 'rgba(17, 30, 48, 0.96)',
-      nodeBorder: '#f3dca6', // Champagne gold hexagon border
+      nodeBorder: '#f3dca6', // Champagne gold border
       nodeText: '#ffffff', // White text
       edgeColor: '#f6e4b7', // Gold connecting lines
       minimapNode: '#ebd290',
@@ -38,15 +40,18 @@ export const getThemeStyles = (themeName) => {
       accent: '#ebd290', // Champagne gold primary
       titleFont: 'Orbitron, sans-serif', // Modern, powerful font
       bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 0, // Hexagons don't have border-radius (handled by clip-path)
+      nodeRadius: 6, // Match Empire format
       edgeType: 'smoothstep',
-      backgroundVariant: 'dots',
+      edgeAnimated: false,
+      backgroundVariant: 'lines',
     },
     // GREED - Deep forest green background with white boxes and yellow-gold accents
     // From family-tree-corrected.md: #095332 forest green, #f4d961 golden yellow
+    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
     greed: {
       background: '#064729',
       backgroundGrid: '#04341f',
+      backgroundTexture: 'radial-gradient(closest-side, rgba(244,217,97,0.08), rgba(0,0,0,0) 60%)',
       nodeStudying: '#fcfff7', // bright cards
       nodeGraduated: '#fcfff7',
       nodeBorder: '#d8f2a8', // vivid border
@@ -58,15 +63,18 @@ export const getThemeStyles = (themeName) => {
       accent: '#f6e66a', // Golden yellow primary
       titleFont: 'Montserrat, system-ui, sans-serif', // Heavy/bold sans-serif
       bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 0, // Crisp corners (0px border-radius)
+      nodeRadius: 6, // Match Empire format
       edgeType: 'smoothstep',
-      backgroundVariant: 'dots',
+      edgeAnimated: false,
+      backgroundVariant: 'lines',
     },
     // WOLFPACK - Slate blue background, white boxes, dark blue headers
     // From family-tree-corrected.md: #364c73 slate blue, #ffffff white primary, #3d5373 dark blue headers
+    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
     wolfpack: {
       background: '#364c73',
       backgroundGrid: '#2a3a5c',
+      backgroundTexture: 'radial-gradient(closest-side, rgba(156,184,234,0.08), rgba(0,0,0,0) 60%)',
       nodeStudying: '#f7faff', // Bright cards
       nodeGraduated: '#f7faff',
       nodeBorder: '#d6e4ff', // Brighter border for contrast
@@ -79,15 +87,18 @@ export const getThemeStyles = (themeName) => {
       accentSecondary: '#3d5373', // Dark blue for headers/boxes
       titleFont: 'Russo One, sans-serif', // Heavy bold sans-serif
       bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 0, // Crisp corners
+      nodeRadius: 6, // Match Empire format
       edgeType: 'smoothstep',
-      backgroundVariant: 'dots',
+      edgeAnimated: false,
+      backgroundVariant: 'lines',
     },
     // PRIDE - Very dark brown/black with muted gold accents, photo-focused
     // From family-tree-corrected.md: #181413 dark brown, #d4af7e muted gold
+    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
     pride: {
       background: '#181413',
       backgroundGrid: '#242220',
+      backgroundTexture: 'radial-gradient(closest-side, rgba(212,175,126,0.08), rgba(0,0,0,0) 60%)',
       nodeStudying: '#2a1d12', // Solid dark card
       nodeGraduated: '#2a1d12',
       nodeBorder: '#d4af7e', // Muted gold border
@@ -99,8 +110,9 @@ export const getThemeStyles = (themeName) => {
       accent: '#d4af7e', // Muted gold primary
       titleFont: 'Cinzel, serif', // Elegant serif
       bodyFont: 'Inter, system-ui, sans-serif',
-      nodeRadius: 8,
+      nodeRadius: 6, // Match Empire format
       edgeType: 'smoothstep',
+      edgeAnimated: false,
       backgroundVariant: 'lines',
     },
   };

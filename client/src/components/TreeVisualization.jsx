@@ -355,28 +355,36 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     if (isPower) {
       return {
         ...base,
-        siblingPadding: 42,
+        horizontalSpacing: 220,
+        multiChildCompression: 0.86,
+        siblingPadding: 30,
       };
     }
 
     if (isGreed) {
       return {
         ...base,
-        siblingPadding: 34,
+        horizontalSpacing: 220,
+        multiChildCompression: 0.86,
+        siblingPadding: 30,
       };
     }
 
     if (isPride) {
       return {
         ...base,
-        siblingPadding: 40,
+        horizontalSpacing: 220,
+        multiChildCompression: 0.86,
+        siblingPadding: 30,
       };
     }
 
     if (isWolfpack) {
       return {
         ...base,
-        siblingPadding: 38,
+        horizontalSpacing: 220,
+        multiChildCompression: 0.86,
+        siblingPadding: 30,
       };
     }
 
