@@ -309,8 +309,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return {
         width: '100%',
         height: '100dvh', // Use dynamic viewport height for better mobile support
-        minHeight: '100vh',
-        minHeight: '-webkit-fill-available',
+        minHeight: '-webkit-fill-available', // Better mobile support
         backgroundColor: theme.background || '#f5f5f5',
         backgroundImage: composedBackground || undefined,
         backgroundSize: sizeValue,
