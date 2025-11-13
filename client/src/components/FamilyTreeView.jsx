@@ -257,7 +257,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           </div>
         </div>
       </div>
-      <div style={{ height: '38px' }}></div>
+      <div style={{ height: '38px' }} />
       <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
     </div>
   );
