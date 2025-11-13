@@ -1024,6 +1024,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
     
     try {
+      // Debug: log pledge classes found
+      const foundClasses = new Set();
+      nodes.forEach(node => {
+        if (node?.data?.brother?.pledge_class) {
+          foundClasses.add(node.data.brother.pledge_class);
+        }
+      });
+      if (foundClasses.size > 0) {
+        console.log('Pledge classes found in tree:', Array.from(foundClasses).sort());
+      }
+      
       // Group nodes by pledge class and find their average Y position
       const pledgeGroups = new Map();
       nodes.forEach(node => {
@@ -1067,6 +1078,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       });
       
       // Return all pledge classes that exist in the tree, sorted by Greek letter order
+      // Debug: log the markers being returned
+      if (markers.length > 0) {
+        console.log('Milestone markers calculated:', markers.map(m => ({ 
+          class: m.pledgeClass, 
+          level: m.pledgeLevel, 
+          y: m.avgY.toFixed(0) 
+        })));
+      }
       return markers;
     } catch (error) {
       console.warn('Error calculating milestone markers:', error);
