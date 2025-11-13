@@ -306,11 +306,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           ? '280px 280px'
           : undefined;
 
+      // Header height for calculating tree container height
+      const HEADER_HEIGHT = 64;
+      // Use calc to account for header, ensuring no scrolling
+      // Safari-safe: use 100vh with calc instead of 100dvh
+      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px)`;
+      
       return {
         width: '100%',
-        height: '100vh', // Use viewport height
-        minHeight: '100vh', // Ensure minimum height
-        maxHeight: '100vh', // Prevent overflow
+        height: treeHeight,
+        minHeight: treeHeight,
+        maxHeight: treeHeight,
         backgroundColor: theme.background || '#f5f5f5',
         backgroundImage: composedBackground || undefined,
         backgroundSize: sizeValue,
@@ -322,6 +328,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
+        marginTop: `${HEADER_HEIGHT}px`, // Push content below fixed header
       };
     } catch (error) {
       console.warn('Error computing container style:', error);
@@ -1371,9 +1378,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         }}
         style={{ 
           width: '100%', 
-          height: '100vh',
-          minHeight: '100vh',
-          maxHeight: '100vh',
+          height: '100%', // Fill parent container
+          minHeight: '100%',
+          maxHeight: '100%',
           background: theme.background, 
           fontFamily: theme.bodyFont, 
           pointerEvents: isModalOpen ? 'none' : 'auto',
