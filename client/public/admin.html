@@ -356,12 +356,12 @@
         if (currentFamilyBrothers.length === 0) {
           bigBrotherSelect.innerHTML = '<option value="">None (Root Node - starts new branch) - No brothers yet in this family</option>';
         } else {
-          currentFamilyBrothers.forEach(brother => {
-            const option = document.createElement('option');
-            option.value = brother.id;
-            option.textContent = `${brother.name}${brother.pledge_class ? ` (${brother.pledge_class})` : ''}`;
-            bigBrotherSelect.appendChild(option);
-          });
+        currentFamilyBrothers.forEach(brother => {
+          const option = document.createElement('option');
+          option.value = brother.id;
+          option.textContent = `${brother.name}${brother.pledge_class ? ` (${brother.pledge_class})` : ''}`;
+          bigBrotherSelect.appendChild(option);
+        });
           showMessage(`Loaded ${currentFamilyBrothers.length} brother(s) for Big Brother selection`, 'success');
         }
       } catch (error) {

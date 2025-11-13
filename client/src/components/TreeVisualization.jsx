@@ -3,6 +3,7 @@ import ReactFlow, {
   MiniMap,
   Controls,
   Background,
+  Panel,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -183,14 +184,28 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       const estimatedHeight = targetNode.style?.minHeight || targetNode.style?.height || 110;
       try {
         if (reactFlowInstance && reactFlowInstance.setCenter) {
+          // First zoom out slightly for better context, then zoom in smoothly
           reactFlowInstance.setCenter(
             targetNode.position.x + estimatedWidth / 2,
             targetNode.position.y + estimatedHeight / 2,
             {
-              zoom: 1.15,
-              duration: 600,
+              zoom: 0.8,
+              duration: 400,
             },
           );
+          // Then zoom in to the target
+          setTimeout(() => {
+            if (reactFlowInstance && reactFlowInstance.setCenter) {
+              reactFlowInstance.setCenter(
+                targetNode.position.x + estimatedWidth / 2,
+                targetNode.position.y + estimatedHeight / 2,
+                {
+                  zoom: 1.2,
+                  duration: 500,
+                },
+              );
+            }
+          }, 400);
         }
       } catch (error) {
         console.warn('Failed to center node:', error);
@@ -333,7 +348,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         multiChildCompression: 0.86,
         siblingPadding: 30,
       };
-    }
+      }
 
     if (isPower) {
       return {
@@ -407,8 +422,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             maxWidth: 190,
             whiteSpace: 'normal',
             color: palette.bodyColor,
-          }}
-        >
+              }}
+            >
           <div
             style={{
               display: 'flex',
@@ -427,8 +442,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 background: palette.badgeBg,
                 color: palette.badgeColor,
                 fontWeight: 600,
-              }}
-            >
+                }}
+              >
               {pledgeLabel}
               </div>
             {isTransfer && (
@@ -452,8 +467,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 letterSpacing: palette.nameTracking || '0.5px',
                 lineHeight: 1.32,
                 color: palette.nameColor,
-              }}
-            >
+                }}
+              >
               {effectiveName}
               </div>
               <div 
@@ -463,8 +478,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 fontWeight: 500,
                 letterSpacing: '0.3px',
                 lineHeight: 1.4,
-              }}
-            >
+                }}
+              >
               {statusLabel}
               </div>
             {classLabel && (
@@ -474,8 +489,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                   color: palette.classColor,
                   letterSpacing: '0.2px',
                   lineHeight: 1.4,
-                }}
-              >
+              }}
+            >
                 {classLabel}
             </div>
             )}
@@ -589,7 +604,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
             treeBoundsRef.current = bounds;
           }
         },
-      });
+        });
 
       // Validate layout result before setting
       if (layoutResult && layoutResult.nodes && layoutResult.edges) {
@@ -925,7 +940,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           </p>
           <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
             {safeOnChangeFamily && (
-              <button 
+            <button
                 onClick={safeOnChangeFamily} 
                 className="btn"
                 style={{
@@ -1278,8 +1293,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               borderTop: `1px solid ${hexToRgba(presentation.legend.textColor, 0.18)}`,
               textTransform: 'none',
               letterSpacing: '0.02em',
-            }}
-          >
+      }}
+    >
             <div style={{ fontWeight: 600, marginBottom: 2 }}>Selected</div>
             <div>{selectedBrother.name}</div>
             <div style={{ opacity: 0.7 }}>
@@ -1295,6 +1310,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onMove={(event, viewport) => {
+          setViewport(viewport);
+        }}
+        onMoveStart={(event, viewport) => {
+          setViewport(viewport);
+        }}
+        onMoveEnd={(event, viewport) => {
+          setViewport(viewport);
+        }}
         style={{ 
           width: '100%', 
           height: '100%', 
@@ -1321,56 +1345,77 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
-
-      {/* Milestone Markers - Pledge Class Guides */}
-      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && milestoneMarkers.map((marker, idx) => {
-        if (!marker || typeof marker.avgY !== 'number') return null;
-        
-        try {
-          const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
-          const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
-          
-          return (
-            <div
-              key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: marker.avgY,
-                width: '100%',
-                height: '1px',
-                background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
-                pointerEvents: 'none',
-                zIndex: 0,
-                transform: 'translateY(-50%)',
-              }}
-            >
-              <div
+      
+      {/* Milestone Markers - Pledge Class Guides (positioned to follow viewport) */}
+      <div
         style={{
           position: 'absolute',
-                  left: 24,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: textColor,
-                  background: presentation.legend?.panelBg || 'transparent',
-                  padding: '2px 8px',
-                  borderRadius: 4,
-                  opacity: 0.7,
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 2,
+          overflow: 'hidden',
+        }}
+      >
+        {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && milestoneMarkers.map((marker, idx) => {
+          if (!marker || typeof marker.avgY !== 'number') return null;
+          
+          try {
+            const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
+            const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
+            
+            // Get current viewport - use state if available, otherwise default
+            const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
+            
+            // Transform marker position: ReactFlow applies translate(x, y) scale(zoom) to the pane
+            // So we need to transform the flow coordinate to screen coordinate
+            // Screen Y = (Flow Y * zoom) + viewport.y
+            const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
+            
+            return (
+              <div
+                key={`milestone-${marker.pledgeClass || idx}-${idx}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: `${screenY}px`,
+                  width: '100%',
+                  height: '1px',
+                  background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
+                  pointerEvents: 'none',
+                  transform: `translateY(-50%) scale(${currentViewport.zoom})`,
+                  transformOrigin: 'left center',
                 }}
               >
-                {marker.pledgeClass || ''}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 24,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: textColor,
+                    background: presentation.legend?.panelBg || 'transparent',
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    opacity: 0.7,
+                  }}
+                >
+                  {marker.pledgeClass || ''}
+                </div>
               </div>
-            </div>
-          );
-        } catch (error) {
-          console.warn('Error rendering milestone marker:', error);
-          return null;
-        }
-      })}
+            );
+          } catch (error) {
+            console.warn('Error rendering milestone marker:', error);
+            return null;
+          }
+        })}
+      </div>
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (

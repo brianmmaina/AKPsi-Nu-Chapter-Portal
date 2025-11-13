@@ -76,7 +76,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
   const handleBackdropClick = (e) => {
     // Only close if clicking the backdrop itself, not the modal content
     if (e.target === e.currentTarget) {
-      onClose();
+    onClose();
     }
   };
 
@@ -507,7 +507,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
             </>
           ) : (
             /* Edit Mode - Form Layout */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
             <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
               Name
@@ -778,29 +778,29 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                     />
                   </div>
                 </div>
-              </div>
+          </div>
 
-              {isEditing && (
-                <div>
+          {isEditing && (
+            <div>
                   <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                    Transfer?
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.is_transfer}
-                      onChange={(e) => setFormData({ ...formData, is_transfer: e.target.checked })}
-                    />
-                    <span style={{ color: theme?.nodeText || 'var(--text)' }}>Yes</span>
-                  </div>
-                </div>
-              )}
+                Transfer?
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.is_transfer}
+                  onChange={(e) => setFormData({ ...formData, is_transfer: e.target.checked })}
+                />
+                <span style={{ color: theme?.nodeText || 'var(--text)' }}>Yes</span>
+              </div>
+            </div>
+          )}
             </div>
           )}
 
           {/* Action Buttons - Only show in edit mode */}
           {isEditing && (
-            <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
+        <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
               <button
                 onClick={handleSave}
                 disabled={saving}

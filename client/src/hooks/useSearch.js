@@ -117,8 +117,9 @@ export const useSearch = (family, brothers, onFocusNode, onToast) => {
         );
         if (matches.length === 0) {
           if (onToast) {
-            onToast({ message: 'No member found across the archive.', type: 'info' });
+            onToast({ message: 'No member found. Try a different search term.', type: 'info' });
           }
+          setIsSearching(false);
           return;
         }
 

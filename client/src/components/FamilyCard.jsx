@@ -64,7 +64,7 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
       shadow: '0 14px 28px rgba(50, 33, 15, 0.12)',
       text: '#4a3b25',
     };
-
+    
     return { accent, titleColor: selected.titleColor, cardStyle: selected };
   }, [family.theme]);
 
