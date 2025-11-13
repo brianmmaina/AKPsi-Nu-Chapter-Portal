@@ -1367,75 +1367,80 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </ReactFlow>
       
       {/* Milestone Markers - Pledge Class Guides (positioned to follow viewport) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 2,
-          overflow: 'hidden',
-        }}
-      >
-        {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && milestoneMarkers.map((marker, idx) => {
-          if (!marker || typeof marker.avgY !== 'number') return null;
-          
-          try {
-            const accentColor = hexToRgba(theme.accent || '#c9a857', 0.15);
-            const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.5);
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 10, // Higher z-index to ensure visibility above ReactFlow
+            overflow: 'visible', // Allow markers to be visible
+          }}
+        >
+          {milestoneMarkers.map((marker, idx) => {
+            if (!marker || typeof marker.avgY !== 'number') return null;
             
-            // Get current viewport - use state if available, otherwise default
-            const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
-            
-            // Transform marker position: ReactFlow applies translate(x, y) scale(zoom) to the pane
-            // So we need to transform the flow coordinate to screen coordinate
-            // Screen Y = (Flow Y * zoom) + viewport.y
-            const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
-            
-            return (
-              <div
-                key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: `${screenY}px`,
-                  width: '100%',
-                  height: '1px',
-                  background: `linear-gradient(90deg, transparent 0%, ${accentColor} 5%, ${accentColor} 95%, transparent 100%)`,
-                  pointerEvents: 'none',
-                  transform: `translateY(-50%) scale(${currentViewport.zoom})`,
-                  transformOrigin: 'left center',
-                }}
-              >
+            try {
+              const accentColor = hexToRgba(theme.accent || '#c9a857', 0.2);
+              const textColor = hexToRgba(presentation.legend?.textColor || theme.nodeText || '#666666', 0.8);
+              
+              // Get current viewport - use state if available, otherwise default
+              const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
+              
+              // Transform marker position: ReactFlow applies translate(x, y) scale(zoom) to the pane
+              // So we need to transform the flow coordinate to screen coordinate
+              // Screen Y = (Flow Y * zoom) + viewport.y
+              const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
+              
+              return (
                 <div
+                  key={`milestone-${marker.pledgeClass || idx}-${idx}`}
                   style={{
                     position: 'absolute',
-                    left: 24,
-                    top: '50%',
+                    left: 0,
+                    top: `${screenY}px`,
+                    width: '100%',
+                    height: '2px',
+                    background: `linear-gradient(90deg, transparent 0%, ${accentColor} 8%, ${accentColor} 92%, transparent 100%)`,
+                    pointerEvents: 'none',
                     transform: 'translateY(-50%)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: textColor,
-                    background: presentation.legend?.panelBg || 'transparent',
-                    padding: '2px 8px',
-                    borderRadius: 4,
-                    opacity: 0.7,
+                    zIndex: 10,
                   }}
                 >
-                  {marker.pledgeClass || ''}
+                  {/* Label on the left side */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      color: textColor,
+                      background: hexToRgba(presentation.legend?.panelBg || theme.background || '#ffffff', 0.9),
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.3)}`,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {marker.pledgeClass || ''}
+                  </div>
                 </div>
-              </div>
-            );
-          } catch (error) {
-            console.warn('Error rendering milestone marker:', error);
-            return null;
-          }
-        })}
-      </div>
+              );
+            } catch (error) {
+              console.warn('Error rendering milestone marker:', error);
+              return null;
+            }
+          })}
+        </div>
+      )}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
