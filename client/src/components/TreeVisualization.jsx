@@ -686,6 +686,40 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, []);
 
+  // Define fitPaddingForBounds and fitTreeView BEFORE they're used in other callbacks
+  // This prevents "Can't find variable" errors
+  const fitPaddingForBounds = useCallback(() => {
+    const { width, height } = treeBoundsRef.current;
+    const longestSide = Math.max(width, height);
+    if (!longestSide || !Number.isFinite(longestSide)) {
+      return 0.25;
+    }
+
+    if (longestSide < 600) return 0.42;
+    if (longestSide < 1200) return 0.28;
+    if (longestSide < 2000) return 0.22;
+    return 0.18;
+  }, []);
+
+  const fitTreeView = useCallback(
+    (paddingOverride, duration = 500) => {
+      try {
+        if (reactFlowInstance && reactFlowInstance.fitView) {
+          reactFlowInstance.fitView({
+            padding: paddingOverride ?? fitPaddingForBounds(),
+            duration,
+          });
+        }
+      } catch (err) {
+        console.warn('fitView failed:', err);
+      }
+    },
+    [fitPaddingForBounds, reactFlowInstance],
+  );
+  
+  // Ensure fitTreeView is always a function
+  const safeFitTreeView = fitTreeView && typeof fitTreeView === 'function' ? fitTreeView : () => {};
+
   const closeProfile = useCallback(
     (restoreViewport = true) => {
       if (restoreViewport) {
@@ -801,7 +835,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeView]);
+  }, [isEmpire, reactFlowInstance, minZoom, maxZoom, safeFitTreeView]);
 
   useEffect(() => {
     if (!isTreeReady || nodes.length === 0 || hasFitRef.current) {
@@ -816,36 +850,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         console.warn('Failed to fit view:', err);
       }
     });
-  }, [isTreeReady, nodes, reactFlowInstance, isEmpire, fitTreeView]);
-
-  const fitPaddingForBounds = useCallback(() => {
-    const { width, height } = treeBoundsRef.current;
-    const longestSide = Math.max(width, height);
-    if (!longestSide || !Number.isFinite(longestSide)) {
-      return 0.25;
-    }
-
-    if (longestSide < 600) return 0.42;
-    if (longestSide < 1200) return 0.28;
-    if (longestSide < 2000) return 0.22;
-    return 0.18;
-  }, []);
-
-  const fitTreeView = useCallback(
-    (paddingOverride, duration = 500) => {
-      try {
-        if (reactFlowInstance?.fitView) {
-          reactFlowInstance.fitView({
-            padding: paddingOverride ?? fitPaddingForBounds(),
-            duration,
-          });
-        }
-      } catch (err) {
-        console.warn('fitView failed:', err);
-      }
-    },
-    [fitPaddingForBounds, reactFlowInstance],
-  );
+  }, [isTreeReady, nodes, reactFlowInstance, isEmpire, safeFitTreeView]);
 
   // Remove loading state - tree will fade in instead
 
