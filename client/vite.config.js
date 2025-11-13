@@ -9,11 +9,26 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    // Optimize chunk splitting for better caching
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks(id) {
+          // Separate ReactFlow into its own chunk (large library)
+          if (id.includes('reactflow')) {
+            return 'reactflow';
+          }
+          // Separate axios into its own chunk (smaller, changes less frequently)
+          if (id.includes('axios')) {
+            return 'axios';
+          }
+          // Vite already handles React/ReactDOM splitting automatically
+          // No need to manually chunk them
+        },
       },
     },
+    // Enable minification and compression
+    minify: 'esbuild', // Fast minification
+    chunkSizeWarningLimit: 1000, // Warn if chunks exceed 1MB
   },
   server: {
     proxy: {
@@ -22,5 +37,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'reactflow', 'axios'],
   },
 })

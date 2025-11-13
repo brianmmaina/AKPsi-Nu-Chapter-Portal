@@ -1,0 +1,407 @@
+import { MarkerType } from 'reactflow';
+import { getPledgeLevel } from './pledgeClass';
+import {
+  getBaseNodeStyle,
+  applyPlaceholderStyle,
+  applyHighlightStyle,
+  applyLineageHighlightStyle,
+} from './nodeStyles';
+import { hexToRgba } from './color';
+
+/**
+ * Calculates tree layout and creates React Flow nodes and edges
+ * 
+ * @param {Object} params - Layout calculation parameters
+ * @param {Array} params.brothers - List of all brothers
+ * @param {Array} params.relationships - Parent-child relationships
+ * @param {string} params.familyKey - Family key (empire, power, etc.)
+ * @param {Object} params.theme - Theme configuration
+ * @param {Object} params.layoutSettings - Layout settings (spacing, compression, etc.)
+ * @param {string|null} params.highlightBrotherId - ID of highlighted brother
+ * @param {Set} params.lineageHighlightSet - Set of IDs in lineage highlight
+ * @param {Function} params.renderNodeContent - Function to render node content
+ * @param {boolean} params.isEmpire - Whether this is the Empire family
+ * @param {Function} params.onTreeBounds - Callback to update tree bounds
+ * @returns {Object} Object with nodes and edges arrays
+ */
+export const calculateTreeLayout = ({
+  brothers,
+  relationships,
+  familyKey,
+  theme,
+  layoutSettings,
+  highlightBrotherId,
+  lineageHighlightSet,
+  renderNodeContent,
+  isEmpire,
+  onTreeBounds,
+}) => {
+  // Safety check: ensure theme is initialized
+  if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
+    return { nodes: [], edges: [] };
+  }
+
+  // Safety check: ensure brothers and relationships are arrays
+  if (!Array.isArray(brothers)) {
+    return { nodes: [], edges: [] };
+  }
+  if (!Array.isArray(relationships)) {
+    return { nodes: [], edges: [] };
+  }
+
+  // Build relationship structure: parent -> children
+  const relationshipsMap = new Map(); // little_id -> big_id
+  const childrenMap = new Map(); // big_id -> [little_ids]
+  
+  relationships.forEach(rel => {
+    if (rel && rel.big_id && rel.little_id) {
+      relationshipsMap.set(rel.little_id, rel.big_id);
+      if (!childrenMap.has(rel.big_id)) {
+        childrenMap.set(rel.big_id, []);
+      }
+      childrenMap.get(rel.big_id).push(rel.little_id);
+    }
+  });
+
+  // Layout algorithm: Binary tree vertical layout
+  const layoutNodes = [];
+  const layoutEdges = [];
+  const nodePositions = new Map();
+  const subtreeWidthCache = new Map();
+  
+  // Node dimensions
+  const nodeWidth = 180;
+  const nodeHeight = 100;
+  const {
+    horizontalSpacing,
+    baseVerticalSpacing,
+    pledgeVerticalSpacing,
+    multiChildCompression,
+    siblingPadding,
+    prongDropFactor,
+  } = layoutSettings;
+
+  /**
+   * Recursively calculates the width needed for a subtree
+   * @param {number} rootId - Root of the subtree
+   * @returns {number} Width needed for this subtree
+   */
+  const getSubtreeWidth = (rootId) => {
+    if (subtreeWidthCache.has(rootId)) {
+      return subtreeWidthCache.get(rootId);
+    }
+
+    const children = childrenMap.get(rootId) || [];
+    if (children.length === 0) {
+      subtreeWidthCache.set(rootId, horizontalSpacing);
+      return horizontalSpacing;
+    }
+
+    const childWidths = children.map((childId) => getSubtreeWidth(childId));
+    const compression =
+      multiChildCompression < 1 && children.length >= 3
+        ? multiChildCompression
+        : 1;
+
+    let totalWidth;
+    if (children.length === 3) {
+      const pad = siblingPadding || horizontalSpacing * 0.25;
+      const left = childWidths[0] * compression;
+      const center = childWidths[1] * compression;
+      const right = childWidths[2] * compression;
+      totalWidth = left + center + right + pad * 2;
+    } else {
+      totalWidth =
+        childWidths.reduce((sum, width) => sum + width, 0) * compression +
+        Math.max(children.length - 1, 0) * siblingPadding;
+    }
+    const width = Math.max(totalWidth, horizontalSpacing);
+
+    subtreeWidthCache.set(rootId, width);
+    return width;
+  };
+
+  /**
+   * Recursively positions nodes in a binary tree layout
+   * @param {number} nodeId - ID of the node to position
+   * @param {number} x - X position (center of subtree)
+   * @param {number} y - Y position (generation level)
+   */
+  const positionNode = (nodeId, x, y) => {
+    nodePositions.set(nodeId, { x, y });
+    
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) {
+      return;
+    }
+
+    // Calculate positions for children
+    const childWidthsRaw = children.map((childId) => getSubtreeWidth(childId));
+    const compression =
+      multiChildCompression < 1 && children.length >= 3
+        ? multiChildCompression
+        : 1;
+
+    if (children.length === 3) {
+      const compressedWidths = childWidthsRaw.map((width) => width * compression);
+      const pad = siblingPadding || horizontalSpacing * 0.25;
+
+      const leftWidth = compressedWidths[0];
+      const centerWidth = compressedWidths[1];
+      const rightWidth = compressedWidths[2];
+
+      const leftX = x - (leftWidth / 2 + centerWidth / 2 + pad);
+      const rightX = x + (rightWidth / 2 + centerWidth / 2 + pad);
+      const outerY = y + baseVerticalSpacing;
+      const centerY = y + baseVerticalSpacing * (prongDropFactor || 1.12);
+
+      positionNode(children[0], leftX, outerY);
+      positionNode(children[2], rightX, outerY);
+      positionNode(children[1], x, centerY);
+      return;
+    }
+
+    const totalWidth =
+      childWidthsRaw.reduce((sum, width) => sum + width, 0) * compression +
+      Math.max(children.length - 1, 0) * siblingPadding;
+    const startX = x - totalWidth / 2;
+
+    let accumulatedWidth = 0;
+    children.forEach((childId, index) => {
+      const width = childWidthsRaw[index] * compression;
+      const pad = index > 0 ? siblingPadding : 0;
+      accumulatedWidth += pad;
+      const childX = startX + accumulatedWidth + width / 2;
+      positionNode(childId, childX, y + baseVerticalSpacing);
+      accumulatedWidth += width;
+    });
+  };
+
+  // Find root nodes (nodes with no big_id)
+  const rootNodes = brothers.filter(b => {
+    if (!b || typeof b.id === 'undefined') return false;
+    const bigId = relationshipsMap.get(b.id);
+    return !bigId || !brothers.some(br => br && br.id === bigId);
+  });
+
+  // Position root nodes at the top
+  if (rootNodes.length > 0) {
+    const totalWidth = rootNodes.reduce((sum, root) => {
+      const rootId = root.id;
+      const children = childrenMap.get(rootId) || [];
+      return sum + (children.length > 0 ? getSubtreeWidth(rootId) : horizontalSpacing);
+    }, 0);
+    
+    let currentX = -totalWidth / 2;
+    
+    rootNodes.forEach((root) => {
+      const rootId = root.id;
+      const children = childrenMap.get(rootId) || [];
+      const subtreeWidth = children.length > 0 ? getSubtreeWidth(rootId) : horizontalSpacing;
+      const rootX = currentX + subtreeWidth / 2;
+      positionNode(rootId, rootX, 0);
+      currentX += subtreeWidth;
+    });
+  } else {
+    // No roots found, just position all nodes in a simple grid
+    const levelMap = new Map();
+    brothers.forEach(b => {
+      if (!b || typeof b.id === 'undefined') return;
+      const bigId = relationshipsMap.get(b.id);
+      const level = bigId ? 1 : 0;
+      if (!levelMap.has(level)) levelMap.set(level, []);
+      levelMap.get(level).push(b.id);
+    });
+
+    levelMap.forEach((nodeIds, level) => {
+      const spacing = horizontalSpacing;
+      const startX = -((nodeIds.length - 1) * spacing) / 2;
+      nodeIds.forEach((nodeId, index) => {
+        nodePositions.set(nodeId, { x: startX + index * spacing, y: level * baseVerticalSpacing });
+      });
+    });
+  }
+
+  // Empire-specific: center parents above their children
+  if (isEmpire) {
+    brothers.forEach((brother) => {
+      if (!brother || typeof brother.id === 'undefined') return;
+      const children = childrenMap.get(brother.id) || [];
+      if (children.length === 0) {
+        return;
+      }
+      const childXs = children
+        .map((childId) => nodePositions.get(childId))
+        .filter(Boolean)
+        .map((pos) => pos.x);
+      if (childXs.length === 0) {
+        return;
+      }
+      const avgX = childXs.reduce((sum, x) => sum + x, 0) / childXs.length;
+      const currentPos = nodePositions.get(brother.id);
+      if (currentPos) {
+        nodePositions.set(brother.id, { ...currentPos, x: avgX });
+      }
+    });
+  }
+
+  // Adjust positions based on pledge classes
+  const adjustedPositions = new Map();
+  brothers.forEach((brother) => {
+    if (!brother || typeof brother.id === 'undefined') return;
+    const pos = nodePositions.get(brother.id);
+    if (pos) {
+      const depthLevel = Math.floor(pos.y / baseVerticalSpacing);
+      const pledgeLevel = getPledgeLevel(brother.pledge_class, depthLevel);
+      adjustedPositions.set(brother.id, {
+        ...pos,
+        depthLevel,
+        pledgeLevel,
+      });
+    }
+  });
+
+  const enforceHierarchy = (nodeId) => {
+    const current = adjustedPositions.get(nodeId);
+    if (!current) return;
+    const children = childrenMap.get(nodeId) || [];
+    children.forEach((childId) => {
+      const childPos = adjustedPositions.get(childId);
+      if (!childPos) return;
+      if (childPos.pledgeLevel <= current.pledgeLevel) {
+        childPos.pledgeLevel = current.pledgeLevel + 1;
+      }
+      enforceHierarchy(childId);
+    });
+  };
+
+  brothers.forEach((brother) => {
+    if (!brother || typeof brother.id === 'undefined') return;
+    if (!relationshipsMap.get(brother.id)) {
+      enforceHierarchy(brother.id);
+    }
+  });
+
+  const levelRemap = new Map();
+  Array.from(new Set(Array.from(adjustedPositions.values()).map(({ pledgeLevel }) => pledgeLevel)))
+    .sort((a, b) => a - b)
+    .forEach((level, idx) => levelRemap.set(level, idx));
+
+  brothers.forEach((brother) => {
+    if (!brother || typeof brother.id === 'undefined') return;
+    const info = adjustedPositions.get(brother.id);
+    if (!info) return;
+    const remappedLevel = levelRemap.get(info.pledgeLevel) ?? info.pledgeLevel;
+    nodePositions.set(brother.id, {
+      x: info.x,
+      y: remappedLevel * pledgeVerticalSpacing,
+    });
+  });
+
+  // Create React Flow nodes
+  brothers.forEach(brother => {
+    // Safety check: skip null/undefined brothers
+    if (!brother || typeof brother.id === 'undefined') {
+      console.warn('Skipping invalid brother:', brother);
+      return;
+    }
+    
+    const position = nodePositions.get(brother.id);
+    const status = brother.status === 'studying' ? 'studying' : 'graduated';
+    
+    // Get base node style using utility (pass actual status)
+    const nodeStyle = getBaseNodeStyle(familyKey, theme, nodeWidth, nodeHeight, status);
+
+    // Apply conditional styles
+    const isPlaceholderNode = !brother.name || /^unassigned/i.test(brother.name.trim());
+    if (isPlaceholderNode) {
+      applyPlaceholderStyle(nodeStyle, theme);
+    }
+    const isHighlightedNode = highlightBrotherId === String(brother.id);
+    if (isHighlightedNode) {
+      applyHighlightStyle(nodeStyle, theme);
+    }
+    if (lineageHighlightSet && lineageHighlightSet.has(String(brother.id))) {
+      applyLineageHighlightStyle(nodeStyle, theme);
+    }
+
+    // Build node label using unified renderer
+    const nodeLabel = renderNodeContent(brother);
+
+    // Add node with position (fallback to 0,0 if not calculated)
+    layoutNodes.push({
+      id: String(brother.id),
+      data: {
+        label: nodeLabel,
+        brother: brother,
+      },
+      position: position || { x: 0, y: 0 },
+      style: nodeStyle,
+    });
+  });
+
+  // Capture layout bounds for dynamic viewport
+  if (layoutNodes.length && onTreeBounds) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    layoutNodes.forEach((node) => {
+      minX = Math.min(minX, node.position.x);
+      maxX = Math.max(maxX, node.position.x + nodeWidth);
+      minY = Math.min(minY, node.position.y);
+      maxY = Math.max(maxY, node.position.y + nodeHeight);
+    });
+    onTreeBounds({
+      width: maxX - minX,
+      height: maxY - minY,
+    });
+  }
+
+  // Create edges - only if both nodes exist
+  const edgeColor = theme.edgeColor || theme.accent || '#666666';
+  const edgeStrokeWidth = 4;
+  
+  relationships.forEach(rel => {
+    if (!rel || !rel.big_id || !rel.little_id) return;
+    
+    // Verify both nodes exist in the brothers array
+    const bigExists = brothers.some(b => b && b.id === rel.big_id);
+    const littleExists = brothers.some(b => b && b.id === rel.little_id);
+    
+    if (bigExists && littleExists) {
+      const childCount = (childrenMap.get(rel.big_id) || []).length;
+      const isSingleChild = childCount <= 1;
+      const edgeType = isSingleChild ? 'step' : (theme.edgeType || 'smoothstep');
+      const isLineageEdge =
+        lineageHighlightSet &&
+        lineageHighlightSet.has(String(rel.big_id)) &&
+        lineageHighlightSet.has(String(rel.little_id));
+      
+      const edge = {
+        id: `e${rel.big_id}-${rel.little_id}`,
+        source: String(rel.big_id),
+        target: String(rel.little_id),
+        type: edgeType,
+        animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
+        style: {
+          stroke: isLineageEdge ? hexToRgba(theme.accent || edgeColor, 0.9) : edgeColor,
+          strokeWidth: isLineageEdge ? edgeStrokeWidth + 2 : edgeStrokeWidth + 1,
+          opacity: 0.97,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))',
+          borderRadius: isSingleChild ? 16 : undefined,
+        },
+        markerEnd: MarkerType.ArrowClosed,
+        data: {
+          isSingleChild,
+        },
+      };
+      layoutEdges.push(edge);
+    }
+  });
+
+  return { nodes: layoutNodes, edges: layoutEdges };
+};
+
