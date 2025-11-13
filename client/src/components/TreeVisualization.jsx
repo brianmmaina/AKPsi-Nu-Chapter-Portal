@@ -62,6 +62,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const toastTimeoutRef = useRef(null);
   const highlightTimeoutRef = useRef(null);
   const hasFitRef = useRef(false);
+  const reactFlowPaneRef = useRef(null);
   const reactFlowInstance = useReactFlow();
 
   // Use custom hooks for data loading, search, and lineage highlighting
@@ -1166,7 +1167,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     <>
       {/* Combined header rendered by parent */}
       {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
-      <div className="w-full relative" style={containerStyle}>
+      <div className="w-full relative" style={{ ...containerStyle, position: 'relative' }}>
 
       {toast && (
         <div
@@ -1379,18 +1380,51 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               const lineOpacity = isLightTheme ? 0.18 : 0.12; // Slightly more visible on light backgrounds
               const lineAccent = hexToRgba(theme.accent || '#c9a857', lineOpacity);
               
-              // Text color for pledge class markers with 0.7 opacity
-              // Ensures good contrast with background
-              const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.7);
+              // Text color for pledge class markers - darker for better contrast
+              // Increased opacity to 0.9 for better readability
+              const textColor = hexToRgba(theme.nodeText || '#2b2314', 0.9);
               
               // Get current viewport - use state if available, otherwise default
               const currentViewport = (viewport && viewport.x !== undefined) ? viewport : (defaultViewport || { x: 0, y: 0, zoom: 1 });
               
-              // ReactFlow's coordinate system: the pane has transform: translate(viewport.x, viewport.y) scale(viewport.zoom)
-              // To position an overlay element at a flow coordinate, we need to apply the same transform
-              // Screen Y = (Flow Y * zoom) + viewport.y
-              // But we need to account for the ReactFlow pane's position
-              const screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
+              // Use ReactFlow's project() method to accurately convert flow coordinates to screen coordinates
+              // project() returns coordinates relative to the ReactFlow pane element
+              // The overlay div and ReactFlow are siblings in the same container
+              // Both are positioned within the container which has paddingTop for the header
+              let screenY;
+              if (project && typeof project === 'function') {
+                try {
+                  // Project converts flow coordinates to screen coordinates
+                  // Returns position relative to ReactFlow's pane element (accounts for zoom/pan)
+                  const projected = project({ x: 0, y: marker.avgY });
+                  screenY = projected.y;
+                  
+                  // For Empire theme, markers may be slightly misaligned due to different default zoom
+                  // Add small adjustment if needed (Empire uses 0.45 zoom vs 0.5+ for others)
+                  if (familyKey === 'empire') {
+                    // Small adjustment to align markers properly - may need fine-tuning
+                    screenY = screenY + 2; // Adjust down by 2px for Empire
+                  }
+                } catch (error) {
+                  // Fallback to manual calculation if project() fails
+                  console.warn('project() failed, using manual calculation:', error);
+                  // Manual calc: account for viewport transform
+                  // screenY = (flowY * zoom) + viewportY
+                  screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
+                  // Add Empire adjustment for manual calc too
+                  if (familyKey === 'empire') {
+                    screenY = screenY + 2;
+                  }
+                }
+              } else {
+                // Manual calculation as fallback when project() is not available
+                // This may not be perfectly accurate but should be close
+                screenY = (marker.avgY * currentViewport.zoom) + currentViewport.y;
+                // Add Empire adjustment for manual calc too
+                if (familyKey === 'empire') {
+                  screenY = screenY + 2;
+                }
+              }
               
               return (
                 <div

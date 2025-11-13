@@ -136,7 +136,9 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         fontSize: '14px',
                         fontFamily: 'Cinzel, serif',
                         fontWeight: 600,
-                        color: presentation.header?.textColor || 'rgba(59, 43, 22, 0.72)',
+                        color: isDarkTheme 
+                          ? presentation.header?.textColor || 'rgba(248, 235, 206, 0.95)' 
+                          : presentation.header?.textColor || 'rgba(59, 43, 22, 0.92)', // Darker for better contrast
                         letterSpacing: '0.03em',
                       }}
                     >
@@ -174,7 +176,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         : 'rgba(255, 230, 170, 0.35)';
                       const tabTextColor = isActive 
                         ? familyPrimary 
-                        : (isFamilyDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(74, 74, 74, 0.85)');
+                        : (isFamilyDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(59, 43, 22, 0.85)'); // Darker for better contrast
                       
                       return (
                         <button
@@ -313,7 +315,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                             border: 'none',
                             outline: 'none',
                             width: '160px',
-                            color: headerProps.searchPalette.inputColor || '#3b2b16',
+                            color: headerProps.searchPalette.inputColor || (isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : 'rgba(59, 43, 22, 0.95)'), // Darker for better contrast
                             fontSize: '13px',
                           }}
                         />
