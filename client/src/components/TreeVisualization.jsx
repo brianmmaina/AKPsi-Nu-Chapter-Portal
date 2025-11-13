@@ -186,6 +186,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       }
       const estimatedWidth = targetNode.style?.width || targetNode.style?.minWidth || 200;
       const estimatedHeight = targetNode.style?.minHeight || targetNode.style?.height || 110;
+      // Set highlight to show which node was found
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+      setHighlightBrotherId(String(brotherId));
+      highlightTimeoutRef.current = setTimeout(() => setHighlightBrotherId(null), 2600);
+      
+      // Set lineage highlight if enabled
+      if (safeLineageHighlight && safeLineageHighlight.lineageHighlightMode !== 'off' && safeLineageHighlight.setSourceFromBrotherId) {
+        safeLineageHighlight.setSourceFromBrotherId(brotherId);
+      }
+      
+      // Center and zoom to the node
       try {
         if (reactFlowInstance && reactFlowInstance.setCenter) {
           // First zoom out slightly for better context, then zoom in smoothly
@@ -210,19 +223,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               );
             }
           }, 400);
+          return true; // Return true to indicate success
         }
+        return false; // No reactFlowInstance available
       } catch (error) {
         console.warn('Failed to center node:', error);
+        return false;
       }
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current);
-      }
-      setHighlightBrotherId(String(brotherId));
-      highlightTimeoutRef.current = setTimeout(() => setHighlightBrotherId(null), 2600);
-      if (safeLineageHighlight && safeLineageHighlight.lineageHighlightMode !== 'off' && safeLineageHighlight.setSourceFromBrotherId) {
-        safeLineageHighlight.setSourceFromBrotherId(brotherId);
-      }
-      return true;
     },
     [nodes, reactFlowInstance, safeLineageHighlight],
   );
