@@ -1410,35 +1410,45 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               return (
                 <div
                   key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-        style={{
-          position: 'absolute',
+                  style={{
+                    position: 'absolute',
                     left: 0,
                     top: `${screenY}px`,
                     width: '100%',
-                    height: '1px',
-                    background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
                     pointerEvents: 'none',
                     transform: 'translateY(-50%)',
                     zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
-                  {/* Text label on the left side - no button styling */}
+                  {/* Text label on the left side - positioned first */}
                   <div
                     style={{
                       position: 'absolute',
                       left: 'calc(12px + env(safe-area-inset-left, 0px))',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
                       fontSize: '9px',
                       fontWeight: 500,
                       letterSpacing: '0.15em',
                       textTransform: 'uppercase',
                       color: textColor,
                       whiteSpace: 'nowrap',
+                      lineHeight: '1',
+                      height: '1em',
+                      display: 'flex',
+                      alignItems: 'center',
                     }}
                   >
                     {marker.pledgeClass || ''}
                   </div>
+                  {/* Horizontal line - spans full width, aligned to text center */}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent 0%, ${lineAccent} 8%, ${lineAccent} 92%, transparent 100%)`,
+                    }}
+                  />
                 </div>
               );
             } catch (error) {
