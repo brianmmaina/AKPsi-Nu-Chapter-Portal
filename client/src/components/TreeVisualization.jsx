@@ -339,56 +339,56 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   }, [theme, composedBackground, isEmpire, isTreeReady]);
   const layoutSettings = useMemo(() => {
     const base = {
-      horizontalSpacing: 235,
-      baseVerticalSpacing: 150,
-      pledgeVerticalSpacing: 130,
-      multiChildCompression: 0.9,
-      siblingPadding: 36,
+      horizontalSpacing: 260, // Increased from 235 for more horizontal breathing room
+      baseVerticalSpacing: 165, // Increased from 150 for more vertical spacing
+      pledgeVerticalSpacing: 145, // Increased from 130 for more spacing between pledge levels
+      multiChildCompression: 0.92, // Increased from 0.9 - less compression means more spacing
+      siblingPadding: 44, // Increased from 36 for more space between siblings
       prongDropFactor: 1.12,
     };
 
     if (isEmpire) {
       return {
         ...base,
-        horizontalSpacing: 220,
-        multiChildCompression: 0.86,
-        siblingPadding: 30,
+        horizontalSpacing: 240, // Increased from 220
+        multiChildCompression: 0.88, // Increased from 0.86 - less compression
+        siblingPadding: 36, // Increased from 30
       };
       }
 
     if (isPower) {
       return {
         ...base,
-        horizontalSpacing: 220,
-        multiChildCompression: 0.86,
-        siblingPadding: 30,
+        horizontalSpacing: 240, // Increased from 220
+        multiChildCompression: 0.88, // Increased from 0.86
+        siblingPadding: 36, // Increased from 30
       };
     }
 
     if (isGreed) {
       return {
         ...base,
-        horizontalSpacing: 220,
-        multiChildCompression: 0.86,
-        siblingPadding: 30,
+        horizontalSpacing: 240, // Increased from 220
+        multiChildCompression: 0.88, // Increased from 0.86
+        siblingPadding: 36, // Increased from 30
       };
     }
 
     if (isPride) {
       return {
         ...base,
-        horizontalSpacing: 220,
-        multiChildCompression: 0.86,
-        siblingPadding: 30,
+        horizontalSpacing: 240, // Increased from 220
+        multiChildCompression: 0.88, // Increased from 0.86
+        siblingPadding: 36, // Increased from 30
       };
     }
 
     if (isWolfpack) {
       return {
         ...base,
-        horizontalSpacing: 220,
-        multiChildCompression: 0.86,
-        siblingPadding: 30,
+        horizontalSpacing: 250, // Increased from 220 - extra spacing for Wolfpack
+        multiChildCompression: 0.88, // Increased from 0.86
+        siblingPadding: 40, // Increased from 30 - extra padding for Wolfpack
       };
     }
 
