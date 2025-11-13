@@ -33,6 +33,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
     profile_image_url: brother.profile_image_url || '',
     linkedin_url: brother.linkedin_url || '',
     instagram_url: brother.instagram_url || '',
+    email: brother.email || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -57,6 +58,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
         profile_image_url: formData.profile_image_url,
         linkedin_url: formData.linkedin_url,
         instagram_url: formData.instagram_url,
+        email: formData.email,
       });
       setIsEditing(false);
       onUpdate();
@@ -399,7 +401,7 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
               )}
 
               {/* Links Section */}
-              {(brother.linkedin_url || brother.instagram_url) && (
+              {(brother.linkedin_url || brother.instagram_url || brother.email) && (
                 <div style={{ 
                   marginBottom: 'var(--space-6)',
                   padding: '16px 20px',
@@ -485,6 +487,41 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                       >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {brother.email && (
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(brother.email)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#ea4335',
+                          color: 'white',
+                          borderRadius: '0px',
+                          textDecoration: 'none',
+                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = palette.linkGlow;
+                          e.currentTarget.style.filter = 'brightness(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.filter = 'brightness(1)';
+                        }}
+                        title={`Email: ${brother.email}`}
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
                         </svg>
                       </a>
                     )}
@@ -768,6 +805,26 @@ const BrotherDetailModal = ({ brother, familyId, onClose, onUpdate, theme, onToa
                       onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
                       className="input"
                       placeholder="https://instagram.com/username"
+                      style={{ 
+                        color: '#1f1f1f',
+                        backgroundColor: '#ffffff',
+                        border: '2px solid #d4c9b3',
+                        borderRadius: '0px',
+                        padding: '10px 12px',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="input"
+                      placeholder="example@email.com"
                       style={{ 
                         color: '#1f1f1f',
                         backgroundColor: '#ffffff',
