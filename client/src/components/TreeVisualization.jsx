@@ -293,7 +293,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           : undefined;
 
       // Header height for calculating tree container height
-      const HEADER_HEIGHT = 38;
+      // New unified glass header: top panel (~68px) + bottom panel (~50px) + outer padding (~24px) = ~142px
+      const HEADER_HEIGHT = 136;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
       const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
       // Use calc to account for header, safe area insets, and bottom buffer
@@ -1128,7 +1129,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   // Header height constant - single combined bar
   // Combined bar with family tabs, search, and controls in one row
-  const HEADER_HEIGHT = 38;
+  // Updated header height for unified glass panel design
+  const HEADER_HEIGHT = 136;
 
   // Handle null family case after all hooks
   if (!safeFamily || !safeFamily.theme) {

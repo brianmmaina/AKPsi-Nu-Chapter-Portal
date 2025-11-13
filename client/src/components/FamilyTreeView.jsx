@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getThemeStyles } from '../themes';
 import TreeVisualization from './TreeVisualization';
 import { hexToRgba } from '../utils/color';
+import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
 
 /**
  * FamilyTreeView Component
@@ -56,220 +57,306 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         family={selectedFamily} 
         onToast={onToast} 
         onChangeFamily={onChangeFamily}
-        renderCombinedHeader={(headerProps) => (
-          <div 
-            style={{
-              position: 'fixed',
-              top: 'env(safe-area-inset-top, 0px)',
-              left: 0,
-              right: 0,
-              height: '38px',
-              zIndex: 21,
-              backgroundColor: '#f5f5f0',
-              backdropFilter: 'blur(12px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-              borderBottom: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              gap: '16px',
-            }}
-          >
-            {/* Family tabs on the left */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-              {families.map((family) => {
-                const isActive = selectedFamily.id === family.id;
-                const familyTheme = getThemeStyles(family.theme);
-                const familyPrimary = familyTheme?.accent || '#c9a857';
-                
-                const activeBgColor = isActive ? hexToRgba('#c9a857', 0.3) : 'transparent';
-                const textColor = isActive ? familyPrimary : '#4a4a4a';
-                
-                return (
-                  <button
-                    key={family.id}
-                    onClick={() => setSelectedFamily(family)}
-                    style={{
-                      position: 'relative',
-                      padding: '4px 12px',
-                      borderRadius: '4px',
-                      backgroundColor: activeBgColor,
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'background-color 200ms ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.12);
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }
-                    }}
-                    aria-label={`Switch to ${family.name} family`}
-                    aria-current={isActive ? 'true' : 'false'}
-                  >
-                    <span 
-                      style={{
-                        fontSize: '12px',
-                        fontFamily: 'Russo One, sans-serif',
-                        fontWeight: 700,
-                        color: textColor,
-                        letterSpacing: '0.5px',
-                        whiteSpace: 'nowrap',
-                        transition: 'color 200ms ease',
-                      }}
-                    >
-                      {family.name}
-                    </span>
-                    {isActive && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          bottom: '0',
-                          left: '0',
-                          right: '0',
-                          height: '1.5px',
-                          backgroundColor: familyPrimary,
-                          borderRadius: '999px',
-                          opacity: 0.6,
-                        }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Search and controls in the middle */}
-            {headerProps && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', justifyContent: 'center', maxWidth: '600px' }}>
-                {/* Search form */}
-                <form
-                  onSubmit={headerProps.handleSearchSubmit}
+        renderCombinedHeader={(headerProps) => {
+          const presentation = FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
+          
+          return (
+            <div
+              style={{
+                position: 'fixed',
+                top: 'env(safe-area-inset-top, 0px)',
+                left: 0,
+                right: 0,
+                zIndex: 21,
+                padding: '12px 20px 12px 20px',
+                pointerEvents: 'none', // Allow clicks to pass through container
+              }}
+            >
+              {/* Unified Glass Container */}
+              <div
+                style={{
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                  background: 'rgba(255, 255, 255, 0.45)',
+                  borderRadius: '18px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
+                  border: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
+                  pointerEvents: 'auto', // Re-enable clicks on container
+                }}
+              >
+                {/* Top Panel: Family Name, Navigation Tabs, Back Button */}
+                <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    background: headerProps.searchPalette.background,
-                    border: `1px solid ${headerProps.searchPalette.border}`,
-                    borderRadius: 999,
-                    padding: '6px 12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    justifyContent: 'space-between',
+                    padding: '12px 20px',
+                    minHeight: '44px',
                   }}
                 >
-                  <input
-                    type="text"
-                    value={headerProps.searchTerm}
-                    onChange={(event) => headerProps.setSearchTerm(event.target.value)}
-                    placeholder="Search brothers"
-                    aria-label="Search brothers"
+                  {/* Family Name / Crest (Left) */}
+                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: '12px' }}>
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        color: presentation.header?.crestColor || '#5a3d16',
+                      }}
+                    >
+                      {presentation.crestLetter || 'A'}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontFamily: 'Cinzel, serif',
+                        fontWeight: 600,
+                        color: presentation.header?.textColor || 'rgba(59, 43, 22, 0.72)',
+                        letterSpacing: '0.03em',
+                      }}
+                    >
+                      {selectedFamily.name}
+                    </span>
+                  </div>
+
+                  {/* Centered Navigation Tabs */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    flex: '1', 
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                  }}>
+                    {families.map((family) => {
+                      const isActive = selectedFamily.id === family.id;
+                      const familyTheme = getThemeStyles(family.theme);
+                      const familyPrimary = familyTheme?.accent || '#c9a857';
+                      
+                      return (
+                        <button
+                          key={family.id}
+                          onClick={() => setSelectedFamily(family)}
+                          style={{
+                            position: 'relative',
+                            padding: '8px 20px',
+                            borderRadius: '18px',
+                            background: isActive 
+                              ? 'rgba(199, 165, 92, 0.30)' 
+                              : 'rgba(255, 230, 170, 0.25)',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 200ms ease',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            color: isActive ? familyPrimary : 'rgba(74, 74, 74, 0.85)',
+                            letterSpacing: '0.02em',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                            }
+                          }}
+                          aria-label={`Switch to ${family.name} family`}
+                          aria-current={isActive ? 'true' : 'false'}
+                        >
+                          {family.name}
+                          {isActive && (
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: '4px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                width: '60%',
+                                height: '3px',
+                                backgroundColor: '#C7A55C',
+                                borderRadius: '999px',
+                              }}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Back Button (Right) */}
+                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <button
+                      onClick={onChangeFamily}
+                      style={{
+                        padding: '8px 18px',
+                        fontSize: '13px',
+                        borderRadius: '18px',
+                        background: 'rgba(255, 230, 170, 0.25)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        border: 'none',
+                        color: '#c9a857',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 200ms ease',
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                      }}
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bottom Panel: Search and Controls (Compacted) */}
+                {headerProps && (
+                  <div
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      width: 180,
-                      color: headerProps.searchPalette.inputColor,
-                      fontSize: '14px',
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={headerProps.isSearching || !headerProps.searchTerm.trim()}
-                    style={{
-                      background: headerProps.searchPalette.buttonBg,
-                      color: headerProps.searchPalette.buttonText,
-                      border: 'none',
-                      borderRadius: 999,
-                      padding: '6px 12px',
-                      fontWeight: 600,
-                      fontSize: '12px',
-                      cursor: headerProps.isSearching ? 'wait' : 'pointer',
-                      opacity: headerProps.isSearching ? 0.65 : 1,
-                      transition: 'transform 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 20px 12px 20px',
+                      gap: '10px',
+                      borderTop: `1px solid ${hexToRgba('#c9a857', 0.08)}`,
                     }}
                   >
-                    {headerProps.isSearching ? 'Searching…' : 'Search'}
-                  </button>
-                </form>
+                    {/* Search Input + Button (Left) */}
+                    <form
+                      onSubmit={headerProps.handleSearchSubmit}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'rgba(255, 255, 255, 0.65)',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)',
+                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
+                          borderRadius: '20px',
+                          padding: '6px 14px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        }}
+                      >
+                        <input
+                          type="text"
+                          value={headerProps.searchTerm}
+                          onChange={(event) => headerProps.setSearchTerm(event.target.value)}
+                          placeholder="Search brothers"
+                          aria-label="Search brothers"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            width: '160px',
+                            color: headerProps.searchPalette.inputColor || '#3b2b16',
+                            fontSize: '13px',
+                          }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={headerProps.isSearching || !headerProps.searchTerm.trim()}
+                          style={{
+                            background: headerProps.searchPalette.buttonBg || '#c9a857',
+                            color: headerProps.searchPalette.buttonText || '#2b2314',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: '6px 14px',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            cursor: headerProps.isSearching ? 'wait' : 'pointer',
+                            opacity: headerProps.isSearching ? 0.65 : 1,
+                            transition: 'all 200ms ease',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {headerProps.isSearching ? 'Searching…' : 'Search'}
+                        </button>
+                      </div>
+                    </form>
 
-                {/* Controls */}
-                <select
-                  value={headerProps.safeLineageHighlight.lineageHighlightMode}
-                  onChange={(event) => headerProps.safeLineageHighlight.setLineageHighlightMode(event.target.value)}
-                  style={{
-                    background: headerProps.searchPalette.background,
-                    color: headerProps.searchPalette.inputColor,
-                    border: `1px solid ${headerProps.searchPalette.border}`,
-                    borderRadius: 999,
-                    padding: '6px 12px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    cursor: 'pointer',
-                    appearance: 'none',
-                  }}
-                >
-                  <option value="off">Highlight: Off</option>
-                  <option value="ancestors">Highlight: Ancestors</option>
-                  <option value="descendants">Highlight: Descendants</option>
-                  <option value="both">Highlight: Lineage</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={headerProps.handleExportTree}
-                  disabled={headerProps.isPreparingExport}
-                  style={{
-                    background: headerProps.theme.accent || '#c9a857',
-                    color: headerProps.familyKey === 'power' || headerProps.familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: 999,
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    cursor: headerProps.isPreparingExport ? 'wait' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    opacity: headerProps.isPreparingExport ? 0.65 : 1,
-                  }}
-                >
-                  {headerProps.isPreparingExport ? 'Preparing…' : 'Export / Print'}
-                </button>
+                    {/* Controls (Right) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      {/* Highlight Toggle */}
+                      <select
+                        value={headerProps.safeLineageHighlight.lineageHighlightMode}
+                        onChange={(event) => headerProps.safeLineageHighlight.setLineageHighlightMode(event.target.value)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.65)',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)',
+                          color: headerProps.searchPalette.inputColor || '#3b2b16',
+                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
+                          borderRadius: '20px',
+                          padding: '6px 14px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          appearance: 'none',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        }}
+                      >
+                        <option value="off">Highlight: Off</option>
+                        <option value="ancestors">Highlight: Ancestors</option>
+                        <option value="descendants">Highlight: Descendants</option>
+                        <option value="both">Highlight: Lineage</option>
+                      </select>
+
+                      {/* Export / Print Button */}
+                      <button
+                        type="button"
+                        onClick={headerProps.handleExportTree}
+                        disabled={headerProps.isPreparingExport}
+                        style={{
+                          background: headerProps.theme.accent || '#c9a857',
+                          color: headerProps.familyKey === 'power' || headerProps.familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+                          border: 'none',
+                          padding: '6px 16px',
+                          borderRadius: '20px',
+                          fontWeight: 600,
+                          fontSize: '12px',
+                          cursor: headerProps.isPreparingExport ? 'wait' : 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          opacity: headerProps.isPreparingExport ? 0.65 : 1,
+                          transition: 'all 200ms ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {headerProps.isPreparingExport ? 'Preparing…' : 'Export / Print'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Back button on the right */}
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <button
-                onClick={onChangeFamily}
-                style={{
-                  padding: '4px 12px',
-                  fontSize: '12px',
-                  borderRadius: '999px',
-                  backgroundColor: hexToRgba('#c9a857', 0.2),
-                  border: 'none',
-                  color: '#c9a857',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  transition: 'background-color 200ms ease',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.3);
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = hexToRgba('#c9a857', 0.2);
-                }}
-              >
-                Back
-              </button>
             </div>
-          </div>
-        )}
+          );
+        }}
       />
     </div>
   );
