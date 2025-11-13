@@ -36,6 +36,14 @@ import { useLineageHighlight } from '../hooks/useLineageHighlight';
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
+  
+  // CRITICAL: Normalize family prop immediately to prevent uninitialized variable errors
+  // This must be done BEFORE any hooks to ensure it's always available
+  const safeFamily = family && typeof family === 'object' ? family : null;
+  const familyThemeRaw = safeFamily && safeFamily.theme ? String(safeFamily.theme).toLowerCase().trim() : null;
+  const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
+  const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
+  
   const [selectedBrother, setSelectedBrother] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -52,8 +60,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   const reactFlowInstance = useReactFlow();
 
   // Use custom hooks for data loading, search, and lineage highlighting
-  // These hooks must handle undefined family gracefully
-  const { brothers, relationships, loading, error, isTreeReady, reloadTreeData } = useTreeData(family, onToast);
+  // Pass safeFamily (can be null) - hooks must handle this gracefully
+  const { brothers, relationships, loading, error, isTreeReady, reloadTreeData } = useTreeData(safeFamily, onToast);
   
   const showToast = useCallback((message, type = 'info') => {
     if (toastTimeoutRef.current) {
@@ -66,14 +74,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, []);
 
   const lineageHighlight = useLineageHighlight(relationships, selectedBrother);
-
-  // Compute stable family theme value FIRST to avoid optional chaining issues
-  // This must be a simple computation, not a hook, to ensure it's always available
-  const familyThemeValue = family && family.theme ? String(family.theme).toLowerCase() : 'wolfpack';
-  
-  // Validate family theme value
-  const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
-  const safeFamilyTheme = validThemeKeys.includes(familyThemeValue) ? familyThemeValue : 'wolfpack';
 
   // Memoize theme IMMEDIATELY after hooks (before any other dependent code)
   // Must handle undefined family gracefully - always return a valid theme object
@@ -278,7 +278,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return {
         width: '100%',
         height: '100vh',
-        backgroundColor: theme?.background || '#f5f5f5',
+        backgroundColor: (theme && theme.background) || '#f5f5f5',
         pointerEvents: 'auto',
         position: 'relative',
         overflow: 'hidden',
@@ -368,8 +368,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       const effectiveName = brother.name || 'Unassigned';
 
       return (
-        <div
-          style={{
+            <div 
+              style={{ 
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
@@ -386,9 +386,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               gap: 8,
             }}
           >
-            <div
-              style={{
-                fontSize: '9px',
+              <div 
+                style={{ 
+                  fontSize: '9px',
                 letterSpacing: '0.9px',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
@@ -399,23 +399,23 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               }}
             >
               {pledgeLabel}
-            </div>
+              </div>
             {isTransfer && (
-              <div
-                style={{
-                  fontSize: '9px',
+            <div 
+              style={{ 
+                fontSize: '9px',
                   letterSpacing: '0.6px',
                   textTransform: 'uppercase',
                   color: palette.transferColor,
-                }}
-              >
+              }}
+            >
                 Transfer
-              </div>
+            </div>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div
-              style={{
+              <div 
+                style={{ 
                 fontFamily: themeToUse.titleFont,
                 fontSize: palette.nameSize || '12px',
                 letterSpacing: palette.nameTracking || '0.5px',
@@ -424,9 +424,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               }}
             >
               {effectiveName}
-            </div>
-            <div
-              style={{
+              </div>
+              <div 
+                style={{ 
                 fontSize: '10px',
                 color: palette.statusColor,
                 fontWeight: 500,
@@ -435,10 +435,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               }}
             >
               {statusLabel}
-            </div>
+              </div>
             {classLabel && (
               <div
-                style={{
+              style={{ 
                   fontSize: '10px',
                   color: palette.classColor,
                   letterSpacing: '0.2px',
@@ -446,11 +446,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
                 }}
               >
                 {classLabel}
-              </div>
+            </div>
             )}
             {isPlaceholder && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '10px',
                   color: palette.placeholderColor || palette.statusColor,
                   fontStyle: 'italic',
@@ -461,8 +461,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               </div>
             )}
           </div>
-        </div>
-      );
+          </div>
+        );
     } catch (error) {
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
@@ -621,14 +621,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     // Smoothly center and zoom to the clicked node
     try {
       if (node.position && setCenter) {
-        const { x, y } = node.position;
-        const width = node.style?.width || 180;
-        const height = node.style?.minHeight || 80;
-        const zoom = 1.4; // tasteful zoom level
-        setCenter(x + width / 2, y + height / 2, {
-          zoom,
-          duration: 500,
-        });
+    const { x, y } = node.position;
+    const width = node.style?.width || 180;
+    const height = node.style?.minHeight || 80;
+    const zoom = 1.4; // tasteful zoom level
+    setCenter(x + width / 2, y + height / 2, {
+      zoom,
+      duration: 500,
+    });
       }
     } catch (e) {
       console.warn('Failed to center node:', e);
@@ -670,7 +670,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       }
 
       restorePointerEvents();
-      setSelectedBrother(null);
+    setSelectedBrother(null);
       setIsModalOpen(false);
       setViewportBeforeModal(null);
     },
@@ -1310,8 +1310,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
               }}
             >
               <div
-                style={{
-                  position: 'absolute',
+        style={{
+          position: 'absolute',
                   left: 24,
                   top: '50%',
                   transform: 'translateY(-50%)',
