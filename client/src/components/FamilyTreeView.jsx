@@ -176,7 +176,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         : 'rgba(255, 230, 170, 0.35)';
                       const tabTextColor = isActive 
                         ? familyPrimary 
-                        : (isFamilyDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(59, 43, 22, 0.85)'); // Darker for better contrast
+                        : (isFamilyDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(59, 43, 22, 0.95)'); // Dark text for better contrast
                       
                       return (
                         <button
