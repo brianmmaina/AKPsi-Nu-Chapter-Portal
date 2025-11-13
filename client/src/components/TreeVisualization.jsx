@@ -237,12 +237,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   );
   
   const defaultViewport = useMemo(() => {
-    if (isEmpire) return { x: 0, y: 0, zoom: 0.6 };
-    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
-    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
-    if (isPride) return { x: 0, y: 0, zoom: 0.73 };
-    if (isWolfpack) return { x: 0, y: 0, zoom: 0.74 };
-    return { x: 0, y: 0, zoom: 0.75 };
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.45 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.5 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.52 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.53 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.54 };
+    return { x: 0, y: 0, zoom: 0.55 };
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
   
   const minZoom = isEmpire ? 0.12 : 0.18;
@@ -309,6 +309,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       return {
         width: '100%',
         height: '100vh',
+        height: '100dvh', // Use dynamic viewport height for better mobile support
+        minHeight: '100vh',
+        minHeight: '-webkit-fill-available',
         backgroundColor: theme.background || '#f5f5f5',
         backgroundImage: composedBackground || undefined,
         backgroundSize: sizeValue,
@@ -319,6 +322,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
         position: 'relative',
         overflow: 'hidden',
+        boxSizing: 'border-box',
       };
     } catch (error) {
       console.warn('Error computing container style:', error);
