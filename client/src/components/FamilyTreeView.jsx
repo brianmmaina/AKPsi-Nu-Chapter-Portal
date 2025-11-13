@@ -162,7 +162,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       transition: 'background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
                       cursor: 'pointer',
                       // Reserve space for underline to prevent shifting
-                      paddingBottom: isActive ? 'calc(var(--space-1) + 6px)' : 'var(--space-1)',
+                      paddingBottom: isActive ? '10px' : '4px',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
