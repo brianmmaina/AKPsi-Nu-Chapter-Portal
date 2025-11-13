@@ -1043,8 +1043,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           if (!yPositions || yPositions.length === 0) return null;
           const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
           const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
+          
+          // Get canonical pledge class name for display (e.g., "one" -> "omega")
+          const canonical = getCanonicalPledge(pledgeClass);
+          const displayName = canonical ? canonical.toUpperCase() : String(pledgeClass || '').toUpperCase();
+          
           return {
-            pledgeClass: String(pledgeClass || '').toUpperCase(),
+            pledgeClass: displayName,
             avgY: avgY,
             pledgeLevel: pledgeLevel,
           };
