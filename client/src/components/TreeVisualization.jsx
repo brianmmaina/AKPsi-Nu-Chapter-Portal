@@ -4,6 +4,7 @@ import ReactFlow, {
   Controls,
   Background,
   Panel,
+  MarkerType,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -297,9 +298,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           ? '280px 280px'
           : undefined;
 
-      // Header heights - top nav bar + search bar
-      const TOP_NAV_HEIGHT = 48; // Slightly taller for better proportions
-      const SEARCH_BAR_HEIGHT = 32; // Smaller, more compact search bar
+      // Header heights - top nav bar + search bar (no gap)
+      const TOP_NAV_HEIGHT = 38;
+      const SEARCH_BAR_HEIGHT = 38;
       const TOTAL_HEADER_HEIGHT = TOP_NAV_HEIGHT + SEARCH_BAR_HEIGHT;
       // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
       const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
@@ -527,6 +528,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
   // Safely destructure ReactFlow methods
   const setCenter = reactFlowInstance?.setCenter;
   const getViewport = reactFlowInstance?.getViewport;
+  const project = reactFlowInstance?.project; // Convert flow coordinates to screen coordinates
 
   const pledgeSummary = useMemo(() => {
     const classes = new Set();
@@ -899,7 +901,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
     [],
   );
 
-  // Search palette removed - using theme directly for better matching
+  // Search palette - must be called before any conditional returns
+  const searchIsDark = ['power', 'pride', 'wolfpack'].includes(familyKey);
+  const searchPalette = useMemo(
+    () => ({
+      background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
+      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
+      border: hexToRgba(theme.accent || '#c9a857', 0.35),
+      buttonBg: theme.accent || '#c9a857',
+      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
+    }),
+    [familyKey, theme.accent, searchIsDark],
+  );
 
   // Export handler - must be called before any conditional returns
   const handleExportTree = useCallback(async () => {
@@ -947,49 +960,87 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         }
       });
       
-      // Group nodes by pledge class and calculate average Y position
-      const pledgeGroups = new Map();
+      // Group nodes by tree level (Y position rounded to nearest level spacing)
+      // TreeLayout positions nodes at: y = level * pledgeVerticalSpacing
+      // Round Y to nearest level to group nodes at the same tree level
+      const pledgeVerticalSpacing = layoutSettings?.pledgeVerticalSpacing || 130;
+      const levelGroups = new Map(); // levelY -> Set of pledge classes at this level
+      const pledgeClassCounts = new Map(); // levelY -> Map(pledgeClass -> count)
+      const levelYPositions = new Map(); // levelY -> list of exact Y positions (for averaging)
+      
+      // Group nodes by tree level (round Y to nearest multiple of pledgeVerticalSpacing)
       nodes.forEach((node) => {
         if (!node || !node.data || !node.data.brother) return;
         const brother = node.data.brother;
-        if (!brother.pledge_class) return;
-        const pledgeClass = brother.pledge_class.trim().toUpperCase();
-        if (!pledgeClass) return;
         const y = node.position?.y;
         if (typeof y !== 'number') return;
-        if (!pledgeGroups.has(pledgeClass)) {
-          pledgeGroups.set(pledgeClass, []);
+        
+        // Round to nearest tree level (multiple of pledgeVerticalSpacing)
+        // This groups nodes that are at the same tree level
+        const levelY = Math.round(y / pledgeVerticalSpacing) * pledgeVerticalSpacing;
+        
+        if (!levelGroups.has(levelY)) {
+          levelGroups.set(levelY, new Set());
+          pledgeClassCounts.set(levelY, new Map());
+          levelYPositions.set(levelY, []);
         }
-        pledgeGroups.get(pledgeClass).push(y);
+        
+        // Track exact Y positions for this level (for more accurate marker positioning)
+        levelYPositions.get(levelY).push(y);
+        
+        if (brother.pledge_class) {
+          const pledgeClass = brother.pledge_class.trim().toUpperCase();
+          if (pledgeClass) {
+            levelGroups.get(levelY).add(pledgeClass);
+            const counts = pledgeClassCounts.get(levelY);
+            counts.set(pledgeClass, (counts.get(pledgeClass) || 0) + 1);
+          }
+        }
       });
       
-      // Create markers for each pledge class
-      const markers = Array.from(pledgeGroups.entries())
-        .map(([pledgeClass, yPositions]) => {
-          if (!yPositions || yPositions.length === 0) return null;
-          const avgY = yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length;
-          const pledgeLevel = getPledgeLevel(pledgeClass, 9999); // Use high fallback for unknown
+      // Create markers for each unique tree level with the most common pledge class
+      const markers = Array.from(levelGroups.entries())
+        .map(([levelY, pledgeClasses]) => {
+          if (pledgeClasses.size === 0) return null;
           
-          // Get canonical pledge class name for display (e.g., "one" -> "omega")
-          const canonical = getCanonicalPledge(pledgeClass);
-          const displayName = canonical ? canonical.toUpperCase() : String(pledgeClass || '').toUpperCase();
+          // Find the most common pledge class at this level
+          const counts = pledgeClassCounts.get(levelY) || new Map();
+          let mostCommonPledgeClass = null;
+          let maxCount = 0;
+          
+          counts.forEach((count, pledgeClass) => {
+            if (count > maxCount) {
+              maxCount = count;
+              mostCommonPledgeClass = pledgeClass;
+            }
+          });
+          
+          // Fallback to first pledge class if no counts
+          if (!mostCommonPledgeClass) {
+            mostCommonPledgeClass = Array.from(pledgeClasses)[0];
+          }
+          
+          // Calculate average Y position for this level (more accurate than rounded levelY)
+          const yPositions = levelYPositions.get(levelY) || [];
+          const avgY = yPositions.length > 0 
+            ? yPositions.reduce((sum, y) => sum + y, 0) / yPositions.length
+            : levelY;
+          
+          const pledgeLevel = getPledgeLevel(mostCommonPledgeClass, 9999);
+          const canonical = getCanonicalPledge(mostCommonPledgeClass);
+          const displayName = canonical ? canonical.toUpperCase() : String(mostCommonPledgeClass || '').toUpperCase();
           
           return {
             pledgeClass: displayName,
-            avgY: avgY,
+            avgY: avgY, // Use average Y position for accurate marker placement
             pledgeLevel: pledgeLevel,
             isNewest: false,
           };
         })
         .filter(Boolean);
       
-      // Sort by pledge level first (to maintain Greek letter order), then by Y position as tiebreaker
-      markers.sort((a, b) => {
-        if (a.pledgeLevel !== b.pledgeLevel) {
-          return a.pledgeLevel - b.pledgeLevel;
-        }
-        return a.avgY - b.avgY;
-      });
+      // Sort by Y position (tree level) - markers should appear in tree order
+      markers.sort((a, b) => a.avgY - b.avgY);
       
       if (markers.length > 0) {
         const newestLevel = Math.max(...markers.map((marker) => marker.pledgeLevel ?? -Infinity));
@@ -1000,23 +1051,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
         });
       }
       
-      // Return all pledge classes that exist in the tree, sorted by Greek letter order
-      // Debug: log the markers being returned
-      if (markers.length > 0) {
-        console.log('Milestone markers calculated:', markers.map(m => ({ 
-          pledgeClass: m.pledgeClass, 
-          avgY: m.avgY, 
-          level: m.pledgeLevel,
-          isNewest: m.isNewest 
-        })));
-      }
-      
       return markers;
     } catch (error) {
       console.warn('Error calculating milestone markers:', error);
       return [];
     }
-  }, [isTreeReady, nodes]);
+  }, [isTreeReady, nodes, layoutSettings]);
 
   // Remove loading state - tree will fade in instead
 
@@ -1113,8 +1153,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
   }
 
   // Header height constant - matches the theme
-  const SEARCH_BAR_HEIGHT = 32; // Smaller, more compact search bar
-  const TOP_NAV_HEIGHT = 48; // Slightly taller for better proportions
+  const SEARCH_BAR_HEIGHT = 38;
+  const TOP_NAV_HEIGHT = 38;
 
   // Handle null family case after all hooks
   if (!safeFamily || !safeFamily.theme) {
@@ -1129,39 +1169,38 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
 
   return (
     <div className="w-full relative" style={containerStyle}>
-      {/* Fixed translucent search/action bar - attached to top bar */}
+      {/* Fixed translucent search/action bar - directly attached to top bar with no gap */}
       <div
         style={{
           position: 'fixed',
-          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Attached directly to top nav bar
+          top: `calc(env(safe-area-inset-top, 0px) + ${TOP_NAV_HEIGHT}px)`, // Directly attached - no gap
           left: 0,
           right: 0,
           height: `${SEARCH_BAR_HEIGHT}px`,
           zIndex: 20,
-          background: hexToRgba(theme.background || '#f5f5f5', 0.92),
-          backdropFilter: 'blur(8px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(8px) saturate(150%)',
-          borderTop: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.15)}`,
-          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.15)}`,
+          background: hexToRgba(theme.background || '#f5f5f5', 0.85),
+          backdropFilter: 'blur(12px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          borderBottom: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.2)}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 16px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          padding: '0 20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        {/* Search form - compact and theme-matched */}
+        {/* Search form - larger, more prominent */}
         <form
           onSubmit={handleSearchSubmit}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            background: hexToRgba(theme.background || '#f5f5f5', 0.6),
-            border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.25)}`,
-            borderRadius: 6,
-            padding: '4px 8px',
-            boxShadow: 'none',
+            gap: 8,
+            background: searchPalette.background,
+            border: `1px solid ${searchPalette.border}`,
+            borderRadius: 999,
+            padding: '6px 12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           }}
         >
           {/* Search field selector */}
@@ -1172,38 +1211,39 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: theme.nodeText || '#2b2314',
-              fontSize: '10px',
-              fontWeight: 500,
+              color: searchPalette.inputColor,
+              fontSize: '11px',
+              fontWeight: 600,
               cursor: 'pointer',
               padding: '2px 4px',
               textTransform: 'uppercase',
-              letterSpacing: '0.3px',
+              letterSpacing: '0.5px',
             }}
             aria-label="Search field"
             title="Search field"
           >
-            <option value="all" style={{ background: theme.background, color: theme.nodeText }}>
+            <option value="all" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
               All
             </option>
-            <option value="name" style={{ background: theme.background, color: theme.nodeText }}>
+            <option value="name" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
               Name
             </option>
-            <option value="pledge_class" style={{ background: theme.background, color: theme.nodeText }}>
+            <option value="pledge_class" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
               Pledge
             </option>
-            <option value="major" style={{ background: theme.background, color: theme.nodeText }}>
+            <option value="major" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
               Major
             </option>
-            <option value="graduation_year" style={{ background: theme.background, color: theme.nodeText }}>
+            <option value="graduation_year" style={{ background: searchPalette.background, color: searchPalette.inputColor }}>
               Year
             </option>
           </select>
           <div
             style={{
               width: '1px',
-              height: '14px',
-              background: hexToRgba(theme.accent || '#c9a857', 0.3),
+              height: '20px',
+              background: searchPalette.border,
+              opacity: 0.5,
             }}
           />
           <input
@@ -1216,25 +1256,25 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              width: 140,
-              color: theme.nodeText || '#2b2314',
-              fontSize: '13px',
+              width: 160,
+              color: searchPalette.inputColor,
+              fontSize: '14px',
             }}
           />
           <button
             type="submit"
             disabled={isSearching || !searchTerm.trim()}
             style={{
-              background: hexToRgba(theme.accent || '#c9a857', 0.7),
-              color: theme.nodeText || '#2b2314',
+              background: searchPalette.buttonBg,
+              color: searchPalette.buttonText,
               border: 'none',
-              borderRadius: 4,
-              padding: '4px 10px',
-              fontWeight: 500,
-              fontSize: '11px',
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontWeight: 600,
+              fontSize: '12px',
               cursor: isSearching ? 'wait' : 'pointer',
-              opacity: isSearching || !searchTerm.trim() ? 0.5 : 1,
-              transition: 'opacity 0.2s ease',
+              opacity: isSearching ? 0.65 : 1,
+              transition: 'transform 0.2s ease',
             }}
             title="Search"
           >
@@ -1242,11 +1282,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           </button>
         </form>
 
-        {/* Right side controls - compact and theme-matched */}
+        {/* Right side controls - larger, more prominent */}
         <div
           style={{
             display: 'flex',
-            gap: 6,
+            gap: 8,
             alignItems: 'center',
           }}
         >
@@ -1254,43 +1294,42 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
             value={safeLineageHighlight.lineageHighlightMode}
             onChange={(event) => safeLineageHighlight.setLineageHighlightMode(event.target.value)}
             style={{
-              background: hexToRgba(theme.background || '#f5f5f5', 0.6),
-              color: theme.nodeText || '#2b2314',
-              border: `1px solid ${hexToRgba(theme.accent || '#c9a857', 0.25)}`,
-              borderRadius: 6,
-              padding: '4px 8px',
-              fontSize: '10px',
-              fontWeight: 500,
+              background: searchPalette.background,
+              color: searchPalette.inputColor,
+              border: `1px solid ${searchPalette.border}`,
+              borderRadius: 999,
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.3px',
+              letterSpacing: '0.08em',
               cursor: 'pointer',
               appearance: 'none',
             }}
           >
-            <option value="off" style={{ background: theme.background, color: theme.nodeText }}>Off</option>
-            <option value="ancestors" style={{ background: theme.background, color: theme.nodeText }}>Ancestors</option>
-            <option value="descendants" style={{ background: theme.background, color: theme.nodeText }}>Descendants</option>
-            <option value="both" style={{ background: theme.background, color: theme.nodeText }}>Lineage</option>
+            <option value="off">Highlight: Off</option>
+            <option value="ancestors">Highlight: Ancestors</option>
+            <option value="descendants">Highlight: Descendants</option>
+            <option value="both">Highlight: Lineage</option>
           </select>
           <button
             type="button"
             onClick={handleExportTree}
             disabled={isPreparingExport}
             style={{
-              background: hexToRgba(theme.accent || '#c9a857', 0.7),
-              color: theme.nodeText || '#2b2314',
+              background: theme.accent || '#c9a857',
+              color: familyKey === 'power' || familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
               border: 'none',
-              padding: '4px 10px',
-              borderRadius: 6,
-              fontWeight: 500,
-              fontSize: '10px',
+              padding: '8px 16px',
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: '12px',
               cursor: isPreparingExport ? 'wait' : 'pointer',
-              opacity: isPreparingExport ? 0.5 : 1,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              opacity: isPreparingExport ? 0.65 : 1,
             }}
           >
-            {isPreparingExport ? '...' : 'Export'}
+            {isPreparingExport ? 'Preparing…' : 'Export / Print'}
           </button>
         </div>
       </div>
@@ -1435,105 +1474,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           </div>
         )}
       </div>
-      {/* Milestone Markers - Pledge Class Guides (very subtle, rendered BEFORE ReactFlow to be behind) */}
-      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1, // Behind ReactFlow
-            overflow: 'hidden',
-          }}
-        >
-          {milestoneMarkers.map((marker, idx) => {
-            if (!marker || typeof marker.avgY !== 'number') return null;
-            
-            try {
-              // Use ReactFlow's viewport to transform coordinates
-              // ReactFlow applies transforms to its internal pane
-              // For overlay markers, we need to account for the container's position
-              // The markers container is positioned absolutely within the ReactFlow container
-              // ReactFlow's pane uses CSS transforms: translate(x, y) scale(zoom)
-              // We need to apply similar transform accounting for the container offset
-              const currentViewport = (viewport && viewport.x !== undefined && viewport.y !== undefined && viewport.zoom !== undefined) 
-                ? viewport 
-                : (defaultViewport || { x: 0, y: 0, zoom: 1 });
-              
-              // Get viewport dimensions for center calculation
-              // ReactFlow typically uses center as transform origin
-              // For simplicity, we'll position relative to the flow coordinate system
-              // Since markers are in a fixed overlay, we'll use a simpler approach:
-              // Position at the Y coordinate in flow space, accounting for zoom
-              // The container already accounts for the header offset via marginTop
-              
-              // Calculate position - ReactFlow transforms flow coordinates to screen
-              // Flow Y -> Screen Y: (flowY * zoom) + viewportY + containerCenterY
-              // For overlay, we approximate: flowY position scaled by zoom
-              const flowY = marker.avgY;
-              const zoom = currentViewport.zoom || 1;
-              const viewportY = currentViewport.y || 0;
-              
-              // Simple approach: position marker at flow Y coordinate
-              // The ReactFlow container handles the transform, so we position relative to it
-              // Since we're in an absolute overlay, we need to account for ReactFlow's internal transform
-              // But ReactFlow's transform is applied to its pane, not the container
-              // So we position markers in the same coordinate space as ReactFlow nodes
-              
-              // For now, use a fixed position approach - markers will follow viewport via React
-              // The key is they should be behind nodes (lower z-index) and very subtle
-              return (
-                <div
-                  key={`milestone-${marker.pledgeClass || idx}-${idx}`}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: `${marker.avgY}px`, // Use flow coordinate directly - will be transformed by ReactFlow's parent
-                    width: '100%',
-                    height: '1px',
-                    background: `linear-gradient(90deg, transparent 0%, ${hexToRgba(theme.accent || '#c9a857', 0.12)} 8px, ${hexToRgba(theme.accent || '#c9a857', 0.12)} calc(100% - 8px), transparent 100%)`,
-                    pointerEvents: 'none',
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  {/* Label on the left side - very subtle, text only, no styling */}
-                  <span
-                    style={{
-                      position: 'absolute',
-                      left: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontSize: '8px',
-                      fontWeight: 400,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: hexToRgba(theme.nodeText || '#2b2314', 0.4),
-                      background: 'transparent',
-                      padding: 0,
-                      margin: 0,
-                      border: 'none',
-                      boxShadow: 'none',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-block',
-                      fontFamily: theme.bodyFont || 'Montserrat, system-ui, sans-serif',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {marker.pledgeClass || ''}
-                  </span>
-                </div>
-              );
-            } catch (error) {
-              console.warn('Error rendering milestone marker:', error);
-              return null;
-            }
-          })}
-        </div>
-      )}
-
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1559,7 +1499,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           fontFamily: theme.bodyFont, 
           pointerEvents: isModalOpen ? 'none' : 'auto',
           position: 'relative',
-          zIndex: 2, // Above markers (zIndex: 1)
         }}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -1579,6 +1518,128 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, onSwitchFamil
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
+
+      {/* Milestone Markers - Pledge Class Guides with divider lines */}
+      {/* Render markers inside ReactFlow using custom edges or as overlay */}
+      {milestoneMarkers && Array.isArray(milestoneMarkers) && milestoneMarkers.length > 0 && reactFlowInstance && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1, // Behind nodes, above background
+            overflow: 'hidden',
+          }}
+        >
+          {milestoneMarkers.map((marker, idx) => {
+            if (!marker || typeof marker.avgY !== 'number') return null;
+            
+            try {
+              // Use ReactFlow's project() method to convert flow coordinates to screen coordinates
+              // This ensures markers follow the viewport transform correctly
+              const flowY = marker.avgY;
+              
+              // ReactFlow's project() converts flow coordinates to screen coordinates
+              // project({ x, y }) returns { x: screenX, y: screenY }
+              let screenY = flowY;
+              
+              if (project && typeof project === 'function') {
+                try {
+                  // Convert flow coordinate to screen coordinate
+                  const screenPos = project({ x: 0, y: flowY });
+                  screenY = screenPos.y;
+                } catch (projectError) {
+                  // Fallback to manual calculation if project() fails
+                  console.warn('Error using project(), falling back to manual calculation:', projectError);
+                  const currentViewport = reactFlowInstance.getViewport ? reactFlowInstance.getViewport() : (viewport || defaultViewport);
+                  const container = document.querySelector('.react-flow')?.parentElement;
+                  const containerHeight = container?.clientHeight || window.innerHeight;
+                  const centerY = containerHeight / 2;
+                  const zoom = currentViewport.zoom || 1;
+                  const viewportY = currentViewport.y || 0;
+                  screenY = centerY + (flowY - centerY) * zoom + viewportY;
+                }
+              } else {
+                // Fallback: manual calculation using viewport
+                const currentViewport = reactFlowInstance.getViewport ? reactFlowInstance.getViewport() : (viewport || defaultViewport);
+                const container = document.querySelector('.react-flow')?.parentElement;
+                const containerHeight = container?.clientHeight || window.innerHeight;
+                const centerY = containerHeight / 2;
+                const zoom = currentViewport.zoom || 1;
+                const viewportY = currentViewport.y || 0;
+                screenY = centerY + (flowY - centerY) * zoom + viewportY;
+              }
+              
+              return (
+                <div
+                  key={`milestone-${marker.pledgeClass || idx}-${idx}`}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: `${screenY}px`,
+                    width: '100%',
+                    height: '3px',
+                    background: `linear-gradient(90deg, transparent 0%, ${hexToRgba(theme.accent || '#c9a857', 0.6)} 8%, ${hexToRgba(theme.accent || '#c9a857', 0.6)} 92%, transparent 100%)`,
+                    pointerEvents: 'none',
+                    transform: 'translateY(-50%)',
+                    zIndex: 1,
+                  }}
+                >
+                  {/* Label on the left side - prominent with background */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 'calc(18px + env(safe-area-inset-left, 0px))',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      letterSpacing: '0.2em',
+                      textTransform: 'uppercase',
+                      color: theme.nodeText || '#2b2314',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.86) 100%)',
+                      padding: marker.isNewest ? '6px 16px' : '5px 14px',
+                      borderRadius: 8,
+                      border: `2px solid ${hexToRgba(theme.accent || '#c9a857', marker.isNewest ? 0.8 : 0.55)}`,
+                      boxShadow: '0 8px 22px rgba(0,0,0,0.22)',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: marker.isNewest ? 10 : 0,
+                      fontFamily: theme.bodyFont || 'Montserrat, system-ui, sans-serif',
+                    }}
+                  >
+                    <span>{marker.pledgeClass || ''}</span>
+                    {marker.isNewest && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          letterSpacing: '0.18em',
+                          textTransform: 'uppercase',
+                          fontWeight: 800,
+                          padding: '4px 8px',
+                          background: hexToRgba(theme.accent || '#c9a857', 0.85),
+                          color: theme.nodeText || '#2b2314',
+                          borderRadius: 999,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        Newest
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            } catch (error) {
+              console.warn('Error rendering milestone marker:', error);
+              return null;
+            }
+          })}
+        </div>
+      )}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
