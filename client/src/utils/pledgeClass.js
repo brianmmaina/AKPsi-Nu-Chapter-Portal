@@ -118,6 +118,31 @@ export const expandDoubleLetter = (normalized) => {
 };
 
 /**
+ * Gets the canonical (normalized) pledge class name
+ * @param {string} pledgeClass - Pledge class string
+ * @returns {string} Canonical pledge class name
+ */
+export const getCanonicalPledge = (pledgeClass) => {
+  if (!pledgeClass || typeof pledgeClass !== 'string') return '';
+  const normalized = normalizePledge(pledgeClass);
+  if (!normalized) return '';
+
+  const synonym = PLEDGE_SYNONYMS[normalized];
+  const canonical = synonym || normalized;
+
+  if (PLEDGE_INDEX.has(canonical)) {
+    return canonical;
+  }
+
+  const expanded = expandDoubleLetter(canonical);
+  if (expanded && PLEDGE_INDEX.has(expanded)) {
+    return expanded;
+  }
+
+  return normalized; // Return normalized version even if not in index
+};
+
+/**
  * Gets the pledge level index for a given pledge class
  * @param {string} pledgeClass - Pledge class string
  * @param {number} fallback - Fallback level if pledge class not found
