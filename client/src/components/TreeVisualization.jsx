@@ -307,11 +307,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           : undefined;
 
       // Header height for calculating tree container height
-      const HEADER_HEIGHT = 44;
-      // Use calc to account for header and safe area insets
+      const HEADER_HEIGHT = 38;
+      // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
+      const BOTTOM_BUFFER = 20; // Extra pixels for comfortable spacing
+      // Use calc to account for header, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
-      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))`;
+      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
       const headerTop = `env(safe-area-inset-top, 0px)`;
       
       return {
@@ -331,7 +333,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
         overflow: 'hidden',
         boxSizing: 'border-box',
         marginTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)', // Add padding for bottom safe area
+        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`, // Add padding for bottom safe area + buffer
       };
     } catch (error) {
       console.warn('Error computing container style:', error);
@@ -1126,9 +1128,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
     }
   }, [isTreeReady, nodes]);
 
-  // Header height constant - just a couple pixels larger than button height
-  // Buttons are ~36px (padding 8px + content), so header should be ~44px
-  const HEADER_HEIGHT = 44;
+  // Header height constant - minimal height, just enough for buttons
+  // Buttons are ~32px (padding 6px + content ~20px), so header should be ~38px
+  const HEADER_HEIGHT = 38;
 
   return (
     <div className="w-full relative" style={containerStyle}>
@@ -1148,7 +1150,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
+          padding: '0 20px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
