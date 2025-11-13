@@ -59,7 +59,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           left: 0,
           right: 0,
           height: '38px',
-          zIndex: 21, // Above the search bar
+          zIndex: 21,
           backgroundColor: hexToRgba(themeBackground, 0.85),
           backdropFilter: 'blur(12px) saturate(180%)',
           WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -253,8 +253,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           </div>
         </div>
       </div>
-      <div style={{ height: '38px' }}></div>
-      <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
+      <div style={{ height: '38px' }} />
+      <TreeVisualization 
+        family={selectedFamily} 
+        onToast={onToast} 
+        onChangeFamily={onChangeFamily} 
+      />
     </div>
   );
 };
