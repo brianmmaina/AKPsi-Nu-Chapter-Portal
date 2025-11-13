@@ -187,8 +187,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   );
 
   // Use search hook (must be called AFTER focusBrotherNode is defined)
+  // Pass safeFamily instead of family to avoid potential uninitialized variable errors
   const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
-    family,
+    safeFamily,
     brothers,
     focusBrotherNode,
     onToast || showToast,
@@ -227,7 +228,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
   }, [presentation, theme]);
   
   // NOW we can do the early return check AFTER all hooks and dependent values
-  if (!family || !family.theme) {
+  // Use safeFamily instead of family to avoid accessing potentially uninitialized variable
+  if (!safeFamily || !safeFamily.theme) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
         <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -236,6 +238,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily }) => {
       </div>
     );
   }
+  
+  // After early return check, safeFamily is guaranteed to be valid
+  // Use safeFamily instead of family for all subsequent references
+  const currentFamily = safeFamily;
 
   const containerStyle = useMemo(() => {
     // Safety checks: ensure theme is fully initialized
