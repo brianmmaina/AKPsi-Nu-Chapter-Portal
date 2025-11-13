@@ -33,7 +33,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
   if (!selectedFamily) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+      <div style={{ minHeight: '100vh', backgroundColor: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
         <div>No families found. Please initialize the database.</div>
       </div>
     );
@@ -46,10 +46,10 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
   return (
     <div 
-      className="min-h-screen" 
       style={{ 
+        minHeight: '100vh',
         backgroundColor: themeBackground,
-        transition: 'background-color 400ms var(--ease-standard)',
+        transition: 'background-color 400ms ease',
       }}
     >
       {/* Minimalist Header - Themed */}
@@ -65,14 +65,14 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           backdropFilter: 'blur(12px) saturate(180%)',
           WebkitBackdropFilter: 'blur(12px) saturate(180%)',
           borderBottom: `1px solid ${hexToRgba(themeAccent, 0.2)}`,
-          transition: 'background-color 400ms var(--ease-standard), border-bottom-color 400ms var(--ease-standard)',
+          transition: 'background-color 400ms ease, border-bottom-color 400ms ease',
           display: 'flex',
           alignItems: 'center',
           padding: '0 20px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        <div style={{ 
+        <div style={{
           width: '100%',
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
@@ -82,28 +82,33 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
             {/* Left: Compact family name - fixed width to prevent shifting */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px' }}>
               <div 
-                className="family-crest active"
                 style={{
                   width: '28px',
                   height: '28px',
-                  fontSize: '14px',
-                  borderColor: hexToRgba(themeAccent, 0.4),
+                  borderRadius: '50%',
+                  border: `1px solid ${hexToRgba(themeAccent, 0.4)}`,
+                  backgroundColor: hexToRgba(themeAccent, 0.15),
                   color: themeAccent,
-                  transition: 'all 400ms var(--ease-standard)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  fontWeight: 700,
                   flexShrink: 0,
+                  transition: 'all 400ms ease',
                 }}
               >
                 {selectedFamily.name.charAt(0)}
               </div>
               <h1
-                className="font-bold"
                 style={{
-                  fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--font-display)',
+                  fontSize: '16px',
+                  fontFamily: 'Russo One, sans-serif',
+                  fontWeight: 700,
                   color: themeAccent,
-                  letterSpacing: 'var(--tracking-wide)',
+                  letterSpacing: '0.5px',
                   margin: 0,
-                  transition: 'color 400ms var(--ease-standard)',
+                  transition: 'color 400ms ease',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -151,15 +156,15 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   <button
                     key={family.id}
                     onClick={() => setSelectedFamily(family)}
-                    className="relative group"
                     style={{
-                      padding: 'var(--space-1) var(--space-3)',
-                      borderRadius: 'var(--radius-md)',
+                      position: 'relative',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
                       // Always reserve space for border to prevent shifting
                       border: '1px solid',
                       borderColor: isActive ? activeBorderColor : 'transparent',
                       backgroundColor: isActive ? activeBgColor : 'transparent',
-                      transition: 'background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
+                      transition: 'background-color 200ms ease, border-color 200ms ease',
                       cursor: 'pointer',
                       // Reserve space for underline to prevent shifting
                       paddingBottom: isActive ? '10px' : '4px',
@@ -185,15 +190,16 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     aria-current={isActive ? 'true' : 'false'}
                   >
                     <span 
-                      className="whitespace-nowrap relative z-10"
                       style={{
-                        fontSize: 'var(--text-xs)',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: isActive ? 'var(--weight-bold)' : 'var(--weight-medium)',
+                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                        zIndex: 10,
+                        fontSize: '12px',
+                        fontFamily: 'Russo One, sans-serif',
+                        fontWeight: isActive ? 700 : 500,
                         color: isActive ? activeTextColor : inactiveColor,
                         letterSpacing: '0.5px',
-                        transition: 'color var(--motion-fast) var(--ease-standard), font-weight var(--motion-fast) var(--ease-standard)',
-                        // Prevent font-weight from causing shift by using consistent width
+                        transition: 'color 200ms ease, font-weight 200ms ease',
                         display: 'inline-block',
                         minWidth: 'fit-content',
                       }}
@@ -202,16 +208,16 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                     </span>
                     {isActive && (
                       <span
-                        className="absolute rounded-full"
                         style={{
+                          position: 'absolute',
                           bottom: '-6px',
                           left: '50%',
                           transform: 'translateX(-50%)',
                           height: '2px',
                           width: '60%',
                           backgroundColor: activeTextColor,
+                          borderRadius: '999px',
                           boxShadow: `0 0 4px ${hexToRgba(activeTextColor, 0.5)}`,
-                          animation: 'slideIn 200ms var(--ease-standard)',
                         }}
                       />
                     )}
@@ -224,16 +230,17 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
             <div style={{ display: 'flex', justifyContent: 'flex-end', minWidth: '80px' }}>
               <button
                 onClick={onChangeFamily}
-                className="btn"
                 style={{
-                  padding: 'var(--space-1) var(--space-3)',
-                  fontSize: 'var(--text-xs)',
-                  borderRadius: 'var(--radius-md)',
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
                   backgroundColor: hexToRgba(themeAccent, 0.15),
-                  borderColor: hexToRgba(themeAccent, 0.3),
+                  border: `1px solid ${hexToRgba(themeAccent, 0.3)}`,
                   color: themeAccent,
-                  transition: 'all 400ms var(--ease-standard)',
+                  transition: 'all 400ms ease',
                   whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  fontWeight: 500,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = hexToRgba(themeAccent, 0.25);
@@ -250,12 +257,10 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           </div>
         </div>
       </div>
-      {/* Spacer to push content below fixed header */}
-      <div style={{ height: '38px' }} />
+      <div style={{ height: '38px' }}></div>
       <TreeVisualization family={selectedFamily} onToast={onToast} onChangeFamily={onChangeFamily} />
     </div>
   );
 };
 
 export default FamilyTreeView;
-
