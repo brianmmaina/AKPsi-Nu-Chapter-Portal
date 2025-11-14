@@ -238,7 +238,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         fontWeight: 700,
 
-                        color: presentation.header?.crestColor || '#5a3d16',
+                        color: '#000000',
 
                       }}
 
@@ -258,7 +258,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         fontWeight: 600,
 
-                        color: familyNameColor,
+                        color: '#000000',
 
                         letterSpacing: '0.03em',
 
@@ -366,7 +366,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                             fontFamily: themeBodyFont,
 
-                            color: isActive ? tabActiveColor : tabInactiveColor,
+                            color: '#000000',
 
                             letterSpacing: '0.02em',
 
@@ -462,7 +462,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         border: 'none',
 
-                        color: themeAccent,
+                        color: '#000000',
 
                         cursor: 'pointer',
 
@@ -543,7 +543,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                           WebkitBackdropFilter: 'blur(10px)',
 
-                          color: themeText,
+                          color: '#000000',
                           fontFamily: themeBodyFont,
 
                           border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
@@ -569,6 +569,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         }}
 
                       >
+                        <style>{`
+                          select option {
+                            color: #000000 !important;
+                            background: #ffffff;
+                          }
+                        `}</style>
 
                         <option value="off">Highlight: Off</option>
 
@@ -594,7 +600,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                           background: themeAccent,
 
-                          color: isDarkTheme ? '#1f1f1f' : '#2b2314',
+                          color: '#000000',
                           fontFamily: themeBodyFont,
 
                           border: 'none',
