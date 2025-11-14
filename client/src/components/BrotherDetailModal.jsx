@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { brothers as brothersApi } from '../api';
 import { hexToRgba } from '../utils/color';
 
@@ -290,14 +291,12 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     }
   };
 
-  return (
+  const modal = (
     <div
+      className="profile-modal-overlay"
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         width: '100vw',
         height: '100vh',
         display: 'flex',
@@ -308,6 +307,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         pointerEvents: 'auto',
+        padding: '24px',
       }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
@@ -319,7 +319,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       aria-labelledby="modal-title"
     >
       <div
-        className="glass-panel-elevated rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="profile-modal-card glass-panel-elevated rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         style={{
           background: theme?.modalBg || 'rgba(18,20,24,0.92)',
           borderRadius: '24px',
@@ -850,6 +850,12 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(modal, document.body);
 };
 
 export default BrotherDetailModal;
