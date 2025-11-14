@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 
-
-
 import { getThemeStyles } from '../themes';
 
 import TreeVisualization from './TreeVisualization';
@@ -111,6 +109,93 @@ import { hexToRgba } from '../utils/color';
 
 import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
 
+const CREST_ICON_SIZE = 22;
+
+const CrestIcon = ({ themeKey, color, fallback }) => {
+  const accent = color || '#c9a857';
+  const normalized = (themeKey || '').toLowerCase();
+  const commonSvgProps = {
+    width: CREST_ICON_SIZE,
+    height: CREST_ICON_SIZE,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: accent,
+    strokeWidth: 1.6,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+  };
+
+  if (normalized === 'empire') {
+    return (
+      <svg {...commonSvgProps}>
+        <path d="M4 16h16l-1.4-7.2-3.1 3.4-2.5-5.5-2.5 5.5-3.1-3.4z" />
+        <path d="M5 19h14" />
+      </svg>
+    );
+  }
+
+  if (normalized === 'greed') {
+    return (
+      <svg {...commonSvgProps}>
+        <path d="M3.5 16h17l-1.1-5.6-3 2.4-2.9-5.4-2.9 5.4-3-2.4z" />
+        <path d="M12 4.2v2.6" />
+        <path d="M10.4 5.4h3.2" />
+        <circle cx="12" cy="3.3" r="0.8" fill={accent} stroke="none" />
+      </svg>
+    );
+  }
+
+  if (normalized === 'power') {
+    return (
+      <svg {...commonSvgProps}>
+        <path
+          d="M11 3 6 14h4l-1.5 7 6.5-11h-4l1.5-7z"
+          fill={accent}
+          stroke="none"
+        />
+      </svg>
+    );
+  }
+
+  if (normalized === 'pride') {
+    return (
+      <svg {...commonSvgProps}>
+        <path d="M6 9h12" />
+        <path d="M7 18h10" />
+        <rect x="8" y="9.5" width="8" height="6.5" rx="0.8" />
+        <line x1="10" y1="9.5" x2="10" y2="16" />
+        <line x1="14" y1="9.5" x2="14" y2="16" />
+      </svg>
+    );
+  }
+
+  if (normalized === 'wolfpack') {
+    return (
+      <svg {...commonSvgProps}>
+        <path
+          d="M5.5 17l2-6 3 2 1.5-4 2.5 2v4.5L12 20l-2-2-2 .5z"
+          fill={accent}
+          stroke="none"
+        />
+        <circle cx="17.5" cy="6.5" r="2.3" />
+      </svg>
+    );
+  }
+
+  return (
+    <span
+      style={{
+        fontWeight: 700,
+        fontSize: '16px',
+        color: '#000000',
+      }}
+    >
+      {fallback}
+    </span>
+  );
+};
+
 /**
 
  * FamilyTreeView Component
@@ -183,8 +268,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
   const themeBackground = selectedTheme?.background || '#003366';
 
-  const themeAccent = selectedTheme?.accent || '#D3AF37';
-
   return (
     <>
       <style>{PAGE_LAYOUT_CSS}</style>
@@ -204,7 +287,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         onChangeFamily={onChangeFamily}
         renderCombinedHeader={(headerProps) => {
 
-          const presentation = FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
+          const presentation =
+            FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
           
           // Get active theme styles for dynamic styling
           const activeTheme = getThemeStyles(selectedFamily.theme);
@@ -215,18 +299,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           // Determine if theme is dark (for contrast adjustments)
           const isDarkTheme = selectedFamily.theme === 'power' || selectedFamily.theme === 'pride' || selectedFamily.theme === 'wolfpack' || selectedFamily.theme === 'greed';
           // Theme-aware background colors for tabs
-          const activeTabBg = isDarkTheme 
-            ? hexToRgba(themeAccent, 0.25)
-            : hexToRgba(themeAccent, 0.30);
           const inactiveTabBg = isDarkTheme
             ? hexToRgba(themeAccent, 0.12)
             : 'rgba(255, 230, 170, 0.25)';
           const inactiveTabHoverBg = isDarkTheme
             ? hexToRgba(themeAccent, 0.18)
             : 'rgba(255, 230, 170, 0.35)';
-          
-          // Theme-aware underline color
-          const underlineColor = themeAccent;
 
           const {
             searchPalette,
@@ -251,6 +329,16 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           const selectMajorHandler = handleSelectMajor || (() => {});
           const clearMajorHandler = clearActiveMajor || (() => {});
           const preparingExport = Boolean(headerPreparingExport);
+
+          const crestFallback =
+            presentation.crestLetter || selectedFamily.name?.charAt(0) || 'A';
+          const crestIcon = (
+            <CrestIcon
+              themeKey={selectedFamily.theme}
+              color={themeAccent}
+              fallback={crestFallback}
+            />
+          );
 
           return (
       <div 
@@ -299,7 +387,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         color: '#000000',
                       }}
                     >
-                      {presentation.crestLetter || 'A'}
+                      {crestIcon}
                     </div>
                     <span
                       style={{
@@ -319,14 +407,10 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         const isActive = selectedFamily.id === family.id;
                         const familyTheme = getThemeStyles(family.theme);
                         const familyAccent = familyTheme?.accent || '#c9a857';
-                        const familyText = familyTheme?.nodeText || '#3b2b16';
                         const isFamilyDark = ['power', 'pride', 'wolfpack', 'greed'].includes(family.theme);
                         const tabActiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.25) : hexToRgba(familyAccent, 0.30);
                         const tabInactiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.12) : 'rgba(255, 230, 170, 0.25)';
                         const tabInactiveHoverBg = isFamilyDark ? hexToRgba(familyAccent, 0.18) : 'rgba(255, 230, 170, 0.35)';
-                        const tabActiveColor = familyAccent;
-                        const tabInactiveColor = isFamilyDark ? hexToRgba(familyText, 0.75) : hexToRgba(familyText, 0.65);
-
                         return (
                           <button
                             key={family.id}

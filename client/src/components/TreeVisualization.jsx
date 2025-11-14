@@ -434,22 +434,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     };
   }, [isTreeReady]);
 
-  const toScreenPosition = useCallback(
-    (point) => {
-      if (reactFlowInstance?.flowToScreenPosition) {
-        return reactFlowInstance.flowToScreenPosition(point);
-      }
-      const currentZoom = viewport?.zoom ?? 1;
-      const offsetX = viewport?.x ?? 0;
-      const offsetY = viewport?.y ?? 0;
-      return {
-        x: point.x * currentZoom + offsetX,
-        y: point.y * currentZoom + offsetY,
-      };
-    },
-    [reactFlowInstance, viewport],
-  );
-
   const layoutSettings = useMemo(() => {
     const base = {
       horizontalSpacing: 320,
@@ -1378,6 +1362,41 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   const isProfileOpen = Boolean(selectedBrotherId);
 
+  // Render combined header props memo (must be before any early returns)
+  const headerProps = useMemo(() => {
+    if (!renderCombinedHeader) return null;
+    return {
+      searchPalette,
+      safeLineageHighlight,
+      handleExportTree,
+      isPreparingExport,
+      theme,
+      familyKey,
+      brothersIndex,
+      handleSelectBrother: handleSelectBrotherFromSearch,
+      handleSelectMajor,
+      activeMajor,
+      majorResults,
+      clearActiveMajor,
+      isProfileOpen,
+    };
+  }, [
+    renderCombinedHeader,
+    searchPalette,
+    safeLineageHighlight,
+    handleExportTree,
+    isPreparingExport,
+    theme,
+    familyKey,
+    brothersIndex,
+    handleSelectBrotherFromSearch,
+    handleSelectMajor,
+    activeMajor,
+    majorResults,
+    clearActiveMajor,
+    isProfileOpen,
+  ]);
+
   // Remove loading state - tree will fade in instead
 
   // Error state
@@ -1422,61 +1441,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     );
   }
 
-  // Empty state - no brothers yet (only show if not loading and actually empty)
-  if (!loading && brothers.length === 0) {
-    return (
-      <>
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
-          <h2
-            className="font-bold mb-4"
-            style={{
-              fontSize: 'var(--text-3xl)',
-              fontFamily: 'var(--font-display)',
-              // WOLFPACK text should always be white
-              color: familyKey === 'wolfpack' ? '#ffffff' : (theme.accent || 'var(--primary)'),
-              marginBottom: 'var(--space-4)',
-            }}
-          >
-            {safeFamily?.name || 'Family Tree'}
-          </h2>
-          <p
-            className="mb-6"
-            style={{
-              fontSize: 'var(--text-lg)',
-              color: theme.nodeText || 'var(--text-on-dark)',
-              marginBottom: 'var(--space-6)',
-            }}
-          >
-              This family tree is empty. Contact an administrator to add brothers to this family.
-          </p>
-          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-            {safeOnChangeFamily && (
-            <button
-                onClick={safeOnChangeFamily} 
-                className="btn"
-                style={{
-                  backgroundColor: 'transparent',
-                  color: theme.accent,
-                  borderColor: hexToRgba(theme.accent, 0.4),
-                }}
-              >
-                Back to Families
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-        {/* Add functionality removed - site is read-only */}
-      </>
-    );
-  }
-
   // Header height constant - single combined bar
   // Combined bar with family tabs, search, and controls in one row
   // Updated header height for unified glass panel design
 
-  // Handle null family case after all hooks
+  // Handle null family case after hooks to keep hook order stable
   if (!safeFamily || !safeFamily.theme) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
@@ -1485,42 +1454,55 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         </div>
       </div>
     );
-        }
+  }
 
-  // Render combined header if provided by parent
-  const headerProps = useMemo(() => {
-    if (!renderCombinedHeader) return null;
-          return {
-      searchPalette,
-      safeLineageHighlight,
-      handleExportTree,
-      isPreparingExport,
-      theme,
-      familyKey,
-      brothersIndex,
-      handleSelectBrother: handleSelectBrotherFromSearch,
-      handleSelectMajor,
-      activeMajor,
-      majorResults,
-      clearActiveMajor,
-      isProfileOpen,
-    };
-  }, [
-    renderCombinedHeader,
-    searchPalette,
-    safeLineageHighlight,
-    handleExportTree,
-    isPreparingExport,
-    theme,
-    familyKey,
-    brothersIndex,
-    handleSelectBrotherFromSearch,
-    handleSelectMajor,
-    activeMajor,
-    majorResults,
-    clearActiveMajor,
-    isProfileOpen,
-  ]);
+  // Empty state - no brothers yet (only show if not loading and actually empty)
+  if (!loading && brothers.length === 0) {
+    return (
+      <>
+        <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
+          <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+            <h2
+              className="font-bold mb-4"
+              style={{
+                fontSize: 'var(--text-3xl)',
+                fontFamily: 'var(--font-display)',
+                color: familyKey === 'wolfpack' ? '#ffffff' : theme.accent || 'var(--primary)',
+                marginBottom: 'var(--space-4)',
+              }}
+            >
+              {safeFamily?.name || 'Family Tree'}
+            </h2>
+            <p
+              className="mb-6"
+              style={{
+                fontSize: 'var(--text-lg)',
+                color: theme.nodeText || 'var(--text-on-dark)',
+                marginBottom: 'var(--space-6)',
+              }}
+            >
+              This family tree is empty. Contact an administrator to add brothers to this family.
+            </p>
+            <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
+              {safeOnChangeFamily && (
+                <button
+                  onClick={safeOnChangeFamily}
+                  className="btn"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: theme.accent,
+                    borderColor: hexToRgba(theme.accent, 0.4),
+                  }}
+                >
+                  Back to Families
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

@@ -20,13 +20,15 @@ const PledgeClassMarkers = ({
 
   const markerAccent = theme?.pledgeMarkerAccent || theme?.accent || '#d9b87b';
   const markerAccentEnd = theme?.pledgeMarkerAccentEnd || markerAccent;
-  const markerText = 'rgba(0,0,0,0.92)';
+  const familyKey = theme?.key;
+  const useLightText = familyKey === 'power' || familyKey === 'pride';
+  const markerText = useLightText ? 'rgba(255,255,255,0.94)' : 'rgba(0,0,0,0.92)';
   const labelBg = theme?.pledgeMarkerLabelBg || 'rgba(255,255,255,0.35)';
   const labelBorder = theme?.pledgeMarkerLabelBorder || 'rgba(255,255,255,0.55)';
   const labelShadow = theme?.pledgeMarkerShadow || '0 6px 16px rgba(0,0,0,0.18)';
   const isGradientValue = (value) =>
     typeof value === 'string' && value.toLowerCase().includes('gradient');
-  const yearText = 'rgba(0,0,0,0.7)';
+  const yearText = useLightText ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)';
   const getHoverStripeBackground = () => {
     if (isGradientValue(markerAccent)) {
       return markerAccent;

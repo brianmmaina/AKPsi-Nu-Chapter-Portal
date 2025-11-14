@@ -170,18 +170,35 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     return base;
   }, [theme]);
 
-  if (!brother) return null;
+  const modalColors = useMemo(
+    () => ({
+      overlay: theme?.modalBg || 'rgba(0, 0, 0, 0.7)',
+      text: theme?.modalText || theme?.modalTextColor || palette.heading,
+      secondary: theme?.modalSecondaryText || palette.bodyText,
+      label: theme?.modalLabelText || palette.label,
+      cardBg: theme?.modalCardBg || palette.panelBg,
+      cardBorder: theme?.modalCardBorder || palette.fieldBorder,
+      close: theme?.modalCloseColor || palette.heading,
+      connectBg: theme?.connectButtonBg || palette.connectBg,
+      connectBorder: theme?.connectButtonBorder || palette.connectBorder,
+      connectIcon: theme?.connectButtonIcon || palette.heading,
+    }),
+    [theme, palette],
+  );
 
   const isDarkTheme = useMemo(() => isHexDark(theme?.background), [theme]);
 
+  if (!brother) return null;
+
   const infoCardStyle = {
-    background: palette.panelBg,
-    border: `1px solid ${palette.fieldBorder}`,
+    background: modalColors.cardBg,
+    border: `1px solid ${modalColors.cardBorder}`,
     borderRadius: '18px',
     padding: '18px 22px',
     boxShadow: '0 18px 36px rgba(0,0,0,0.08)',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
+    color: modalColors.text,
   };
 
   const socialLinks = [
@@ -224,9 +241,9 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     width: '52px',
     height: '52px',
     borderRadius: '16px',
-    border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', isDarkTheme ? 0.25 : 0.35)}`,
-    background: isDarkTheme ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.06)',
-    color: isDarkTheme ? '#ffffff' : '#111111',
+    border: `1px solid ${modalColors.connectBorder}`,
+    background: modalColors.connectBg,
+    color: modalColors.connectIcon || (isDarkTheme ? '#ffffff' : '#111111'),
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -272,13 +289,13 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     fontSize: '11px',
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
-    color: palette.heading,
+    color: modalColors.label,
     marginBottom: '8px',
-    opacity: 0.75,
+    opacity: 0.9,
   };
 
   const cardBodyStyle = {
-    color: palette.bodyText,
+    color: modalColors.text,
     fontSize: '14px',
     lineHeight: 1.6,
     margin: 0,
@@ -303,7 +320,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 200,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: modalColors.overlay,
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         pointerEvents: 'auto',
@@ -321,10 +338,11 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       <div
         className="profile-modal-card glass-panel-elevated rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         style={{
-          background: theme?.modalBg || 'rgba(18,20,24,0.92)',
+          background: modalColors.cardBg,
           borderRadius: '24px',
-          border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.2)}`,
+          border: `1px solid ${modalColors.cardBorder}`,
           boxShadow: '0 30px 60px rgba(0,0,0,0.45)',
+          color: modalColors.text,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -336,7 +354,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
             style={{
               background: 'rgba(0, 0, 0, 0.1)',
               border: 'none',
-              color: theme?.nodeText || 'var(--text)',
+              color: modalColors.close,
               padding: 'var(--space-2) var(--space-3)',
               fontSize: 'var(--text-xl)',
               lineHeight: '1',
@@ -376,7 +394,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                 {renderAvatar}
                 {socialLinks.length > 0 && (
                   <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '16px' }}>
-                    <div style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: '10px' }}>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: modalColors.label, opacity: 0.9, marginBottom: '10px' }}>
                       Connect
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
@@ -404,7 +422,9 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                 )}
                 {brother.email && (
                   <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '14px 18px' }}>
-                    <div style={{ fontSize: '11px', letterSpacing: '0.08em', opacity: 0.7 }}>Email</div>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.08em', opacity: 0.9, textTransform: 'uppercase', color: modalColors.label }}>
+                      Email
+                    </div>
                     <div style={{ fontWeight: 600 }}>{brother.email}</div>
                   </div>
                 )}
@@ -417,14 +437,14 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                     style={{
                       fontSize: '34px',
                       fontFamily: theme?.titleFont || 'var(--font-display)',
-                      color: theme?.nodeText || '#1f1f1f',
+                      color: modalColors.text,
                       fontWeight: 700,
                       margin: 0,
                     }}
                   >
                     {brother.name}
                   </h1>
-                  <p style={{ color: palette.bodyText, opacity: 0.75, marginTop: '4px', marginBottom: 0 }}>
+                  <p style={{ color: modalColors.secondary, opacity: 0.85, marginTop: '4px', marginBottom: 0 }}>
                     {brother.major || brother.pledge_class || 'Nu Chapter Brother'}
                   </p>
                 </div>
@@ -440,7 +460,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                         fontSize: '11px',
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color: palette.heading,
+                        color: modalColors.label,
                       }}
                     >
                       {brother.pledge_class}
@@ -456,7 +476,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                         fontSize: '11px',
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color: palette.heading,
+                        color: modalColors.label,
                       }}
                     >
                       Class of {brother.graduation_year}
@@ -471,7 +491,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                       fontSize: '11px',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      color: palette.heading,
+                      color: modalColors.label,
                     }}
                   >
                     {brother.status === 'studying' ? 'Active Brother' : 'Alumni'}
