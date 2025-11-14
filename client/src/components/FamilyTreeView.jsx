@@ -466,25 +466,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   </div>
                 </div>
               </div>
-
-                  </div>
-
-                )}
-
-        </div>
-
-      </div>
-
+            </div>
           );
-
         }}
-
       />
-
     </div>
-
   );
-
 };
 
 export default FamilyTreeView;
