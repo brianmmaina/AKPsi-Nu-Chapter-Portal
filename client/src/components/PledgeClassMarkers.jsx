@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { hexToRgba } from '../utils/color';
 
-const PLEDGE_GUTTER_WIDTH = 140; // keep in sync with TreeVisualization
+const PLEDGE_GUTTER_WIDTH = 110; // keep in sync with TreeVisualization
 
 const PledgeClassMarkers = ({
   markers = [],
@@ -99,7 +99,7 @@ const PledgeClassMarkers = ({
             <div
               style={{
                 position: 'absolute',
-                left: '16px',
+                left: '14px',
                 background: labelBg,
                 border: `1px solid ${labelBorder}`,
                 borderRadius: '6px',

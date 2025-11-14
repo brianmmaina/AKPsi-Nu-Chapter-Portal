@@ -152,7 +152,8 @@ const TREE_LAYER_CSS = `
 `;
 
 const BOTTOM_BUFFER = 4;
-const LEFT_GUTTER = 140;
+const LEFT_TREE_GUTTER = 140;
+const RIGHT_TREE_GUTTER = 80;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -861,7 +862,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             treeBoundsRef.current = bounds;
           }
         },
-    leftMargin: LEFT_GUTTER,
+    leftMargin: LEFT_TREE_GUTTER,
         });
 
       // Validate layout result before setting
@@ -1085,15 +1086,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       const paddedWidth = bounds.width * paddingMultiplier;
       const paddedHeight = bounds.height * paddingMultiplier;
+      const usableWidth = Math.max(
+        200,
+        viewportWidth - LEFT_TREE_GUTTER - RIGHT_TREE_GUTTER,
+      );
       const rawScale = Math.min(
-        viewportWidth / paddedWidth,
+        usableWidth / paddedWidth,
         viewportHeight / paddedHeight,
       );
       const nextZoom = Math.min(maxZoom, Math.max(minZoom, rawScale));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
-      const visualCenterX = centerX - LEFT_GUTTER / 2;
-      const nextX = viewportWidth / 2 - visualCenterX * nextZoom;
+      const nextX =
+        LEFT_TREE_GUTTER + usableWidth / 2 - centerX * nextZoom;
       const nextY = viewportHeight / 2 - centerY * nextZoom;
 
       try {
@@ -1658,20 +1663,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           size={theme.backgroundVariant === 'lines' ? 2 : 0.8}
         />
         <Panel
-          position="bottom-left"
           className="tree-controls-panel"
           style={{
             position: 'absolute',
-            left: LEFT_GUTTER + 20,
-            bottom: 40,
+            left: '50%',
+            bottom: 32,
+            transform: 'translateX(-50%)',
             pointerEvents: 'auto',
-            background: theme.controlsPanelBg || 'rgba(0,0,0,0.35)',
-            border: theme.controlsBorder || '1px solid rgba(255,255,255,0.2)',
-            boxShadow: theme.controlsShadow || '0 12px 28px rgba(0,0,0,0.35)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'transparent',
+            border: 'none',
+            boxShadow: 'none',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
             color: theme.nodeText || '#1f1f1f',
-            padding: '6px 10px',
+            padding: 0,
           }}
         >
           <div className="tree-controls" style={{ pointerEvents: 'auto' }}>
