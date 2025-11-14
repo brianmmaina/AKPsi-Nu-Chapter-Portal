@@ -18,7 +18,6 @@ import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
 import { statusLabelForBrother, getNodePalette } from '../utils/nodeRenderer';
 import { calculateTreeLayout } from '../utils/treeLayout';
 import { useTreeData } from '../hooks/useTreeData';
-import { useSearch } from '../hooks/useSearch';
 import { useLineageHighlight } from '../hooks/useLineageHighlight';
 
 /**
@@ -48,6 +47,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
   
   const [selectedBrother, setSelectedBrother] = useState(null);
+  const [selectedBrotherId, setSelectedBrotherId] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -233,25 +233,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     [nodes, reactFlowInstance, safeLineageHighlight],
   );
 
-  // Search is deactivated for now - will be implemented later
-  // const safeFocusBrotherNode = focusBrotherNode && typeof focusBrotherNode === 'function' ? focusBrotherNode : () => false;
-  // const safeShowToast = safeOnToast || showToast;
-  // const { searchTerm, setSearchTerm, isSearching, handleSearchSubmit } = useSearch(
-  //   safeFamily,
-  //   brothers,
-  //   safeFocusBrotherNode,
-  //   safeShowToast,
-  // );
-  
-  // Placeholder values for search (deactivated)
-  const searchTerm = '';
-  const setSearchTerm = () => {};
-  const isSearching = false;
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    // Search is deactivated
-  };
-  
   const defaultViewport = useMemo(() => {
     if (isEmpire) return { x: 0, y: 0, zoom: 0.45 };
     if (isPower) return { x: 0, y: 0, zoom: 0.5 };
@@ -645,6 +626,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // State for highlighting nodes when marker is clicked
   const [highlightedPledgeClass, setHighlightedPledgeClass] = useState(null);
   const [hoveredMarkerLevel, setHoveredMarkerLevel] = useState(null);
+  const [activeMajor, setActiveMajor] = useState(null);
+  const [majorResults, setMajorResults] = useState([]);
   // Ref to track current highlight state and prevent infinite loops
   const lastHighlightStateRef = useRef({ highlighted: null, hovered: null });
 
@@ -875,6 +858,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
     
     setSelectedBrother(node.data.brother);
+    setSelectedBrotherId(String(node.data.brother.id));
+    setActiveMajor(null);
+    setMajorResults([]);
     setIsModalOpen(true);
     
     // Smoothly center and zoom to the clicked node
@@ -897,6 +883,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const onPaneClick = useCallback((event) => {
     if (event.target.classList.contains('react-flow__pane')) {
       setSelectedBrother(null);
+      setSelectedBrotherId(null);
       setIsModalOpen(false);
       // Don't close add form on pane click - let user finish adding
     }
@@ -963,9 +950,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       }
 
       restorePointerEvents();
-    setSelectedBrother(null);
+      setSelectedBrother(null);
+      setSelectedBrotherId(null);
       setIsModalOpen(false);
       setViewportBeforeModal(null);
+      setActiveMajor(null);
+      setMajorResults([]);
     },
     [
       viewportBeforeModal,
@@ -1108,10 +1098,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const searchPalette = useMemo(
     () => ({
       background: searchIsDark ? 'rgba(20, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.92)',
-      inputColor: searchIsDark ? '#f6edcf' : '#2b2314',
+      inputColor: '#000000',
       border: hexToRgba(theme.accent || '#c9a857', 0.35),
       buttonBg: theme.accent || '#c9a857',
-      buttonText: searchIsDark ? '#1c2635' : '#2b2314',
+      buttonText: '#000000',
     }),
     [familyKey, theme.accent, searchIsDark],
   );
@@ -1146,6 +1136,79 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       setIsPreparingExport(false);
     }
   }, [fitTreeView, showToast]);
+
+  // Build brother index for search (name + major)
+  const brothersIndex = useMemo(() => {
+    if (!Array.isArray(brothers)) {
+      return [];
+    }
+    return brothers
+      .filter((brother) => brother && brother.id !== undefined && brother.id !== null)
+      .map((brother) => ({
+        id: String(brother.id),
+        name: brother.name || 'Unassigned Brother',
+        major: brother.major || '',
+        pledgeClass: brother.pledge_class || undefined,
+        gradYear: typeof brother.graduation_year === 'number' ? brother.graduation_year : undefined,
+      }));
+  }, [brothers]);
+
+  useEffect(() => {
+    if (selectedBrother && selectedBrother.id !== undefined && selectedBrother.id !== null) {
+      setSelectedBrotherId(String(selectedBrother.id));
+    } else {
+      setSelectedBrotherId(null);
+    }
+  }, [selectedBrother]);
+
+  const handleSelectBrotherFromSearch = useCallback(
+    (brotherId) => {
+      if (!brotherId) return;
+      const target = brothers.find((brother) => String(brother.id) === String(brotherId));
+      if (!target) {
+        showToast('Brother not found in this family.');
+        return;
+      }
+      try {
+        if (getViewport) {
+          const currentViewport = getViewport();
+          setViewportBeforeModal(currentViewport);
+        }
+      } catch (error) {
+        console.warn('Failed to capture viewport before opening profile:', error);
+      }
+      focusBrotherNode(brotherId);
+      setActiveMajor(null);
+      setMajorResults([]);
+      setSelectedBrother(target);
+      setSelectedBrotherId(String(target.id));
+      setIsModalOpen(true);
+    },
+    [brothers, focusBrotherNode, getViewport, showToast],
+  );
+
+  const handleSelectMajor = useCallback(
+    (major) => {
+      if (!major) {
+        setActiveMajor(null);
+        setMajorResults([]);
+        return;
+      }
+      setActiveMajor(major);
+      const matches = brothersIndex.filter(
+        (brother) => (brother.major || '').toLowerCase() === major.toLowerCase(),
+      );
+      setMajorResults(matches);
+    },
+    [brothersIndex],
+  );
+
+  const clearActiveMajor = useCallback(() => {
+    setActiveMajor(null);
+    setMajorResults([]);
+  }, []);
+
+  const isProfileOpen = Boolean(selectedBrotherId);
 
   // Remove loading state - tree will fade in instead
 
@@ -1261,18 +1324,36 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const headerProps = useMemo(() => {
     if (!renderCombinedHeader) return null;
     return {
-      searchTerm,
-      setSearchTerm,
-      isSearching,
-      handleSearchSubmit,
       searchPalette,
       safeLineageHighlight,
       handleExportTree,
       isPreparingExport,
       theme,
       familyKey,
+      brothersIndex,
+      handleSelectBrother: handleSelectBrotherFromSearch,
+      handleSelectMajor,
+      activeMajor,
+      majorResults,
+      clearActiveMajor,
+      isProfileOpen,
     };
-  }, [renderCombinedHeader, searchTerm, setSearchTerm, isSearching, handleSearchSubmit, searchPalette, safeLineageHighlight, handleExportTree, isPreparingExport, theme, familyKey]);
+  }, [
+    renderCombinedHeader,
+    searchPalette,
+    safeLineageHighlight,
+    handleExportTree,
+    isPreparingExport,
+    theme,
+    familyKey,
+    brothersIndex,
+    handleSelectBrotherFromSearch,
+    handleSelectMajor,
+    activeMajor,
+    majorResults,
+    clearActiveMajor,
+    isProfileOpen,
+  ]);
 
   return (
     <>

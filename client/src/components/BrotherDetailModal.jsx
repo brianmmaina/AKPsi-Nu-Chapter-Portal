@@ -175,7 +175,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 100, // Above header (z-index 21) - modal overlay
+        zIndex: 200,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',

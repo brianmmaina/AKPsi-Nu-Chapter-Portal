@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { getThemeStyles } from '../themes';
 
 import TreeVisualization from './TreeVisualization';
+import SearchBar from './SearchBar';
+import MajorResultsPanel from './MajorResultsPanel';
 
 import { hexToRgba } from '../utils/color';
 
@@ -115,7 +117,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           // Get active theme styles for dynamic styling
           const activeTheme = getThemeStyles(selectedFamily.theme);
           const themeAccent = activeTheme?.accent || '#c9a857';
-          const themeText = activeTheme?.nodeText || '#3b2b16';
           const themeTitleFont = activeTheme?.titleFont || 'Cinzel, serif';
           const themeBodyFont = activeTheme?.bodyFont || 'Inter, system-ui, sans-serif';
           
@@ -125,8 +126,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           
           // Theme-aware text colors
           const activeTabColor = themeAccent;
-          const inactiveTabColor = isDarkTheme ? hexToRgba(themeText, 0.75) : hexToRgba(themeText, 0.65);
-          const familyNameColor = isDarkTheme ? hexToRgba(themeText, 0.92) : hexToRgba(themeText, 0.85);
           
           // Theme-aware background colors for tabs
           const activeTabBg = isDarkTheme 
@@ -142,358 +141,220 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           // Theme-aware underline color
           const underlineColor = themeAccent;
 
+          const {
+            searchPalette,
+            safeLineageHighlight: headerLineageHighlight,
+            handleExportTree: headerExportTree,
+            isPreparingExport: headerPreparingExport,
+            brothersIndex = [],
+            handleSelectBrother,
+            handleSelectMajor,
+            activeMajor,
+            majorResults = [],
+            clearActiveMajor,
+            isProfileOpen,
+          } = headerProps || {};
+
+          const highlightState = headerLineageHighlight || {
+            lineageHighlightMode: 'off',
+            setLineageHighlightMode: () => {},
+          };
+          const exportHandler = headerExportTree || (() => {});
+          const selectBrotherHandler = handleSelectBrother || (() => {});
+          const selectMajorHandler = handleSelectMajor || (() => {});
+          const clearMajorHandler = clearActiveMajor || (() => {});
+          const preparingExport = Boolean(headerPreparingExport);
+
+          const topBarVisibilityStyles = isProfileOpen
+            ? { opacity: 0, transform: 'translateY(-8px)', pointerEvents: 'none' }
+            : { opacity: 1, transform: 'translateY(0)', pointerEvents: 'auto' };
+
           return (
 
             <div
-
               style={{
-
                 position: 'fixed',
-
                 top: 'env(safe-area-inset-top, 0px)',
-
                 left: 0,
-
                 right: 0,
-
-                zIndex: 30, // Lower than modal (100) but above tree content (1-12)
-
+                zIndex: 50,
                 padding: '12px 20px 12px 20px',
-
-                pointerEvents: 'none', // Allow clicks to pass through container
-
+                pointerEvents: 'none',
               }}
-
             >
 
               {/* Unified Glass Container */}
 
               <div
-
                 style={{
-
                   backdropFilter: 'blur(12px) saturate(180%)',
-
                   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-
                   background: 'rgba(255, 255, 255, 0.45)',
-
                   borderRadius: '18px',
-
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
-
                   border: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
-
-                  pointerEvents: 'auto', // Re-enable clicks on container
-
+                  pointerEvents: topBarVisibilityStyles.pointerEvents,
+                  color: '#000000',
+                  transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
+                  opacity: topBarVisibilityStyles.opacity,
+                  transform: topBarVisibilityStyles.transform,
                 }}
-
               >
 
                 {/* Top Panel: Family Name, Navigation Tabs, Back Button */}
-
                 <div
-
                   style={{
-
                     display: 'flex',
-
-                    alignItems: 'center',
-
+                    alignItems: 'flex-start',
                     justifyContent: 'space-between',
-
                     padding: '12px 20px',
-
-                    minHeight: '44px',
-
+                    gap: '16px',
                   }}
-
                 >
-
-                  {/* Family Name / Crest (Left) */}
-
-                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: '12px' }}>
-
-                    <div
-
-                      style={{
-
-                        width: '32px',
-
-                        height: '32px',
-
-                        borderRadius: '50%',
-
-                        background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
-
-                        display: 'flex',
-
-                        alignItems: 'center',
-
-                        justifyContent: 'center',
-
-                        fontFamily: 'var(--font-display)',
-
-                        fontSize: '18px',
-
-                        fontWeight: 700,
-
-                        color: '#000000',
-
-                      }}
-
-                    >
-
-                      {presentation.crestLetter || 'A'}
-
+                  {/* Family Name / Crest / Search */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: 'var(--font-display)',
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          color: '#000000',
+                        }}
+                      >
+                        {presentation.crestLetter || 'A'}
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '14px',
+                          fontFamily: themeTitleFont,
+                          fontWeight: 600,
+                          color: '#000000',
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        {selectedFamily.name}
+                      </span>
                     </div>
-
-                    <span
-
-                      style={{
-
-                        fontSize: '14px',
-
-                        fontFamily: themeTitleFont,
-
-                        fontWeight: 600,
-
-                        color: '#000000',
-
-                        letterSpacing: '0.03em',
-
-                      }}
-
-                    >
-
-                      {selectedFamily.name}
-
-                    </span>
-
+                    <SearchBar
+                      brothers={brothersIndex}
+                      onSelectBrother={selectBrotherHandler}
+                      onSelectMajor={selectMajorHandler}
+                      palette={searchPalette}
+                    />
+                    {activeMajor && (
+                      <MajorResultsPanel
+                        major={activeMajor}
+                        results={majorResults}
+                        onSelectBrother={selectBrotherHandler}
+                        onClear={clearMajorHandler}
+                      />
+                    )}
                   </div>
 
                   {/* Centered Navigation Tabs */}
-
-                  <div style={{ 
-
-                    display: 'flex', 
-
-                    alignItems: 'center', 
-
-                    gap: '6px', 
-
-                    flex: '1', 
-
-                    justifyContent: 'center',
-
-                    position: 'absolute',
-
-                    left: '50%',
-
-                    transform: 'translateX(-50%)',
-
-                  }}>
-
+                  <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     {families.map((family) => {
-
                       const isActive = selectedFamily.id === family.id;
-
                       const familyTheme = getThemeStyles(family.theme);
-
                       const familyAccent = familyTheme?.accent || '#c9a857';
-
                       const familyText = familyTheme?.nodeText || '#3b2b16';
-
-                      const isFamilyDark = family.theme === 'power' || family.theme === 'pride' || family.theme === 'wolfpack' || family.theme === 'greed';
-
-                      // Theme-aware styling for each tab based on its own theme
-
-                      const tabActiveBg = isFamilyDark 
-
-                        ? hexToRgba(familyAccent, 0.25)
-
-                        : hexToRgba(familyAccent, 0.30);
-
-                      const tabInactiveBg = isFamilyDark
-
-                        ? hexToRgba(familyAccent, 0.12)
-
-                        : 'rgba(255, 230, 170, 0.25)';
-
-                      const tabInactiveHoverBg = isFamilyDark
-
-                        ? hexToRgba(familyAccent, 0.18)
-
-                        : 'rgba(255, 230, 170, 0.35)';
-
+                      const isFamilyDark = ['power', 'pride', 'wolfpack', 'greed'].includes(family.theme);
+                      const tabActiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.25) : hexToRgba(familyAccent, 0.30);
+                      const tabInactiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.12) : 'rgba(255, 230, 170, 0.25)';
+                      const tabInactiveHoverBg = isFamilyDark ? hexToRgba(familyAccent, 0.18) : 'rgba(255, 230, 170, 0.35)';
                       const tabActiveColor = familyAccent;
-
                       const tabInactiveColor = isFamilyDark ? hexToRgba(familyText, 0.75) : hexToRgba(familyText, 0.65);
 
-                      
-
                       return (
-
                         <button
-
                           key={family.id}
-
                           onClick={() => setSelectedFamily(family)}
-
                           style={{
-
                             position: 'relative',
-
                             padding: '8px 20px',
-
                             borderRadius: '18px',
-
                             background: isActive ? tabActiveBg : tabInactiveBg,
-
                             backdropFilter: 'blur(8px)',
-
                             WebkitBackdropFilter: 'blur(8px)',
-
                             border: 'none',
-
                             cursor: 'pointer',
-
                             transition: 'all 200ms ease',
-
                             fontWeight: isActive ? 700 : 600,
-
                             fontSize: '13px',
-
                             fontFamily: themeBodyFont,
-
                             color: '#000000',
-
                             letterSpacing: '0.02em',
-
                           }}
-
                           onMouseEnter={(e) => {
-
                             if (!isActive) {
-
                               e.currentTarget.style.background = tabInactiveHoverBg;
-
                             }
-
                           }}
-
                           onMouseLeave={(e) => {
-
                             if (!isActive) {
-
                               e.currentTarget.style.background = tabInactiveBg;
-
                             }
-
                           }}
-
                           aria-label={`Switch to ${family.name} family`}
-
                           aria-current={isActive ? 'true' : 'false'}
-
                         >
-
                           {family.name}
-
                           {isActive && (
-
                             <span
-
                               style={{
-
                                 position: 'absolute',
-
                                 bottom: '4px',
-
                                 left: '50%',
-
                                 transform: 'translateX(-50%)',
-
                                 width: '60%',
-
                                 height: '3px',
-
                                 backgroundColor: familyAccent,
-
                                 borderRadius: '999px',
-
                               }}
-
                             />
-
                           )}
-
                         </button>
-
                       );
-
                     })}
-
                   </div>
 
                   {/* Back Button (Right) */}
-
                   <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-
                     <button
-
                       onClick={onChangeFamily}
-
                       style={{
-
                         padding: '8px 18px',
-
                         fontSize: '13px',
-
                         fontFamily: themeBodyFont,
-
                         borderRadius: '18px',
-
                         background: inactiveTabBg,
-
                         backdropFilter: 'blur(8px)',
-
                         WebkitBackdropFilter: 'blur(8px)',
-
                         border: 'none',
-
                         color: '#000000',
-
                         cursor: 'pointer',
-
                         fontWeight: 600,
-
                         transition: 'all 200ms ease',
-
                         whiteSpace: 'nowrap',
-
                       }}
-
                       onMouseEnter={(e) => {
-
                         e.currentTarget.style.background = inactiveTabHoverBg;
-
                       }}
-
                       onMouseLeave={(e) => {
-
                         e.currentTarget.style.background = inactiveTabBg;
-
                       }}
-
                     >
-
                       Back
-
                     </button>
-
                   </div>
-
                 </div>
 
                 {/* Bottom Panel: Search and Controls (Compacted) */}
@@ -530,10 +391,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       {/* Highlight Toggle */}
 
                       <select
-
-                        value={headerProps.safeLineageHighlight.lineageHighlightMode}
-
-                        onChange={(event) => headerProps.safeLineageHighlight.setLineageHighlightMode(event.target.value)}
+                        value={highlightState.lineageHighlightMode}
+                        onChange={(event) => highlightState.setLineageHighlightMode(event.target.value)}
 
                         style={{
 
@@ -585,9 +444,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         type="button"
 
-                        onClick={headerProps.handleExportTree}
-
-                        disabled={headerProps.isPreparingExport}
+                        onClick={exportHandler}
+                        disabled={preparingExport}
 
                         style={{
 
@@ -606,11 +464,11 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                           fontSize: '12px',
 
-                          cursor: headerProps.isPreparingExport ? 'wait' : 'pointer',
+                          cursor: preparingExport ? 'wait' : 'pointer',
 
                           boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
 
-                          opacity: headerProps.isPreparingExport ? 0.65 : 1,
+                          opacity: preparingExport ? 0.65 : 1,
 
                           transition: 'all 200ms ease',
 
@@ -618,9 +476,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         }}
 
-                      >
-
-                        {headerProps.isPreparingExport ? 'Preparing…' : 'Export / Print'}
+                        >
+                          {preparingExport ? 'Preparing…' : 'Export / Print'}
 
                       </button>
 
