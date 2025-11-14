@@ -545,7 +545,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // Safely destructure ReactFlow methods
   const setCenter = reactFlowInstance?.setCenter;
   const getViewport = reactFlowInstance?.getViewport;
-  const project = reactFlowInstance?.project; // Convert flow coordinates to screen coordinates
+  const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition; // New React Flow API (replaces deprecated project)
 
   const pledgeSummary = useMemo(() => {
     const classes = new Set();
@@ -645,6 +645,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // State for highlighting nodes when marker is clicked
   const [highlightedPledgeClass, setHighlightedPledgeClass] = useState(null);
   const [hoveredMarkerLevel, setHoveredMarkerLevel] = useState(null);
+  // Ref to track current highlight state and prevent infinite loops
+  const lastHighlightStateRef = useRef({ highlighted: null, hovered: null });
 
   /**
    * Calculates tree layout and creates React Flow nodes/edges
@@ -755,10 +757,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     // Check both highlighted (clicked) and hovered states
     const activeMarkerLevel = highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
     
+    // Prevent unnecessary updates if state hasn't changed
+    const currentState = { highlighted: highlightedPledgeClass, hovered: hoveredMarkerLevel };
+    if (
+      lastHighlightStateRef.current.highlighted === currentState.highlighted &&
+      lastHighlightStateRef.current.hovered === currentState.hovered
+    ) {
+      return; // State hasn't changed, skip update
+    }
+    lastHighlightStateRef.current = currentState;
+    
     if (activeMarkerLevel === null) {
       // No active marker - ensure nodes are reset to default styles
-      setNodes((currentNodes) => 
-        currentNodes.map((node) => {
+      setNodes((currentNodes) => {
+        let hasChanges = false;
+        const updatedNodes = currentNodes.map((node) => {
+          // Check if node has highlight styles
+          const hasHighlight = node.style?.filter?.includes('brightness') || 
+                               node.style?.boxShadow?.includes('rgba(201, 168, 87');
+          if (!hasHighlight) {
+            return node; // No changes needed
+          }
+          hasChanges = true;
+          
           // Reset any previous highlighting
           const baseStyle = { ...node.style };
           delete baseStyle.filter;
@@ -769,8 +790,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             baseStyle.boxShadow = filteredShadows.join(', ') || '0 4px 12px rgba(0,0,0,0.08)';
           }
           return { ...node, style: baseStyle };
-        })
-      );
+        });
+        return hasChanges ? updatedNodes : currentNodes;
+      });
       return;
     }
 
@@ -780,9 +802,27 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
 
     const activeNodeIds = new Set(activeMarker.nodeIds);
-    setNodes((currentNodes) => 
-      currentNodes.map((node) => {
+    setNodes((currentNodes) => {
+      let hasChanges = false;
+      const updatedNodes = currentNodes.map((node) => {
         const isHighlighted = activeNodeIds.has(node.id);
+        const expectedGlowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2;
+        const expectedBrightness = highlightedPledgeClass !== null ? 1.1 : 1.05;
+        
+        // Check if node already has correct highlight styles
+        const currentGlowOpacity = node.style?.boxShadow?.match(/rgba\(201, 168, 87, ([\d.]+)\)/)?.[1];
+        const currentBrightness = node.style?.filter?.match(/brightness\(([\d.]+)\)/)?.[1];
+        const hasCorrectHighlight = 
+          isHighlighted &&
+          currentGlowOpacity === String(expectedGlowOpacity) &&
+          currentBrightness === String(expectedBrightness);
+        
+        if (hasCorrectHighlight) {
+          return node; // Already has correct highlight, no changes needed
+        }
+        
+        hasChanges = true;
+        
         if (!isHighlighted) {
           // Reset non-highlighted nodes
           const baseStyle = { ...node.style };
@@ -796,19 +836,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         }
 
         // Apply highlight style to nodes in this pledge class level
-        const existingShadow = node.style?.boxShadow || '0 4px 12px rgba(0,0,0,0.08)';
-        const glowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2; // Stronger when clicked
-        const brightness = highlightedPledgeClass !== null ? 1.1 : 1.05; // Brighter when clicked
+        const existingShadow = node.style?.boxShadow?.split(', ').find(s => !s.includes('rgba(201, 168, 87')) || '0 4px 12px rgba(0,0,0,0.08)';
         const newStyle = {
           ...node.style,
-          boxShadow: `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${glowOpacity})`,
-          filter: `brightness(${brightness})`,
+          boxShadow: `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${expectedGlowOpacity})`,
+          filter: `brightness(${expectedBrightness})`,
           transition: 'filter 0.3s ease, box-shadow 0.3s ease',
         };
         return { ...node, style: newStyle };
-      })
-    );
-  }, [isEmpire, highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers]);
+      });
+      return hasChanges ? updatedNodes : currentNodes;
+    });
+  }, [isEmpire, highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers, nodes.length]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -1443,19 +1482,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           }}
         >
           {pledgeClassMarkers.map((marker, idx) => {
-            // Use ReactFlow's project() to convert flow coordinates to screen coordinates
+            // Use ReactFlow's flowToScreenPosition() to convert flow coordinates to screen coordinates
+            // (Replaces deprecated project() method)
             let screenY;
             try {
-              if (project && typeof project === 'function') {
-                const projected = project({ x: 0, y: marker.y });
-                screenY = projected.y;
+              if (flowToScreenPosition && typeof flowToScreenPosition === 'function') {
+                const screenPos = flowToScreenPosition({ x: 0, y: marker.y });
+                screenY = screenPos.y;
               } else {
                 // Fallback to manual calculation
                 const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
                 screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
               }
             } catch (error) {
-              console.warn('Failed to project marker position:', error);
+              console.warn('Failed to convert flow to screen position:', error);
               const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
               screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
             }
