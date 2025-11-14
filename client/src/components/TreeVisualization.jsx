@@ -1589,62 +1589,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           style={silhouetteStyle}
         />
       )}
-      {/* Add functionality removed - site is read-only. Use admin.html for adding brothers. */}
-    <div
-      style={{
-          position: 'absolute',
-          top: 26,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center',
-          color: presentation.header.textColor,
-          letterSpacing: '0.32em',
-          textTransform: 'uppercase',
-          pointerEvents: 'none',
-          padding: '10px 24px 14px',
-          background: presentation.header.panelBg,
-          borderRadius: 18,
-          boxShadow: presentation.header.shadow,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '18px',
-        }}
-      >
-        <span
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: '50%',
-            background: presentation.header.crestBg,
-            color: presentation.header.crestColor,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: theme.titleFont,
-            fontSize: '18px',
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            border: `1px solid ${hexToRgba(presentation.accent, 0.4)}`,
-          }}
-        >
-          {presentation.crestLetter}
-        </span>
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8 }}>
-            {presentation.subtitle}
-          </div>
-          <div
-            style={{
-              fontFamily: theme.titleFont,
-              fontSize: '18px',
-              letterSpacing: '0.25em',
-              marginTop: 4,
-            }}
-          >
-            {presentation.title}
-          </div>
-        </div>
-      </div>
       <div
         style={{
           position: 'absolute',
