@@ -498,13 +498,6 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                   </span>
                 </div>
 
-                {brother.major && (
-                  <div style={infoCardStyle}>
-                    <div style={cardHeadingStyle}>Major</div>
-                    <p style={cardBodyStyle}>{brother.major}</p>
-                  </div>
-                )}
-
                 {brother.career_aspirations && (
                   <div style={infoCardStyle}>
                     <div style={cardHeadingStyle}>Career Aspirations</div>

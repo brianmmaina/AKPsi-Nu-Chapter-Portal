@@ -18,6 +18,7 @@ import { statusLabelForBrother, getNodePalette } from '../utils/nodeRenderer';
 import { calculateTreeLayout } from '../utils/treeLayout';
 import { useTreeData } from '../hooks/useTreeData';
 import { useLineageHighlight } from '../hooks/useLineageHighlight';
+import { toPng } from 'html-to-image';
 
 /**
  * TreeVisualizationInner Component
@@ -1263,30 +1264,35 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     setIsPreparingExport(true);
     showToast('Preparing export…');
 
-    const cleanup = () => {
-      document.body.classList.remove('printing-tree');
-      setIsPreparingExport(false);
-    };
-
     try {
       fitTreeView();
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      document.body.classList.add('printing-tree');
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      const flowWrapper = flowWrapperRef.current;
+      if (!flowWrapper) {
+        throw new Error('Flow wrapper not found');
+      }
 
-      window.print();
+      const dataUrl = await toPng(flowWrapper, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: theme?.background || '#0a0f1a',
+      });
 
-      setTimeout(() => {
-        cleanup();
-        showToast('Export ready. Use browser print dialog to save as PDF.');
-      }, 100);
+      const link = document.createElement('a');
+      const safeName = `${safeFamily?.name || 'family'}-tree`.replace(/\s+/g, '-').toLowerCase();
+      link.download = `${safeName}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      showToast('Tree exported as PNG');
     } catch (error) {
       console.error('Export failed:', error);
-      cleanup();
       showToast('Export failed. Please try again.');
+    } finally {
+      setIsPreparingExport(false);
     }
-  }, [fitTreeView, showToast]);
+  }, [fitTreeView, showToast, theme?.background, safeFamily?.name]);
 
   // Build brother index for search (name + major)
   const brothersIndex = useMemo(() => {
@@ -1459,46 +1465,46 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   if (!loading && brothers.length === 0) {
     return (
       <>
-        <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
-          <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
-            <h2
-              className="font-bold mb-4"
-              style={{
-                fontSize: 'var(--text-3xl)',
-                fontFamily: 'var(--font-display)',
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: theme.background }}>
+        <div className="text-center container" style={{ maxWidth: '32rem', padding: 'var(--space-6)' }}>
+          <h2
+            className="font-bold mb-4"
+            style={{
+              fontSize: 'var(--text-3xl)',
+              fontFamily: 'var(--font-display)',
                 color: familyKey === 'wolfpack' ? '#ffffff' : theme.accent || 'var(--primary)',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              {safeFamily?.name || 'Family Tree'}
-            </h2>
-            <p
-              className="mb-6"
-              style={{
-                fontSize: 'var(--text-lg)',
-                color: theme.nodeText || 'var(--text-on-dark)',
-                marginBottom: 'var(--space-6)',
-              }}
-            >
+              marginBottom: 'var(--space-4)',
+            }}
+          >
+            {safeFamily?.name || 'Family Tree'}
+          </h2>
+          <p
+            className="mb-6"
+            style={{
+              fontSize: 'var(--text-lg)',
+              color: theme.nodeText || 'var(--text-on-dark)',
+              marginBottom: 'var(--space-6)',
+            }}
+          >
               This family tree is empty. Contact an administrator to add brothers to this family.
-            </p>
-            <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
-              {safeOnChangeFamily && (
-                <button
-                  onClick={safeOnChangeFamily}
-                  className="btn"
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: theme.accent,
-                    borderColor: hexToRgba(theme.accent, 0.4),
-                  }}
-                >
-                  Back to Families
-                </button>
-              )}
-            </div>
+          </p>
+          <div className="flex justify-center" style={{ gap: 'var(--space-4)' }}>
+            {safeOnChangeFamily && (
+            <button
+                onClick={safeOnChangeFamily} 
+                className="btn"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: theme.accent,
+                  borderColor: hexToRgba(theme.accent, 0.4),
+                }}
+              >
+                Back to Families
+              </button>
+            )}
           </div>
         </div>
+      </div>
       </>
     );
   }
