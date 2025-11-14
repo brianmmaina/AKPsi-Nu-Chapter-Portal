@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -58,6 +58,19 @@ const CurvedEdge = ({
 };
 
 const TREE_LAYER_CSS = `
+.tree-page-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  position: relative;
+}
+.tree-canvas-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
 .tree-pledge-markers {
   pointer-events: none;
   z-index: 20;
@@ -166,7 +179,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const flowWrapperRef = useRef(null);
   const toastTimeoutRef = useRef(null);
   const highlightTimeoutRef = useRef(null);
-  const hasFitRef = useRef(false);
   const reactFlowInstance = useReactFlow();
 
   // Use custom hooks for data loading, search, and lineage highlighting
@@ -384,60 +396,40 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return theme?.bgGradient || undefined;
     }
   }, [presentation, theme]);
+  
+  const pageRootStyle = useMemo(() => {
+    const baseBackground = theme?.background || '#f5f5f5';
+      return {
+        width: '100%',
+      height: '100%',
+      minHeight: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+        position: 'relative',
+      backgroundColor: baseBackground,
+      backgroundImage: composedBackground || undefined,
+      backgroundSize: theme?.bgGradient ? 'cover' : undefined,
+      backgroundPosition: 'center',
+    };
+  }, [theme, composedBackground]);
 
-  const containerStyle = useMemo(() => {
-    // Safety checks: ensure theme is fully initialized
-    if (!theme || typeof theme !== 'object' || !theme.background) {
+  const canvasStyle = useMemo(() => {
       return {
+      flex: 1,
         width: '100%',
-        height: '100vh',
-        backgroundColor: '#f5f5f5',
+      height: '100%',
+      minHeight: '100%',
+      position: 'relative',
         pointerEvents: 'auto',
-        position: 'relative',
-        overflow: 'hidden',
-      };
-    }
-    
-    try {
-      // Use calc to account for header, safe area insets, and bottom buffer
-      // Safe area insets prevent content from being cut off on devices with notches/home indicators
-      // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
-      const treeHeight = `calc(100vh - ${HEADER_HEIGHT}px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BOTTOM_BUFFER}px)`;
-      const headerTop = `env(safe-area-inset-top, 0px)`;
-      
-      return {
-        width: '100%',
-        height: '100vh',
-        minHeight: '100vh',
-        backgroundColor: theme.background || '#f5f5f5', // Base background color extends behind header
-        backgroundImage: composedBackground || undefined,
-        backgroundSize: theme.bgGradient ? 'cover' : undefined,
-        backgroundPosition: 'center',
-        pointerEvents: 'auto',
+      overflow: 'hidden',
         opacity: isTreeReady ? 1 : 0,
-        transform: isTreeReady ? 'translateY(0)' : 'translateY(10px)',
+      transform: isTreeReady ? 'translateY(0)' : 'translateY(6px)',
         transition: 'opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        overflow: 'hidden',
+      paddingTop: 0,
+      paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`,
         boxSizing: 'border-box',
-        paddingTop: `calc(${HEADER_HEIGHT}px + ${headerTop})`, // Push content below fixed header + safe area
-        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_BUFFER}px)`, // Add padding for bottom safe area + buffer
-      };
-    } catch (error) {
-      console.warn('Error computing container style:', error);
-      return {
-        width: '100%',
-        height: '100vh',
-        backgroundColor: (theme && theme.background) || '#f5f5f5',
-        pointerEvents: 'auto',
-        position: 'relative',
-        overflow: 'hidden',
-      };
-    }
-  }, [theme, composedBackground, isEmpire, isTreeReady]);
+    };
+  }, [isTreeReady]);
 
   const toScreenPosition = useCallback(
     (point) => {
@@ -514,7 +506,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         multiChildCompression: 0.82,
         siblingPadding: 54,
       };
-    }
+      }
 
     if (isPower) {
       return {
@@ -587,16 +579,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const majorLabel = brother.major ? brother.major.trim() : null;
 
       return (
-        <div
-          style={{
+            <div 
+              style={{ 
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
             maxWidth: 240,
             whiteSpace: 'normal',
             color: palette.bodyColor,
-          }}
-        >
+              }}
+            >
           <div
             style={{
               display: 'flex',
@@ -605,9 +597,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               gap: 8,
             }}
           >
-            <div
-              style={{
-                fontSize: '9px',
+              <div 
+                style={{ 
+                  fontSize: '9px',
                 letterSpacing: '0.8px',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
@@ -615,17 +607,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 background: palette.badgeBg,
                 color: palette.badgeColor,
                 fontWeight: 600,
-              }}
-            >
+                }}
+              >
               {pledgeLabel}
-            </div>
-            <div
-              style={{
+              </div>
+            <div 
+              style={{ 
                 fontSize: '10px',
                 color: palette.statusColor,
                 letterSpacing: '0.35px',
                 fontWeight: 600,
-                textTransform: 'uppercase',
+                  textTransform: 'uppercase',
               }}
             >
               {statusLabel}
@@ -638,20 +630,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               gap: 4,
             }}
           >
-            <div
-              style={{
+              <div 
+                style={{ 
                 fontFamily: themeToUse.titleFont,
                 fontSize: palette.nameSize || '14px',
                 letterSpacing: palette.nameTracking || '0.4px',
                 lineHeight: 1.28,
                 color: palette.nameColor,
-              }}
-            >
+                }}
+              >
               {effectiveName}
-            </div>
+              </div>
             {majorLabel && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '11px',
                   color: palette.classColor,
                   letterSpacing: '0.2px',
@@ -663,15 +655,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             )}
             {classLabel && (
               <div
-                style={{
+              style={{ 
                   fontSize: '10px',
                   color: palette.classColor,
                   letterSpacing: '0.2px',
                   lineHeight: 1.3,
-                }}
-              >
+              }}
+            >
                 {classLabel}
-              </div>
+            </div>
             )}
             {isTransfer && (
               <div
@@ -684,11 +676,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 }}
               >
                 Transfer
-              </div>
+            </div>
             )}
             {isPlaceholder && (
-              <div
-                style={{
+              <div 
+                style={{ 
                   fontSize: '10px',
                   color: palette.placeholderColor || palette.statusColor,
                   fontStyle: 'italic',
@@ -699,8 +691,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               </div>
             )}
           </div>
-        </div>
-      );
+          </div>
+        );
     } catch (error) {
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
@@ -1109,8 +1101,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       }
 
       const wrapper = flowWrapperRef.current;
-      const viewportWidth = wrapper?.clientWidth || window.innerWidth;
-      const viewportHeight = wrapper?.clientHeight || window.innerHeight;
+      const rect = wrapper?.getBoundingClientRect();
+      const viewportWidth = rect?.width ?? window.innerWidth;
+      const viewportHeight = rect?.height ?? window.innerHeight;
       if (!viewportWidth || !viewportHeight) {
         reactFlowInstance.fitView?.({ padding: 0.24, duration });
         return;
@@ -1219,23 +1212,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, [nodes, reactFlowInstance]);
 
-  // Auto-center and fit tree when family changes
-  useEffect(() => {
-    if (!isTreeReady || !nodes || nodes.length === 0) {
+  useLayoutEffect(() => {
+    if (!isTreeReady || nodes.length === 0) {
       return;
     }
-    
-    // Small delay to ensure ReactFlow is ready
-    const timer = setTimeout(() => {
-      try {
-        fitTreeToViewport(400);
-      } catch (e) {
-        console.warn('Failed to fit view on family change:', e);
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [safeFamily?.id, isTreeReady, nodes.length, fitTreeToViewport]);
+    if (!flowWrapperRef.current) {
+      return;
+    }
+    try {
+      fitTreeToViewport(400);
+    } catch (error) {
+      console.warn('Failed to fit tree after layout:', error);
+    }
+  }, [isTreeReady, nodes.length, safeFamily?.id, fitTreeToViewport]);
+
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -1277,21 +1267,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeToViewport]);
-
-  useEffect(() => {
-    if (!isTreeReady || nodes.length === 0 || hasFitRef.current) {
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      try {
-        fitTreeToViewport(400);
-        hasFitRef.current = true;
-      } catch (err) {
-        console.warn('Failed to fit view:', err);
-      }
-    });
-  }, [isTreeReady, nodes, reactFlowInstance, isEmpire, fitTreeToViewport]);
 
   // Cleanup effect - must be called before any conditional returns
   useEffect(
@@ -1570,13 +1545,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   return (
     <>
       <style>{TREE_LAYER_CSS}</style>
-      {/* Combined header rendered by parent */}
-      {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
-      <div
-        className="w-full relative"
-        style={containerStyle}
-        ref={flowWrapperRef}
-      >
+      <div className="tree-page-root" style={pageRootStyle}>
+        {/* Combined header rendered by parent */}
+        {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
+        <div
+          className="tree-canvas-wrapper"
+          style={canvasStyle}
+          ref={flowWrapperRef}
+        >
 
       {toast && (
         <div
@@ -1791,7 +1767,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             type="button"
             className="tree-controls__reset"
             onClick={() => fitTreeToViewport(450)}
-            style={{
+        style={{
               background: hexToRgba(theme?.accent || '#ffffff', 0.16),
               color: theme?.nodeText || '#1f1f1f',
               border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.24)}`,
@@ -1860,6 +1836,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         />
       )}
     </div>
+      </div>
     </>
   );
 };

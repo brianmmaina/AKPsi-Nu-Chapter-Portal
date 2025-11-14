@@ -8,6 +8,22 @@ import TreeVisualization from './TreeVisualization';
 import SearchBar from './SearchBar';
 import MajorResultsPanel from './MajorResultsPanel';
 
+const PAGE_LAYOUT_CSS = `
+  .family-tree-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  .family-tree-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+`;
+
 const TOP_BAR_CSS = `
   .akpsi-topbar {
     display: flex;
@@ -164,29 +180,22 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
   const themeAccent = selectedTheme?.accent || '#D3AF37';
 
   return (
-
-    <div 
-
-      style={{ 
-
-        minHeight: '100vh',
-
-        backgroundColor: themeBackground,
-
-        transition: 'background-color 400ms ease',
-
-      }}
-
-    >
-
-      <TreeVisualization 
-
+    <>
+      <style>{PAGE_LAYOUT_CSS}</style>
+      <div
+        className="family-tree-page"
+        style={{
+          minHeight: '100vh',
+          height: '100vh',
+          backgroundColor: themeBackground,
+          transition: 'background-color 400ms ease',
+        }}
+      >
+        <div className="family-tree-content">
+          <TreeVisualization 
         family={selectedFamily} 
-
         onToast={onToast} 
-
         onChangeFamily={onChangeFamily}
-
         renderCombinedHeader={(headerProps) => {
 
           const presentation = FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
@@ -238,18 +247,18 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           const preparingExport = Boolean(headerPreparingExport);
 
           return (
-
       <div 
         style={{
-          position: 'fixed',
+          position: 'sticky',
           top: 'env(safe-area-inset-top, 0px)',
           left: 0,
           right: 0,
-                zIndex: 50,
-                padding: '12px 20px 12px 20px',
-                pointerEvents: 'none',
-              }}
-            >
+          zIndex: 50,
+          padding: '12px 20px 12px 20px',
+          pointerEvents: 'auto',
+          background: 'transparent',
+        }}
+      >
 
               {/* Unified Glass Container */}
 
@@ -470,7 +479,9 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           );
         }}
       />
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
