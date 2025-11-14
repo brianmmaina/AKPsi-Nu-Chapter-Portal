@@ -66,9 +66,9 @@ export const FAMILY_PRESENTATION = {
     legend: {
       title: 'Navigation',
       lines: ['0 reset view', '+ zoom in · - zoom out'],
-      panelBg: 'rgba(241,250,233,0.88)',
-      border: '1px solid rgba(244,217,97,0.35)',
-      textColor: 'rgba(12,35,23,0.82)',
+      panelBg: 'rgba(8, 20, 14, 0.78)',
+      border: '1px solid rgba(244,217,97,0.45)',
+      textColor: 'rgba(255,255,255,0.9)',
     },
   },
   pride: {
@@ -114,9 +114,9 @@ export const FAMILY_PRESENTATION = {
     legend: {
       title: 'Navigation',
       lines: ['0 reset view', '+ zoom in · - zoom out'],
-      panelBg: 'rgba(33,45,69,0.85)',
-      border: '1px solid rgba(140,166,209,0.35)',
-      textColor: 'rgba(214,223,240,0.88)',
+      panelBg: 'rgba(22, 34, 54, 0.82)',
+      border: '1px solid rgba(140,166,209,0.45)',
+      textColor: 'rgba(255,255,255,0.9)',
     },
   },
   default: {

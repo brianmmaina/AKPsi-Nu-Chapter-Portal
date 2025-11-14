@@ -483,6 +483,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         ...base,
         horizontalSpacing: 310,
         siblingPadding: 56,
+        baseVerticalSpacing: 215,
+        pledgeVerticalSpacing: 195,
       };
     }
 
@@ -1561,61 +1563,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           {toast.message}
         </div>
       )}
-      <div
-        style={{
-          position: 'absolute',
-          right: 24,
-          bottom: 24,
-          background: presentation.legend.panelBg,
-          border: presentation.legend.border,
-          color: presentation.legend.textColor,
-          fontSize: '10px',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          padding: '12px 16px',
-          borderRadius: 12,
-          pointerEvents: 'none',
-          boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
-          minWidth: 160,
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>
-          {presentation.legend.title}
-        </div>
-        {presentation.legend.lines.map((line) => (
-          <div key={line}>{line}</div>
-        ))}
-        <div
-          style={{
-            borderTop: `1px solid ${hexToRgba(presentation.legend.textColor, 0.25)}`,
-            margin: '8px 0',
-            opacity: 0.6,
-          }}
-        />
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>Tree Summary</div>
-        <div>{`${pledgeSummary.totalBrothers} brothers`}</div>
-        <div>{`${pledgeSummary.uniquePledgeClasses} pledge classes`}</div>
-        {pledgeSummary.placeholderCount > 0 && (
-          <div>{`${pledgeSummary.placeholderCount} awaiting assignment`}</div>
-        )}
-        {selectedBrother && (
-          <div
-            style={{
-              marginTop: 6,
-              paddingTop: 6,
-              borderTop: `1px solid ${hexToRgba(presentation.legend.textColor, 0.18)}`,
-              textTransform: 'none',
-              letterSpacing: '0.02em',
-      }}
-    >
-            <div style={{ fontWeight: 600, marginBottom: 2 }}>Selected</div>
-            <div>{selectedBrother.name}</div>
-            <div style={{ opacity: 0.7 }}>
-              {selectedBrother.pledge_class || 'Unassigned'}
-            </div>
-          </div>
-        )}
-      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1678,7 +1625,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           <button
             type="button"
             onClick={() => fitTreeToViewport(450)}
-            style={{
+        style={{
               width: 48,
               height: 48,
               borderRadius: '999px',
@@ -1718,9 +1665,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         />
       )}
 
-      <div
-        style={{
-          position: 'absolute',
+                  <div
+                    style={{
+                      position: 'absolute',
           right: 24,
           bottom: 24,
           background: hexToRgba(theme.background || '#000000', 0.92),
@@ -1728,7 +1675,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           color: theme.nodeText || '#ffffff',
           fontSize: 11,
           letterSpacing: '0.05em',
-          textTransform: 'uppercase',
+                      textTransform: 'uppercase',
           padding: '10px 14px',
           borderRadius: 12,
           pointerEvents: 'none',
@@ -1744,8 +1691,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         {pledgeSummary.placeholderCount > 0 && (
           <div style={{ textTransform: 'none', fontSize: 10, marginTop: 4, opacity: 0.8 }}>
             {`${pledgeSummary.placeholderCount} awaiting assignment`}
-          </div>
-        )}
+        </div>
+      )}
       </div>
 
       {/* Show helpful message if no relationships exist */}
