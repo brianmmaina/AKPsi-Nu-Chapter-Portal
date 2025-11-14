@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { hexToRgba } from '../utils/color';
 
+const LEFT_GUTTER = 140; // keep in sync with TreeVisualization
+
 const PledgeClassMarkers = ({
   markers = [],
   projectPosition,
@@ -50,10 +52,10 @@ const PledgeClassMarkers = ({
         position: 'absolute',
         top: 0,
         left: 0,
-        width: '90px',
+        width: `${LEFT_GUTTER}px`,
         height: '100%',
-        paddingTop: `calc(env(safe-area-inset-top, 0px))`,
-        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomBuffer}px)`,
+        pointerEvents: 'none',
+        zIndex: 20,
       }}
     >
       {markers.map((marker) => {
@@ -68,9 +70,8 @@ const PledgeClassMarkers = ({
             className="marker-interactive"
             style={{
               position: 'absolute',
-              left: 0,
+              left: 16,
               top: `${screenY}px`,
-              width: '100%',
               transform: 'translateY(-50%)',
               display: 'flex',
               alignItems: 'center',

@@ -35,6 +35,7 @@ export const calculateTreeLayout = ({
   renderNodeContent,
   isEmpire,
   onTreeBounds,
+  leftMargin = 0,
 }) => {
   // Safety check: ensure theme is initialized
   if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
@@ -128,7 +129,7 @@ export const calculateTreeLayout = ({
    * @param {number} y - Y position (generation level)
    */
   const positionNode = (nodeId, x, y) => {
-    nodePositions.set(nodeId, { x, y });
+    nodePositions.set(nodeId, { x: x + leftMargin, y });
     
     const children = childrenMap.get(nodeId) || [];
     if (children.length === 0) {

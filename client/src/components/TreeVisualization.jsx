@@ -155,6 +155,7 @@ const TREE_LAYER_CSS = `
 `;
 
 const BOTTOM_BUFFER = 4;
+const LEFT_GUTTER = 140;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -863,6 +864,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             treeBoundsRef.current = bounds;
           }
         },
+    leftMargin: LEFT_GUTTER,
         });
 
       // Validate layout result before setting
@@ -1093,7 +1095,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const nextZoom = Math.min(maxZoom, Math.max(minZoom, rawScale));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
-      const nextX = viewportWidth / 2 - centerX * nextZoom;
+      const visualCenterX = centerX - LEFT_GUTTER / 2;
+      const nextX = viewportWidth / 2 - visualCenterX * nextZoom;
       const nextY = viewportHeight / 2 - centerY * nextZoom;
 
       try {
