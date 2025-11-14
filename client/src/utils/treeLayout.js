@@ -359,19 +359,10 @@ export const calculateTreeLayout = ({
   }
 
   // Create edges - only if both nodes exist
-  // Empire-specific: Enhanced visibility with darker color, thicker stroke, and shadow
   const edgeColor = theme.edgeColor || theme.accent || '#666666';
-  
-  // For Empire, darken edge color by 10-15% and increase stroke width
-  let edgeBaseColor, edgeStrokeWidth;
-  if (isEmpire) {
-    // Darken Empire edge color: #b89347 -> #a0803a (approximately 12% darker)
-    edgeBaseColor = '#a0803a'; // Darkened warm beige tone
-    edgeStrokeWidth = 2.5; // Increased from 1px to 2.5px (1-2px increase as requested)
-  } else {
-    edgeBaseColor = hexToRgba(edgeColor, 1.0); // Full opacity - 100%
-    edgeStrokeWidth = 1; // Thin edges - 1px
-  }
+  const edgeStrokeWidthDefault = theme.edgeStrokeWidth || 2;
+  const edgeBaseColor = theme.edgeStrokeColor || hexToRgba(edgeColor, 1.0);
+  const edgeShadow = theme.edgeShadow;
   
   relationships.forEach(rel => {
     if (!rel || !rel.big_id || !rel.little_id) return;
@@ -391,26 +382,22 @@ export const calculateTreeLayout = ({
       
       // Lineage edges use full opacity, normal edges also use full opacity
       const edgeOpacity = isLineageEdge ? 1.0 : 1.0;
-      const edgeStroke = isLineageEdge ? 2.5 : edgeStrokeWidth;
+      const edgeStroke = isLineageEdge ? edgeStrokeWidthDefault + 0.6 : edgeStrokeWidthDefault;
       const edgeStrokeColor = isLineageEdge 
         ? hexToRgba(theme.accent || edgeColor, edgeOpacity)
         : edgeBaseColor;
       
-      // Empire edges get drop-shadow for better visibility
       const edgeStyle = {
         stroke: edgeStrokeColor,
         strokeWidth: edgeStroke,
         opacity: edgeOpacity,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
-        zIndex: 0, // Behind nodes
+        zIndex: 5,
+        shapeRendering: 'geometricPrecision',
       };
-      
-      // Add drop-shadow for Empire edges
-      if (isEmpire) {
-        edgeStyle.filter = 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.25)) drop-shadow(0px 0px 1px rgba(160, 128, 58, 0.4))';
-        // Ensure crisp edges at all zoom levels
-        edgeStyle.shapeRendering = 'geometricPrecision';
+      if (edgeShadow) {
+        edgeStyle.filter = edgeShadow;
       }
       
       const edge = {

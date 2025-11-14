@@ -12,6 +12,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import BrotherDetailModal from './BrotherDetailModal';
+import PledgeClassMarkers from './PledgeClassMarkers';
 import { getThemeStyles } from '../themes';
 import { hexToRgba } from '../utils/color';
 import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
@@ -32,6 +33,22 @@ import { useLineageHighlight } from '../hooks/useLineageHighlight';
  * @param {Function} props.onChangeFamily - Callback to change the selected family
  * @returns {JSX.Element} React Flow tree visualization
  */
+
+const TREE_LAYER_CSS = `
+.tree-pledge-markers {
+  pointer-events: none;
+  z-index: 20;
+}
+.tree-pledge-markers .marker-interactive {
+  pointer-events: auto;
+}
+.tree-controls {
+  z-index: 30 !important;
+}
+`;
+
+const HEADER_HEIGHT = 136;
+const BOTTOM_BUFFER = 4;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -287,11 +304,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           ? '280px 280px'
           : undefined;
 
-      // Header height for calculating tree container height
-      // New unified glass header: top panel (~68px) + bottom panel (~50px) + outer padding (~24px) = ~142px
-      const HEADER_HEIGHT = 136;
-      // Bottom buffer to prevent content cutoff (extra padding beyond safe area)
-      const BOTTOM_BUFFER = 4; // Reduced by 80% (from 20 to 4) for minimal spacing
       // Use calc to account for header, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
@@ -527,6 +539,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const setCenter = reactFlowInstance?.setCenter;
   const getViewport = reactFlowInstance?.getViewport;
   const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition; // New React Flow API (replaces deprecated project)
+  const projectMarkerPosition = useCallback(
+    (markerY) => {
+      try {
+        if (flowToScreenPosition && typeof flowToScreenPosition === 'function') {
+          return flowToScreenPosition({ x: 0, y: markerY });
+        }
+      } catch (error) {
+        console.warn('Failed to convert marker position:', error);
+      }
+      const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
+      return { y: (markerY * currentViewport.zoom) + currentViewport.y };
+    },
+    [flowToScreenPosition, viewport, defaultViewport],
+  );
 
   const pledgeSummary = useMemo(() => {
     const classes = new Set();
@@ -548,7 +574,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   // Calculate pledge class markers for left-side vertical stripes (Empire only)
   const pledgeClassMarkers = useMemo(() => {
-    if (!isEmpire || !isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
+    if (!isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
       return [];
     }
     
@@ -621,7 +647,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       console.warn('Error calculating pledge class markers:', error);
       return [];
     }
-  }, [isEmpire, isTreeReady, nodes, layoutSettings]);
+  }, [isTreeReady, nodes, layoutSettings]);
   
   // State for highlighting nodes when marker is clicked
   const [highlightedPledgeClass, setHighlightedPledgeClass] = useState(null);
@@ -733,7 +759,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // Separate effect to apply pledge class marker highlighting (Empire only)
   // This runs after nodes are set, avoiding infinite loops
   useEffect(() => {
-    if (!isEmpire || !nodes || nodes.length === 0 || pledgeClassMarkers.length === 0) {
+    if (!nodes || nodes.length === 0 || pledgeClassMarkers.length === 0) {
       return;
     }
 
@@ -830,7 +856,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       });
       return hasChanges ? updatedNodes : currentNodes;
     });
-  }, [isEmpire, highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers, nodes.length]);
+  }, [highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers, nodes.length]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -1307,7 +1333,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // Header height constant - single combined bar
   // Combined bar with family tabs, search, and controls in one row
   // Updated header height for unified glass panel design
-  const HEADER_HEIGHT = 136;
 
   // Handle null family case after all hooks
   if (!safeFamily || !safeFamily.theme) {
@@ -1357,6 +1382,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   return (
     <>
+      <style>{TREE_LAYER_CSS}</style>
       {/* Combined header rendered by parent */}
       {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
       <div className="w-full relative" style={{ ...containerStyle, position: 'relative' }}>
@@ -1539,125 +1565,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         proOptions={{ hideAttribution: true }}
       >
         <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
-        <Controls />
+        <Controls className="tree-controls" style={{ pointerEvents: 'auto' }} />
         <MiniMap 
           nodeColor={theme.minimapNode}
           style={{ backgroundColor: theme.minimapBg }}
         />
       </ReactFlow>
 
-      {/* Left-side Pledge Class Markers (Empire only) */}
-      {isEmpire && pledgeClassMarkers.length > 0 && (
-        <div
-          key={`pledge-markers-${viewport.x}-${viewport.y}-${viewport.zoom}`} // Force re-render on viewport change
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '80px', // Fixed width for marker area
-            height: '100%',
-            pointerEvents: 'auto',
-            zIndex: 2, // Above background, below nodes
-            paddingTop: `calc(136px + env(safe-area-inset-top, 0px))`, // HEADER_HEIGHT = 136
-            paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 4px)`, // BOTTOM_BUFFER = 4
-          }}
-        >
-          {pledgeClassMarkers.map((marker, idx) => {
-            // Use ReactFlow's flowToScreenPosition() to convert flow coordinates to screen coordinates
-            // (Replaces deprecated project() method)
-            let screenY;
-            try {
-              if (flowToScreenPosition && typeof flowToScreenPosition === 'function') {
-                const screenPos = flowToScreenPosition({ x: 0, y: marker.y });
-                screenY = screenPos.y;
-              } else {
-                // Fallback to manual calculation
-                const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
-                screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
-              }
-            } catch (error) {
-              console.warn('Failed to convert flow to screen position:', error);
-              const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
-              screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
-            }
-            
-            const isHighlighted = highlightedPledgeClass === marker.level;
-            const isHovered = hoveredMarkerLevel === marker.level;
-              
-              return (
-                <div
-                key={`pledge-marker-${marker.level}-${idx}`}
-        style={{
-          position: 'absolute',
-                  left: '0',
-                    top: `${screenY}px`,
-                    width: '100%',
-                    transform: 'translateY(-50%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  pointerEvents: 'auto',
-                  transition: 'opacity 0.2s ease',
-                }}
-                onMouseEnter={() => setHoveredMarkerLevel(marker.level)}
-                onMouseLeave={() => setHoveredMarkerLevel(null)}
-                onClick={() => {
-                  // Toggle highlight - click again to clear
-                  setHighlightedPledgeClass(isHighlighted ? null : marker.level);
-                  }}
-                >
-                {/* Vertical bar */}
-                  <div
-                    style={{
-                    width: '4px',
-                    height: '24px',
-                    background: isHovered || isHighlighted
-                      ? 'linear-gradient(to bottom, #e5c98f, #c5a666)' // Brighter on hover
-                      : 'linear-gradient(to bottom, #d9b87b, #be9d5b)', // Default gradient
-                    borderRadius: '2px',
-                    transition: 'all 0.2s ease',
-                    opacity: isHovered || isHighlighted ? 1 : 0.9,
-                    cursor: 'pointer',
-                  }}
-                />
-                
-                {/* Label card */}
-                <div
-                        style={{
-                    position: 'absolute',
-                    left: '12px',
-                    background: 'rgba(255, 255, 255, 0.35)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.55)',
-                    borderRadius: '6px',
-                    padding: '6px 10px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    color: '#3d3526',
-                          fontSize: '10px',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    maxWidth: '200px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    transition: 'all 0.2s ease',
-                    opacity: isHovered || isHighlighted ? 1 : 0.85,
-                    transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontWeight: 600, lineHeight: 1.2 }}>
-                    {marker.label.length > 15 ? marker.label.substring(0, 15) + '...' : marker.label}
-                  </div>
-                  {marker.yearLabel && (
-                    <div style={{ fontSize: '9px', opacity: 0.7, marginTop: '2px' }}>
-                      {marker.yearLabel}
-                    </div>
-                    )}
-                  </div>
-                </div>
-              );
-          })}
-        </div>
+      {pledgeClassMarkers.length > 0 && (
+        <PledgeClassMarkers
+          key={`pledge-markers-${viewport.x}-${viewport.y}-${viewport.zoom}`}
+          markers={pledgeClassMarkers}
+          projectPosition={projectMarkerPosition}
+          headerHeight={HEADER_HEIGHT}
+          bottomBuffer={BOTTOM_BUFFER}
+          highlightedLevel={highlightedPledgeClass}
+          hoveredLevel={hoveredMarkerLevel}
+          onHover={(level) => setHoveredMarkerLevel(level)}
+          onHoverEnd={() => setHoveredMarkerLevel(null)}
+          onToggle={(level) =>
+            setHighlightedPledgeClass((prev) => (prev === level ? null : level))
+          }
+          theme={theme}
+        />
       )}
 
       {/* Show helpful message if no relationships exist */}
