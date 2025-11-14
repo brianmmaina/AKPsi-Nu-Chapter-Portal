@@ -569,13 +569,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                         }}
 
                       >
-                        <style>{`
-                          select option {
-                            color: #000000 !important;
-                            background: #ffffff;
-                          }
-                        `}</style>
-
                         <option value="off">Highlight: Off</option>
 
                         <option value="ancestors">Highlight: Ancestors</option>
