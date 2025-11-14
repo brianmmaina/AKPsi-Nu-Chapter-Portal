@@ -136,13 +136,6 @@ const TREE_LAYER_CSS = `
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.tree-silhouette {
-  border-radius: 60% 40% 55% 45%;
-  filter: blur(60px);
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 0;
-}
 @media print {
   .tree-pledge-markers {
     opacity: 0.35;
@@ -450,48 +443,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     [reactFlowInstance, viewport],
   );
 
-  const silhouetteStyle = useMemo(() => {
-    if (!isTreeReady) {
-      return null;
-    }
-    const bounds = treeBoundsRef.current;
-    if (!bounds || !bounds.width || !bounds.height) {
-      return null;
-    }
-
-    const centerPoint = {
-      x: bounds.minX + bounds.width / 2,
-      y: bounds.minY + bounds.height / 2,
-    };
-
-    const topLeft = toScreenPosition({ x: bounds.minX, y: bounds.minY });
-    const bottomRight = toScreenPosition({ x: bounds.maxX, y: bounds.maxY });
-    const center = toScreenPosition(centerPoint);
-    if (!topLeft || !bottomRight || !center) {
-      return null;
-    }
-
-    const wrapperWidth = flowWrapperRef.current?.clientWidth || Math.abs(bottomRight.x - topLeft.x);
-    const wrapperHeight = flowWrapperRef.current?.clientHeight || Math.abs(bottomRight.y - topLeft.y);
-    const width = Math.min(
-      Math.abs(bottomRight.x - topLeft.x) * 1.15,
-      wrapperWidth * 1.35,
-    );
-    const height = Math.min(
-      Math.abs(bottomRight.y - topLeft.y) * 1.2,
-      wrapperHeight * 1.25,
-    );
-
-    return {
-      width,
-      height,
-      left: center.x - width / 2,
-      top: center.y - height / 2,
-      background:
-        theme?.silhouetteGradient ||
-        'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.14), rgba(0,0,0,0) 70%)',
-    };
-  }, [isTreeReady, theme, toScreenPosition]);
   const layoutSettings = useMemo(() => {
     const base = {
       horizontalSpacing: 320,
@@ -1585,12 +1536,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         >
           {toast.message}
         </div>
-      )}
-      {silhouetteStyle && (
-        <div
-          className="tree-silhouette"
-          style={silhouetteStyle}
-        />
       )}
       <div
         style={{
