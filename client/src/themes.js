@@ -1,162 +1,224 @@
-export const getThemeStyles = (themeName) => {
-  const themes = {
-    // EMPIRE - Cream background, white boxes, tan borders, dark gray lines
-    // From family-tree-corrected.md: #f8f7f3 cream, #c9a857 gold primary
-    empire: {
-      background: '#f1e7d1',
-      backgroundGrid: '#d9c7a8', // Increased opacity ~5% (from #e6d9bd to #d9c7a8) for better grid visibility
-      backgroundTexture: 'radial-gradient(closest-side, rgba(201,168,87,0.08), rgba(0,0,0,0) 60%)',
-      nodeStudying: '#fff7ea',
-      nodeGraduated: '#fff7ea',
-      nodeBorder: '#d6b87a',
-      nodeText: '#3b2b16',
-    edgeColor: '#b89347',
-    edgeStrokeWidth: 2.4,
-    edgeStrokeColor: '#a0803a',
-    edgeShadow: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.25)) drop-shadow(0px 0px 1px rgba(160, 128, 58, 0.4))',
-      minimapNode: '#c9a857',
-      minimapBg: '#f1e7d1',
-      modalBg: 'rgba(241, 231, 210, 0.92)',
-      accent: '#c9a857',
-      titleFont: 'Cinzel, serif',
-      bodyFont: 'Inter, system-ui, sans-serif',
-      nodeRadius: 6,
-      edgeType: 'smoothstep',
-      edgeAnimated: false,
-      backgroundVariant: 'lines',
-    pledgeMarkerAccent: '#d9b87b',
-    pledgeMarkerAccentEnd: '#be9d5b',
+const TREE_THEMES = {
+  empire: {
+    key: 'empire',
+    background: '#f1e7d1',
+    bgGradient:
+      'radial-gradient(circle at 10% 20%, rgba(255,255,255,0.45), rgba(241,231,209,0.85) 45%, rgba(229,208,174,0.65) 70%), linear-gradient(180deg, #f7efd9 0%, #ebd6ac 100%)',
+    gridColor: '#d2b98d',
+    gridOpacity: 0.16,
+    nodeStudying: '#fff9ef',
+    nodeGraduated: '#fff7ea',
+    nodeBorder: '#d6b87a',
+    nodeText: '#3b2b16',
+    nodeSecondaryText: 'rgba(59, 43, 22, 0.78)',
+    nodeCardBg: 'rgba(255, 255, 255, 0.38)',
+    nodeCardBorder: '1px solid rgba(145, 104, 29, 0.55)',
+    nodeCardShadow: '0 12px 28px rgba(65, 45, 10, 0.18)',
+    nodeCardHoverShadow: '0 16px 32px rgba(65, 45, 10, 0.28)',
+    nodeCardAccent: 'linear-gradient(90deg, rgba(201,168,87,0.85) 0px, transparent 14px)',
+    edgeColor: '#c7a25f',
+    edgeStrokeWidth: 3,
+    edgeBaseColor: '#a47a38',
+    edgeGlowColor: 'rgba(255, 230, 180, 0.65)',
+    edgeShadow: 'drop-shadow(0px 2px 4px rgba(56, 38, 9, 0.35)) drop-shadow(0px 0px 4px rgba(187, 144, 60, 0.45))',
+    minimapNode: '#c9a857',
+    minimapBg: '#f1e7d1',
+    modalBg: 'rgba(245, 234, 210, 0.92)',
+    accent: '#c9a857',
+    titleFont: 'Cinzel, serif',
+    bodyFont: 'Inter, system-ui, sans-serif',
+    nodeRadius: 12,
+    edgeType: 'smoothstep',
+    edgeAnimated: false,
+    backgroundVariant: 'lines',
+    pledgeMarkerAccent: 'linear-gradient(to bottom, #e0c188, #bd9a57)',
+    pledgeMarkerAccentEnd: 'linear-gradient(to bottom, #d9b87b, #b7873e)',
     pledgeMarkerText: '#3d3526',
-    pledgeMarkerLabelBg: 'rgba(255, 255, 255, 0.35)',
-    pledgeMarkerLabelBorder: 'rgba(255, 255, 255, 0.55)',
-    },
-    // POWER - Very dark navy with champagne gold accents
-    // From family-tree-corrected.md: #101a26 dark navy, #ebd290 champagne gold
-    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
-    power: {
-      background: '#101a26',
-      backgroundGrid: '#0d151f',
-      backgroundTexture: 'radial-gradient(closest-side, rgba(235,210,144,0.08), rgba(0,0,0,0) 60%)',
-      nodeStudying: 'rgba(17, 30, 48, 0.96)', // solid cards
-      nodeGraduated: 'rgba(17, 30, 48, 0.96)',
-      nodeBorder: '#f3dca6', // Champagne gold border
-      nodeText: '#ffffff', // White text
-    edgeColor: '#f6e4b7', // Gold connecting lines
-    edgeStrokeWidth: 2.2,
-    edgeStrokeColor: 'rgba(246, 228, 183, 0.95)',
-    edgeShadow: 'drop-shadow(0px 1px 2px rgba(8,16,24,0.65)) drop-shadow(0px 0px 1px rgba(235,210,144,0.45))',
-      minimapNode: '#ebd290',
-      minimapBg: '#101a26',
-      modalBg: 'rgba(16, 26, 38, 0.95)',
-      accent: '#ebd290', // Champagne gold primary
-      titleFont: 'Orbitron, sans-serif', // Modern, powerful font
-      bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 6, // Match Empire format
-      edgeType: 'smoothstep',
-      edgeAnimated: false,
-      backgroundVariant: 'lines',
-    pledgeMarkerAccent: '#f3e2b2',
-    pledgeMarkerAccentEnd: '#d9b67a',
-    pledgeMarkerText: '#fdf5dc',
-    pledgeMarkerLabelBg: 'rgba(17, 30, 48, 0.86)',
-    pledgeMarkerLabelBorder: 'rgba(243, 220, 166, 0.55)',
-    },
-    // GREED - Deep forest green background with white boxes and yellow-gold accents
-    // From family-tree-corrected.md: #095332 forest green, #f4d961 golden yellow
-    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
-    greed: {
-      background: '#064729',
-      backgroundGrid: '#04341f',
-      backgroundTexture: 'radial-gradient(closest-side, rgba(244,217,97,0.08), rgba(0,0,0,0) 60%)',
-      nodeStudying: '#fcfff7', // bright cards
-      nodeGraduated: '#fcfff7',
-      nodeBorder: '#d8f2a8', // vivid border
-      nodeText: '#0a2316', // Deep forest text for contrast
-    edgeColor: '#f9e97a', // luminous gold connecting lines
-    edgeStrokeWidth: 2.2,
-    edgeStrokeColor: 'rgba(244, 217, 97, 0.85)',
-    edgeShadow: 'drop-shadow(0px 1px 2px rgba(5,40,26,0.55)) drop-shadow(0px 0px 1px rgba(244,217,97,0.35))',
-      minimapNode: '#ffffff',
-      minimapBg: '#064729',
-      modalBg: 'rgba(7, 58, 34, 0.95)',
-      accent: '#f6e66a', // Golden yellow primary
-      titleFont: 'Montserrat, system-ui, sans-serif', // Heavy/bold sans-serif
-      bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 6, // Match Empire format
-      edgeType: 'smoothstep',
-      edgeAnimated: false,
-      backgroundVariant: 'lines',
-    pledgeMarkerAccent: '#f4d961',
-    pledgeMarkerAccentEnd: '#c5b04b',
-    pledgeMarkerText: '#0a2316',
-    pledgeMarkerLabelBg: 'rgba(252, 255, 247, 0.8)',
-    pledgeMarkerLabelBorder: 'rgba(216, 242, 168, 0.65)',
-    },
-    // WOLFPACK - Slate blue background, white boxes, dark blue headers
-    // From family-tree-corrected.md: #364c73 slate blue, #ffffff white primary, #3d5373 dark blue headers
-    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
-    wolfpack: {
-      background: '#364c73',
-      backgroundGrid: '#2a3a5c',
-      backgroundTexture: 'radial-gradient(closest-side, rgba(156,184,234,0.08), rgba(0,0,0,0) 60%)',
-      nodeStudying: '#f7faff', // Bright cards
-      nodeGraduated: '#f7faff',
-      nodeBorder: '#d6e4ff', // Brighter border for contrast
-      nodeText: '#1e2c45', // Deep navy text
-    edgeColor: '#f0f6ff', // High contrast connecting lines
-    edgeStrokeWidth: 2.2,
-    edgeStrokeColor: 'rgba(214, 228, 255, 0.85)',
-    edgeShadow: 'drop-shadow(0px 1px 2px rgba(26,38,66,0.45)) drop-shadow(0px 0px 1px rgba(214,228,255,0.4))',
-      minimapNode: '#ffffff',
-      minimapBg: '#2a3a5c',
-      modalBg: 'rgba(54, 76, 115, 0.95)',
-      accent: '#ffffff', // White primary - ALL WOLFPACK text should be white
-      accentSecondary: '#3d5373', // Dark blue for headers/boxes
-      titleFont: 'Russo One, sans-serif', // Heavy bold sans-serif
-      bodyFont: 'Montserrat, system-ui, sans-serif',
-      nodeRadius: 6, // Match Empire format
-      edgeType: 'smoothstep',
-      edgeAnimated: false,
-      backgroundVariant: 'lines',
-    pledgeMarkerAccent: '#d6e4ff',
-    pledgeMarkerAccentEnd: '#9cb4e6',
-    pledgeMarkerText: '#1e2c45',
+    pledgeMarkerLabelBg: 'rgba(255, 255, 255, 0.4)',
+    pledgeMarkerLabelBorder: '1px solid rgba(255, 255, 255, 0.55)',
+    pledgeMarkerShadow: '0 6px 16px rgba(46, 29, 3, 0.18)',
+    controlsPanelBg: 'rgba(255, 255, 255, 0.32)',
+    controlsBorder: '1px solid rgba(145, 104, 29, 0.2)',
+    controlsShadow: '0 10px 20px rgba(58, 38, 8, 0.18)',
+  },
+  power: {
+    key: 'power',
+    background: '#0d1724',
+    bgGradient:
+      'radial-gradient(circle at 20% 20%, rgba(30,44,68,0.95), rgba(10,18,32,0.92) 55%), linear-gradient(180deg, #0c1522 0%, #03070d 88%)',
+    gridColor: '#19283b',
+    gridOpacity: 0.18,
+    nodeStudying: 'rgba(17, 30, 48, 0.96)',
+    nodeGraduated: 'rgba(17, 30, 48, 0.96)',
+    nodeBorder: 'rgba(243, 220, 166, 0.8)',
+    nodeText: '#fef4d7',
+    nodeSecondaryText: 'rgba(248, 235, 206, 0.82)',
+    nodeCardBg: 'rgba(17, 30, 48, 0.75)',
+    nodeCardBorder: '1px solid rgba(243, 220, 166, 0.55)',
+    nodeCardShadow: '0 18px 40px rgba(4, 8, 15, 0.55)',
+    nodeCardHoverShadow: '0 24px 48px rgba(4, 8, 15, 0.65)',
+    nodeCardAccent: 'linear-gradient(90deg, rgba(243,220,166,0.65) 0px, transparent 14px)',
+    edgeColor: '#f6e4b7',
+    edgeStrokeWidth: 3,
+    edgeBaseColor: 'rgba(246, 228, 183, 0.95)',
+    edgeGlowColor: 'rgba(251, 237, 202, 0.65)',
+    edgeShadow: 'drop-shadow(0px 2px 5px rgba(9, 14, 22, 0.55)) drop-shadow(0px 0px 4px rgba(243, 220, 166, 0.35))',
+    minimapNode: '#ebd290',
+    minimapBg: '#0c1522',
+    modalBg: 'rgba(9, 16, 28, 0.9)',
+    accent: '#ebd290',
+    titleFont: 'Orbitron, sans-serif',
+    bodyFont: 'Montserrat, system-ui, sans-serif',
+    nodeRadius: 12,
+    edgeType: 'smoothstep',
+    edgeAnimated: false,
+    backgroundVariant: 'lines',
+    pledgeMarkerAccent: 'linear-gradient(to bottom, #f3e2b2, #cca462)',
+    pledgeMarkerAccentEnd: 'linear-gradient(to bottom, #d4b565, #a8843a)',
+    pledgeMarkerText: '#faedca',
+    pledgeMarkerLabelBg: 'rgba(5, 10, 18, 0.85)',
+    pledgeMarkerLabelBorder: '1px solid rgba(243, 220, 166, 0.35)',
+    pledgeMarkerShadow: '0 10px 24px rgba(4, 6, 10, 0.65)',
+    controlsPanelBg: 'rgba(6, 12, 20, 0.72)',
+    controlsBorder: '1px solid rgba(243, 220, 166, 0.25)',
+    controlsShadow: '0 14px 30px rgba(2, 3, 5, 0.65)',
+  },
+  greed: {
+    key: 'greed',
+    background: '#042f19',
+    bgGradient:
+      'radial-gradient(circle at 15% 30%, rgba(9,83,50,0.9), rgba(4,47,25,0.88) 55%), linear-gradient(180deg, #0a3f23 0%, #02180c 95%)',
+    gridColor: '#0f3f24',
+    gridOpacity: 0.18,
+    nodeStudying: '#fdfef8',
+    nodeGraduated: '#fdfef8',
+    nodeBorder: 'rgba(216, 242, 168, 0.75)',
+    nodeText: '#102717',
+    nodeSecondaryText: 'rgba(10, 35, 23, 0.78)',
+    nodeCardBg: 'rgba(249, 255, 239, 0.82)',
+    nodeCardBorder: '1px solid rgba(216, 242, 168, 0.55)',
+    nodeCardShadow: '0 18px 36px rgba(3, 28, 16, 0.45)',
+    nodeCardHoverShadow: '0 22px 42px rgba(3, 25, 15, 0.55)',
+    nodeCardAccent: 'linear-gradient(90deg, rgba(244,217,97,0.6) 0px, transparent 14px)',
+    edgeColor: '#f6e368',
+    edgeStrokeWidth: 3,
+    edgeBaseColor: 'rgba(244, 217, 97, 0.9)',
+    edgeGlowColor: 'rgba(255, 245, 166, 0.55)',
+    edgeShadow: 'drop-shadow(0px 2px 6px rgba(4, 39, 23, 0.55)) drop-shadow(0px 0px 6px rgba(240, 219, 120, 0.45))',
+    minimapNode: '#f5fdd9',
+    minimapBg: '#032718',
+    modalBg: 'rgba(3, 34, 20, 0.92)',
+    accent: '#f4d961',
+    titleFont: 'Montserrat, system-ui, sans-serif',
+    bodyFont: 'Montserrat, system-ui, sans-serif',
+    nodeRadius: 12,
+    edgeType: 'smoothstep',
+    edgeAnimated: false,
+    backgroundVariant: 'lines',
+    pledgeMarkerAccent: 'linear-gradient(to bottom, #f6e66a, #caae41)',
+    pledgeMarkerAccentEnd: 'linear-gradient(to bottom, #d1b44f, #a2832c)',
+    pledgeMarkerText: '#132d1c',
+    pledgeMarkerLabelBg: 'rgba(255, 255, 247, 0.85)',
+    pledgeMarkerLabelBorder: '1px solid rgba(216, 242, 168, 0.55)',
+    pledgeMarkerShadow: '0 10px 24px rgba(2, 16, 9, 0.4)',
+    controlsPanelBg: 'rgba(4, 37, 22, 0.78)',
+    controlsBorder: '1px solid rgba(216, 242, 168, 0.25)',
+    controlsShadow: '0 16px 28px rgba(0, 0, 0, 0.45)',
+  },
+  wolfpack: {
+    key: 'wolfpack',
+    background: '#1f2e4a',
+    bgGradient:
+      'radial-gradient(circle at 18% 25%, rgba(110,140,190,0.65), rgba(40,58,90,0.88) 55%), linear-gradient(180deg, #1c2940 0%, #0c1220 92%)',
+    gridColor: '#2e3f5f',
+    gridOpacity: 0.16,
+    nodeStudying: '#f4f7ff',
+    nodeGraduated: '#f4f7ff',
+    nodeBorder: 'rgba(214, 228, 255, 0.75)',
+    nodeText: '#13213b',
+    nodeSecondaryText: 'rgba(28, 43, 72, 0.75)',
+    nodeCardBg: 'rgba(247, 250, 255, 0.78)',
+    nodeCardBorder: '1px solid rgba(214, 228, 255, 0.55)',
+    nodeCardShadow: '0 14px 32px rgba(13, 20, 38, 0.35)',
+    nodeCardHoverShadow: '0 20px 40px rgba(13, 20, 38, 0.45)',
+    nodeCardAccent: 'linear-gradient(90deg, rgba(156,184,234,0.68) 0px, transparent 14px)',
+    edgeColor: '#f0f6ff',
+    edgeStrokeWidth: 3,
+    edgeBaseColor: 'rgba(214, 228, 255, 0.9)',
+    edgeGlowColor: 'rgba(150, 190, 255, 0.6)',
+    edgeShadow: 'drop-shadow(0px 2px 5px rgba(12, 18, 30, 0.55)) drop-shadow(0px 0px 4px rgba(200, 220, 255, 0.45))',
+    minimapNode: '#f8fbff',
+    minimapBg: '#101a2b',
+    modalBg: 'rgba(12, 18, 32, 0.94)',
+    accent: '#f5f8ff',
+    titleFont: 'Russo One, sans-serif',
+    bodyFont: 'Montserrat, system-ui, sans-serif',
+    nodeRadius: 12,
+    edgeType: 'smoothstep',
+    edgeAnimated: false,
+    backgroundVariant: 'lines',
+    pledgeMarkerAccent: 'linear-gradient(to bottom, #d6e4ff, #9cb4e6)',
+    pledgeMarkerAccentEnd: 'linear-gradient(to bottom, #a3b9ec, #6c83bf)',
+    pledgeMarkerText: '#1c2b45',
     pledgeMarkerLabelBg: 'rgba(247, 250, 255, 0.85)',
-    pledgeMarkerLabelBorder: 'rgba(214, 228, 255, 0.6)',
-    },
-    // PRIDE - Very dark brown/black with muted gold accents, photo-focused
-    // From family-tree-corrected.md: #181413 dark brown, #d4af7e muted gold
-    // Applied Empire format: backgroundTexture, edgeAnimated: false, backgroundVariant: 'lines', nodeRadius: 6
-    pride: {
-      background: '#181413',
-      backgroundGrid: '#242220',
-      backgroundTexture: 'radial-gradient(closest-side, rgba(212,175,126,0.08), rgba(0,0,0,0) 60%)',
-      nodeStudying: '#2a1d12', // Solid dark card
-      nodeGraduated: '#2a1d12',
-      nodeBorder: '#d4af7e', // Muted gold border
-      nodeText: '#ffffff', // White text
-    edgeColor: '#d4af7e', // Gold connecting lines
-    edgeStrokeWidth: 2.2,
-    edgeStrokeColor: 'rgba(212, 175, 126, 0.92)',
-    edgeShadow: 'drop-shadow(0px 1px 2px rgba(12,10,8,0.55)) drop-shadow(0px 0px 1px rgba(212,175,126,0.45))',
-      minimapNode: '#d4af7e',
-      minimapBg: '#181413',
-      modalBg: 'rgba(24, 20, 19, 0.95)',
-      accent: '#d4af7e', // Muted gold primary
-      titleFont: 'Cinzel, serif', // Elegant serif
-      bodyFont: 'Inter, system-ui, sans-serif',
-      nodeRadius: 6, // Match Empire format
-      edgeType: 'smoothstep',
-      edgeAnimated: false,
-      backgroundVariant: 'lines',
-    pledgeMarkerAccent: '#d4af7e',
-    pledgeMarkerAccentEnd: '#b88f63',
-    pledgeMarkerText: '#fbf7ee',
-    pledgeMarkerLabelBg: 'rgba(36, 24, 18, 0.9)',
-    pledgeMarkerLabelBorder: 'rgba(212, 175, 126, 0.55)',
-    },
-  };
-
-  return themes[themeName] || themes.wolfpack;
+    pledgeMarkerLabelBorder: '1px solid rgba(214, 228, 255, 0.45)',
+    pledgeMarkerShadow: '0 8px 18px rgba(8, 12, 20, 0.4)',
+    controlsPanelBg: 'rgba(14, 24, 42, 0.78)',
+    controlsBorder: '1px solid rgba(214, 228, 255, 0.25)',
+    controlsShadow: '0 16px 30px rgba(5, 9, 15, 0.5)',
+  },
+  pride: {
+    key: 'pride',
+    background: '#14100e',
+    bgGradient:
+      'radial-gradient(circle at 22% 25%, rgba(80,55,36,0.65), rgba(25,18,12,0.95) 62%), linear-gradient(180deg, #1d140f 0%, #080603 100%)',
+    gridColor: '#2a231f',
+    gridOpacity: 0.16,
+    nodeStudying: '#2a1d12',
+    nodeGraduated: '#2a1d12',
+    nodeBorder: 'rgba(212, 175, 126, 0.75)',
+    nodeText: '#fff3df',
+    nodeSecondaryText: 'rgba(249, 228, 197, 0.78)',
+    nodeCardBg: 'rgba(32, 22, 15, 0.82)',
+    nodeCardBorder: '1px solid rgba(212, 175, 126, 0.55)',
+    nodeCardShadow: '0 16px 38px rgba(5, 4, 3, 0.65)',
+    nodeCardHoverShadow: '0 20px 46px rgba(5, 4, 3, 0.75)',
+    nodeCardAccent: 'linear-gradient(90deg, rgba(212,175,126,0.65) 0px, transparent 14px)',
+    edgeColor: '#d4af7e',
+    edgeStrokeWidth: 3,
+    edgeBaseColor: 'rgba(212, 175, 126, 0.92)',
+    edgeGlowColor: 'rgba(255, 220, 170, 0.5)',
+    edgeShadow: 'drop-shadow(0px 3px 6px rgba(8, 5, 2, 0.65)) drop-shadow(0px 0px 4px rgba(212, 175, 126, 0.45))',
+    minimapNode: '#d4af7e',
+    minimapBg: '#0b0a08',
+    modalBg: 'rgba(12, 9, 7, 0.95)',
+    accent: '#d4af7e',
+    titleFont: 'Cinzel, serif',
+    bodyFont: 'Inter, system-ui, sans-serif',
+    nodeRadius: 12,
+    edgeType: 'smoothstep',
+    edgeAnimated: false,
+    backgroundVariant: 'lines',
+    pledgeMarkerAccent: 'linear-gradient(to bottom, #d4af7e, #b8864d)',
+    pledgeMarkerAccentEnd: 'linear-gradient(to bottom, #be9060, #8a6234)',
+    pledgeMarkerText: '#fff4e2',
+    pledgeMarkerLabelBg: 'rgba(22, 15, 10, 0.9)',
+    pledgeMarkerLabelBorder: '1px solid rgba(212, 175, 126, 0.5)',
+    pledgeMarkerShadow: '0 12px 26px rgba(2, 1, 0, 0.65)',
+    controlsPanelBg: 'rgba(16, 11, 7, 0.84)',
+    controlsBorder: '1px solid rgba(212, 175, 126, 0.25)',
+    controlsShadow: '0 18px 30px rgba(0, 0, 0, 0.55)',
+  },
 };
 
+const DEFAULT_THEME = TREE_THEMES.empire;
+
+export const getThemeStyles = (themeName) => {
+  const theme = TREE_THEMES[themeName] || TREE_THEMES.wolfpack || DEFAULT_THEME;
+  return {
+    ...DEFAULT_THEME,
+    ...theme,
+  };
+};
+
+export const TREE_THEMES_MAP = TREE_THEMES;

@@ -22,6 +22,7 @@ const PledgeClassMarkers = ({
   const markerText = theme?.pledgeMarkerText || theme?.nodeText || '#3d3526';
   const labelBg = theme?.pledgeMarkerLabelBg || 'rgba(255,255,255,0.35)';
   const labelBorder = theme?.pledgeMarkerLabelBorder || 'rgba(255,255,255,0.55)';
+  const labelShadow = theme?.pledgeMarkerShadow || '0 6px 16px rgba(0,0,0,0.18)';
   const yearText = theme?.pledgeMarkerYearText || hexToRgba(markerText, 0.8);
 
   return (
@@ -81,7 +82,9 @@ const PledgeClassMarkers = ({
                 border: `1px solid ${labelBorder}`,
                 borderRadius: '6px',
                 padding: '6px 10px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                boxShadow: labelShadow,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 color: markerText,
                 fontSize: '10px',
                 fontWeight: 600,

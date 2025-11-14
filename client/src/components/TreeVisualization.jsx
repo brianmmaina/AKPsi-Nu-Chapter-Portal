@@ -42,8 +42,41 @@ const TREE_LAYER_CSS = `
 .tree-pledge-markers .marker-interactive {
   pointer-events: auto;
 }
+.tree-node-card {
+  will-change: transform, box-shadow, filter;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  border-radius: inherit !important;
+}
+.tree-node-card:hover,
+.tree-node-card:focus-within {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: var(--node-hover-shadow, 0 18px 36px rgba(0,0,0,0.22)) !important;
+  filter: brightness(var(--node-hover-brightness, 1.02));
+}
+.tree-controls-panel {
+  border-radius: 18px;
+  overflow: hidden;
+}
+.tree-controls-panel .react-flow__controls {
+  background: transparent !important;
+}
+.tree-controls-panel .react-flow__controls-button {
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  margin: 2px;
+}
+.tree-controls-panel .react-flow__controls-button svg {
+  width: 18px;
+  height: 18px;
+}
 .tree-controls {
   z-index: 30 !important;
+}
+@media print {
+  .tree-pledge-markers {
+    opacity: 0.35;
+  }
 }
 `;
 
@@ -133,13 +166,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       // Ensure all required properties exist with fallback values
       const safeTheme = {
         background: themeResult.background || '#364c73',
-        backgroundGrid: themeResult.backgroundGrid || '#2a3a5c',
-        backgroundTexture: themeResult.backgroundTexture || undefined,
+        bgGradient: themeResult.bgGradient || themeResult.backgroundTexture || undefined,
+        backgroundGrid: themeResult.gridColor || themeResult.backgroundGrid || '#2a3a5c',
+        gridOpacity: typeof themeResult.gridOpacity === 'number' ? themeResult.gridOpacity : 0.12,
         nodeStudying: themeResult.nodeStudying || '#f7faff',
         nodeGraduated: themeResult.nodeGraduated || '#f7faff',
         nodeBorder: themeResult.nodeBorder || '#d6e4ff',
         nodeText: themeResult.nodeText || '#1e2c45',
+        nodeSecondaryText: themeResult.nodeSecondaryText || 'rgba(30,33,45,0.75)',
+        nodeCardBg: themeResult.nodeCardBg,
+        nodeCardBorder: themeResult.nodeCardBorder,
+        nodeCardShadow: themeResult.nodeCardShadow,
+        nodeCardHoverShadow: themeResult.nodeCardHoverShadow,
+        nodeCardAccent: themeResult.nodeCardAccent,
         edgeColor: themeResult.edgeColor || '#f0f6ff',
+        edgeBaseColor: themeResult.edgeBaseColor,
+        edgeGlowColor: themeResult.edgeGlowColor,
         minimapNode: themeResult.minimapNode || '#ffffff',
         minimapBg: themeResult.minimapBg || '#2a3a5c',
         modalBg: themeResult.modalBg || 'rgba(54, 76, 115, 0.95)',
@@ -150,6 +192,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         edgeType: themeResult.edgeType || 'smoothstep',
         edgeAnimated: themeResult.edgeAnimated !== undefined ? themeResult.edgeAnimated : false,
         backgroundVariant: themeResult.backgroundVariant || 'dots',
+        pledgeMarkerAccent: themeResult.pledgeMarkerAccent,
+        pledgeMarkerAccentEnd: themeResult.pledgeMarkerAccentEnd,
+        pledgeMarkerText: themeResult.pledgeMarkerText,
+        pledgeMarkerLabelBg: themeResult.pledgeMarkerLabelBg,
+        pledgeMarkerLabelBorder: themeResult.pledgeMarkerLabelBorder,
+        pledgeMarkerShadow: themeResult.pledgeMarkerShadow,
+        controlsPanelBg: themeResult.controlsPanelBg,
+        controlsBorder: themeResult.controlsBorder,
+        controlsShadow: themeResult.controlsShadow,
       };
       
       return safeTheme;
@@ -264,21 +315,18 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   
   const composedBackground = useMemo(() => {
     try {
+      if (theme?.bgGradient) {
+        return theme.bgGradient;
+      }
       const layers = [];
-      // Access properties directly without optional chaining in dependency array
       const bgLayers = presentation && presentation.backgroundLayers;
       if (bgLayers && Array.isArray(bgLayers) && bgLayers.length > 0) {
         layers.push(...bgLayers);
       }
-      const bgTexture = theme && theme.backgroundTexture;
-      if (bgTexture) {
-        layers.push(bgTexture);
-      }
       return layers.length > 0 ? layers.join(', ') : undefined;
     } catch (error) {
       console.warn('Error composing background:', error);
-      const bgTexture = theme && theme.backgroundTexture;
-      return bgTexture || undefined;
+      return theme?.bgGradient || undefined;
     }
   }, [presentation, theme]);
 
@@ -296,14 +344,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
     
     try {
-      const sizeValue = isEmpire
-        ? theme.backgroundTexture
-          ? '100% 100%, 100% 100%, 280px 280px'
-          : '100% 100%, 100% 100%'
-        : theme.backgroundTexture
-          ? '280px 280px'
-          : undefined;
-
       // Use calc to account for header, safe area insets, and bottom buffer
       // Safe area insets prevent content from being cut off on devices with notches/home indicators
       // env(safe-area-inset-top) for top notch, env(safe-area-inset-bottom) for bottom home indicator
@@ -316,7 +356,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         minHeight: '100vh',
         backgroundColor: theme.background || '#f5f5f5', // Base background color extends behind header
         backgroundImage: composedBackground || undefined,
-        backgroundSize: sizeValue,
+        backgroundSize: theme.bgGradient ? 'cover' : undefined,
         backgroundPosition: 'center',
         pointerEvents: 'auto',
         opacity: isTreeReady ? 1 : 0,
@@ -433,90 +473,111 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const placeholderText = 'Awaiting lineage assignment';
       const effectiveName = brother.name || 'Unassigned';
 
+      const majorLabel = brother.major ? brother.major.trim() : null;
+
       return (
-            <div 
-              style={{ 
+        <div
+          style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
-            maxWidth: 190,
+            gap: 6,
+            maxWidth: 210,
             whiteSpace: 'normal',
             color: palette.bodyColor,
-              }}
-            >
+          }}
+        >
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'space-between',
               gap: 8,
             }}
           >
-              <div 
-                style={{ 
-                  fontSize: '9px',
-                letterSpacing: '0.9px',
+            <div
+              style={{
+                fontSize: '9px',
+                letterSpacing: '0.8px',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
                 borderRadius: 999,
                 background: palette.badgeBg,
                 color: palette.badgeColor,
                 fontWeight: 600,
-                }}
-              >
-              {pledgeLabel}
-              </div>
-            {isTransfer && (
-            <div 
-              style={{ 
-                fontSize: '9px',
-                  letterSpacing: '0.6px',
-                  textTransform: 'uppercase',
-                  color: palette.transferColor,
               }}
             >
-                Transfer
+              {pledgeLabel}
             </div>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div 
-                style={{ 
-                fontFamily: themeToUse.titleFont,
-                fontSize: palette.nameSize || '12px',
-                letterSpacing: palette.nameTracking || '0.5px',
-                lineHeight: 1.32,
-                color: palette.nameColor,
-                }}
-              >
-              {effectiveName}
-              </div>
-              <div 
-                style={{ 
+            <div
+              style={{
                 fontSize: '10px',
                 color: palette.statusColor,
-                fontWeight: 500,
-                letterSpacing: '0.3px',
-                lineHeight: 1.4,
+                letterSpacing: '0.35px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+              }}
+            >
+              {statusLabel}
+            </div>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: themeToUse.titleFont,
+                fontSize: palette.nameSize || '14px',
+                letterSpacing: palette.nameTracking || '0.4px',
+                lineHeight: 1.28,
+                color: palette.nameColor,
+              }}
+            >
+              {effectiveName}
+            </div>
+            {majorLabel && (
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: palette.classColor,
+                  letterSpacing: '0.2px',
+                  lineHeight: 1.3,
                 }}
               >
-              {statusLabel}
+                {majorLabel}
               </div>
+            )}
             {classLabel && (
               <div
-              style={{ 
+                style={{
                   fontSize: '10px',
                   color: palette.classColor,
                   letterSpacing: '0.2px',
-                  lineHeight: 1.4,
-              }}
-            >
+                  lineHeight: 1.3,
+                }}
+              >
                 {classLabel}
-            </div>
+              </div>
+            )}
+            {isTransfer && (
+              <div
+                style={{
+                  fontSize: '9px',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  color: palette.transferColor,
+                  fontWeight: 600,
+                }}
+              >
+                Transfer
+              </div>
             )}
             {isPlaceholder && (
-              <div 
-                style={{ 
+              <div
+                style={{
                   fontSize: '10px',
                   color: palette.placeholderColor || palette.statusColor,
                   fontStyle: 'italic',
@@ -527,8 +588,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               </div>
             )}
           </div>
-          </div>
-        );
+        </div>
+      );
     } catch (error) {
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
@@ -1564,8 +1625,32 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         zoomOnPinch={!isModalOpen}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color={theme.backgroundGrid} variant={theme.backgroundVariant || 'dots'} />
-        <Controls className="tree-controls" style={{ pointerEvents: 'auto' }} />
+        <Background
+          color={hexToRgba(theme.backgroundGrid || '#ffffff', theme.gridOpacity || 0.12)}
+          variant={theme.backgroundVariant || 'dots'}
+          gap={theme.backgroundVariant === 'lines' ? 48 : 32}
+          size={theme.backgroundVariant === 'lines' ? 2 : 0.8}
+        />
+        <Panel
+          position="bottom-left"
+          className="tree-controls-panel"
+          style={{
+            pointerEvents: 'auto',
+            background: theme.controlsPanelBg || 'rgba(0,0,0,0.35)',
+            border: theme.controlsBorder || '1px solid rgba(255,255,255,0.2)',
+            boxShadow: theme.controlsShadow || '0 12px 28px rgba(0,0,0,0.35)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: theme.nodeText || '#1f1f1f',
+            padding: '6px 10px',
+          }}
+        >
+          <Controls
+            className="tree-controls"
+            style={{ pointerEvents: 'auto' }}
+            showInteractive={false}
+          />
+        </Panel>
         <MiniMap 
           nodeColor={theme.minimapNode}
           style={{ backgroundColor: theme.minimapBg }}

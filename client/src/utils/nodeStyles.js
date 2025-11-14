@@ -2,82 +2,24 @@ import { hexToRgba } from './color';
 
 /**
  * Node Styling Utilities
- * 
+ *
  * Generates node styles based on family theme and node state
  */
 
-const NODE_PALETTES = {
-  empire: {
-    background: 'rgba(255, 255, 255, 0.35)', // Glassy elevation effect
-    border: '1px solid rgba(145, 104, 29, 0.85)', // Increased border contrast (slightly more visible)
-    color: '#3d3526', // Warm dark gray for better readability
-    borderRadius: '4px',
-    padding: '14px 16px 14px 26px',
-    minHeight: '108px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Soft glassy elevation shadow
-    backdropFilter: 'blur(8px)', // Glassy effect
-    WebkitBackdropFilter: 'blur(8px)', // Safari support
-    backgroundImage: 'linear-gradient(90deg, rgba(201,168,87,0.68) 0px, rgba(201,168,87,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.24), transparent 55%)',
-    backgroundSize: '9px 100%, 100% 100%',
-    backgroundRepeat: 'no-repeat, no-repeat',
-    backgroundPosition: 'left top, center',
-  },
-  power: {
-    // Use theme colors but apply Empire format: left border accent, padding, shadows
-    background: undefined, // Will use theme.nodeStudying/nodeGraduated
-    border: '1.6px solid rgba(243, 220, 166, 0.75)',
-    color: '#fdf5dc',
-    borderRadius: '4px',
-    padding: '14px 16px 14px 26px',
-    minHeight: '108px',
-    boxShadow: '0 20px 36px rgba(8, 16, 24, 0.22), 0 8px 18px rgba(235, 210, 144, 0.26)',
-    backgroundImage: 'linear-gradient(90deg, rgba(243,220,166,0.68) 0px, rgba(243,220,166,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(235,210,144,0.24), transparent 55%)',
-    backgroundSize: '9px 100%, 100% 100%',
-    backgroundRepeat: 'no-repeat, no-repeat',
-    backgroundPosition: 'left top, center',
-  },
-  greed: {
-    // Use theme colors but apply Empire format: left border accent, padding, shadows
-    background: undefined, // Will use theme.nodeStudying/nodeGraduated
-    border: '1.6px solid rgba(216, 242, 168, 0.75)',
-    color: '#0a2316',
-    borderRadius: '4px',
-    padding: '14px 16px 14px 26px',
-    minHeight: '108px',
-    boxShadow: '0 20px 36px rgba(6, 71, 41, 0.22), 0 8px 18px rgba(244, 217, 97, 0.26)',
-    backgroundImage: 'linear-gradient(90deg, rgba(244,217,97,0.68) 0px, rgba(244,217,97,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(244,217,97,0.24), transparent 55%)',
-    backgroundSize: '9px 100%, 100% 100%',
-    backgroundRepeat: 'no-repeat, no-repeat',
-    backgroundPosition: 'left top, center',
-  },
-  wolfpack: {
-    // Use theme colors but apply Empire format: left border accent, padding, shadows
-    background: undefined, // Will use theme.nodeStudying/nodeGraduated
-    border: '1.6px solid rgba(214, 228, 255, 0.75)',
-    color: '#1e2c45',
-    borderRadius: '4px',
-    padding: '14px 16px 14px 26px',
-    minHeight: '108px',
-    boxShadow: '0 20px 36px rgba(54, 76, 115, 0.22), 0 8px 18px rgba(156, 184, 234, 0.26)',
-    backgroundImage: 'linear-gradient(90deg, rgba(156,184,234,0.68) 0px, rgba(156,184,234,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(156,184,234,0.24), transparent 55%)',
-    backgroundSize: '9px 100%, 100% 100%',
-    backgroundRepeat: 'no-repeat, no-repeat',
-    backgroundPosition: 'left top, center',
-  },
-  pride: {
-    // Use theme colors but apply Empire format: left border accent, padding, shadows
-    background: undefined, // Will use theme.nodeStudying/nodeGraduated
-    border: '1.6px solid rgba(212, 175, 126, 0.75)',
-    color: '#fbf7ee',
-    borderRadius: '4px',
-    padding: '14px 16px 14px 26px',
-    minHeight: '108px',
-    boxShadow: '0 20px 36px rgba(24, 20, 19, 0.22), 0 8px 18px rgba(212, 175, 126, 0.26)',
-    backgroundImage: 'linear-gradient(90deg, rgba(212,175,126,0.68) 0px, rgba(212,175,126,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(212,175,126,0.24), transparent 55%)',
-    backgroundSize: '9px 100%, 100% 100%',
-    backgroundRepeat: 'no-repeat, no-repeat',
-    backgroundPosition: 'left top, center',
-  },
+const BASE_FALLBACK_STYLE = {
+  background: 'rgba(255,255,255,0.9)',
+  color: '#1f1f1f',
+  border: '1px solid rgba(0,0,0,0.08)',
+  borderRadius: '10px',
+  padding: '14px 16px 14px 22px',
+  width: 200,
+  minHeight: 110,
+  fontSize: '12px',
+  fontWeight: 600,
+  boxShadow: '0 12px 24px rgba(0,0,0,0.18)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
 };
 
 /**
@@ -89,74 +31,54 @@ const NODE_PALETTES = {
  * @param {string} status - Node status ('studying' or 'graduated')
  * @returns {Object} Base node style object
  */
-export const getBaseNodeStyle = (familyKey, theme, nodeWidth, nodeHeight, status = 'studying') => {
-  // Safety check: ensure theme exists and has required properties
-  if (!theme || typeof theme.nodeStudying === 'undefined' || typeof theme.nodeGraduated === 'undefined') {
-    console.warn('getBaseNodeStyle: Theme not fully initialized, using fallback');
-    // Return a minimal fallback style
-    return {
-      background: '#ffffff',
-      color: '#333333',
-      border: '1px solid #cccccc',
-      borderRadius: '8px',
-      padding: '10px',
-      width: nodeWidth,
-      minHeight: nodeHeight,
-      fontSize: '12px',
-      fontWeight: '600',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-    };
-  }
-  
-  // Check if family has custom palette first - these take priority
-  const familyStyle = NODE_PALETTES[familyKey];
-  if (familyStyle) {
-    // Family styles have fixed backgrounds and are designed to work for both statuses
-    // Create a complete style object with family-specific overrides
-    const familyStyleCopy = { ...familyStyle };
-    const baseStyle = {
-      background: familyStyleCopy.background || (status === 'studying' ? theme.nodeStudying : theme.nodeGraduated),
-      color: familyStyleCopy.color || theme.nodeText || '#333333',
-      border: familyStyleCopy.border || `2px solid ${theme.nodeBorder || '#cccccc'}`,
-      borderRadius: familyStyleCopy.borderRadius || `${theme.nodeRadius || 8}px`,
-      padding: familyStyleCopy.padding || '10px',
-      width: nodeWidth,
-      minHeight: familyStyleCopy.minHeight || nodeHeight,
-      fontSize: '12px',
-      fontWeight: '600',
-      boxShadow: familyStyleCopy.boxShadow || '0 8px 24px rgba(0,0,0,0.25)',
-      backgroundImage: familyStyleCopy.backgroundImage || undefined,
-      backgroundSize: familyStyleCopy.backgroundSize || undefined,
-      backgroundRepeat: familyStyleCopy.backgroundRepeat || undefined,
-      backgroundPosition: familyStyleCopy.backgroundPosition || undefined,
-    };
-    
-    // Apply backdrop filter for glassy effect (Empire)
-    if (familyStyleCopy.backdropFilter) {
-      baseStyle.backdropFilter = familyStyleCopy.backdropFilter;
-      baseStyle.WebkitBackdropFilter = familyStyleCopy.WebkitBackdropFilter;
-    }
-    
-    // Apply border color override if specified (Empire) - borderColor is already included in border property
-    
-    return baseStyle;
+export const getBaseNodeStyle = (
+  _familyKey,
+  theme,
+  nodeWidth,
+  nodeHeight,
+  status = 'studying',
+) => {
+  if (!theme || (!theme.nodeStudying && !theme.nodeCardBg)) {
+    return { ...BASE_FALLBACK_STYLE, width: nodeWidth, minHeight: nodeHeight };
   }
 
-  // Fallback to base theme styles if no family palette
-  const baseStyle = {
-    background: status === 'studying' ? theme.nodeStudying : theme.nodeGraduated,
-    color: theme.nodeText || '#333333',
-    border: `2px solid ${theme.nodeBorder || '#cccccc'}`,
-    borderRadius: `${theme.nodeRadius || 8}px`,
-    padding: '10px',
+  const borderColor =
+    theme.nodeCardBorder || `1.4px solid ${theme.nodeBorder || '#d6c6aa'}`;
+  const baseBackground =
+    theme.nodeCardBg ||
+    (status === 'studying' ? theme.nodeStudying : theme.nodeGraduated);
+  const accentStripe = theme.nodeCardAccent;
+
+  const style = {
+    background: baseBackground,
+    color: theme.nodeText || '#1f1f1f',
+    border: borderColor,
+    borderRadius: `${theme.nodeRadius || 12}px`,
+    padding: '16px 18px 16px 26px',
     width: nodeWidth,
-    minHeight: nodeHeight,
-    fontSize: '12px',
-    fontWeight: '600',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+    minHeight: nodeHeight + 14,
+    fontSize: '13px',
+    fontWeight: 600,
+    boxShadow: theme.nodeCardShadow || BASE_FALLBACK_STYLE.boxShadow,
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease',
+    backgroundImage: accentStripe ? `${accentStripe}, radial-gradient(circle at 18% 12%, rgba(255,255,255,0.12), transparent 55%)` : undefined,
+    backgroundRepeat: accentStripe ? 'no-repeat, no-repeat' : undefined,
+    backgroundSize: accentStripe ? '14px 100%, 100% 100%' : undefined,
+    backgroundPosition: accentStripe ? 'left top, center' : undefined,
+    pointerEvents: 'auto',
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   };
 
-  return baseStyle;
+  style['--node-hover-shadow'] =
+    theme.nodeCardHoverShadow || '0 22px 40px rgba(0,0,0,0.28)';
+  style['--node-hover-brightness'] = '1.02';
+
+  return style;
 };
 
 /**

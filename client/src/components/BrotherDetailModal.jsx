@@ -2,6 +2,22 @@ import { useState, useEffect, useMemo } from 'react';
 import { brothers as brothersApi } from '../api';
 import { hexToRgba } from '../utils/color';
 
+const isHexDark = (color) => {
+  if (!color || typeof color !== 'string') {
+    return false;
+  }
+  const cleaned = color.replace('#', '');
+  if (![3, 6].includes(cleaned.length)) {
+    return false;
+  }
+  const hex = cleaned.length === 3 ? cleaned.split('').map((c) => c + c).join('') : cleaned;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance < 140;
+};
+
 /**
  * BrotherDetailModal Component
  * 
@@ -155,6 +171,118 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
 
   if (!brother) return null;
 
+  const isDarkTheme = useMemo(() => isHexDark(theme?.background), [theme]);
+
+  const infoCardStyle = {
+    background: palette.panelBg,
+    border: `1px solid ${palette.fieldBorder}`,
+    borderRadius: '18px',
+    padding: '18px 22px',
+    boxShadow: '0 18px 36px rgba(0,0,0,0.08)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+  };
+
+  const socialLinks = [
+    brother.linkedin_url && {
+      id: 'linkedin',
+      label: 'LinkedIn',
+      href: brother.linkedin_url,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4.98 3.5a2.5 2.5 0 1 1-.01 5.001 2.5 2.5 0 0 1 .01-5zm-.02 7.5h5v9h-5v-9zm7 0h4.78v1.31h.07c.66-1.14 2.27-2.35 4.68-2.35 5 0 5.93 3.01 5.93 6.93v6.11h-5v-5.41c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85v5.51h-4.58v-11z" />
+        </svg>
+      ),
+    },
+    brother.instagram_url && {
+      id: 'instagram',
+      label: 'Instagram',
+      href: brother.instagram_url,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+          <path d="M16 11.37a4 4 0 1 1-7.999.001A4 4 0 0 1 16 11.37z" />
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+    },
+    brother.email && {
+      id: 'email',
+      label: 'Email',
+      href: `mailto:${brother.email}`,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <rect x="3" y="5" width="18" height="14" rx="3" />
+          <path d="M3 7.5 12 13l9-5.5" />
+        </svg>
+      ),
+    },
+  ].filter(Boolean);
+
+  const socialButtonBase = {
+    width: '52px',
+    height: '52px',
+    borderRadius: '16px',
+    border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', isDarkTheme ? 0.25 : 0.35)}`,
+    background: isDarkTheme ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.06)',
+    color: isDarkTheme ? '#ffffff' : '#111111',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    textDecoration: 'none',
+  };
+
+  const renderAvatar = brother.profile_image_url ? (
+    <img
+      src={brother.profile_image_url}
+      alt={brother.name}
+      style={{
+        width: '220px',
+        height: '220px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        border: `4px solid ${hexToRgba(theme?.accent || '#ffffff', 0.6)}`,
+        boxShadow: '0 18px 36px rgba(0,0,0,0.25)',
+      }}
+    />
+  ) : (
+    <div
+      style={{
+        width: '220px',
+        height: '220px',
+        borderRadius: '50%',
+        background: hexToRgba(theme?.accent || '#c9a857', 0.9),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: isDarkTheme ? '#111' : '#fdf7ec',
+        fontSize: '56px',
+        fontWeight: 700,
+        border: `4px solid ${hexToRgba(theme?.accent || '#c9a857', 0.6)}`,
+        boxShadow: '0 18px 36px rgba(0,0,0,0.25)',
+      }}
+    >
+      {brother.name.charAt(0).toUpperCase()}
+    </div>
+  );
+
+  const cardHeadingStyle = {
+    fontSize: '11px',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: palette.heading,
+    marginBottom: '8px',
+    opacity: 0.75,
+  };
+
+  const cardBodyStyle = {
+    color: palette.bodyText,
+    fontSize: '14px',
+    lineHeight: 1.6,
+    margin: 0,
+  };
+
   const handleBackdropClick = (e) => {
     // Only close if clicking the backdrop itself, not the modal content
     if (e.target === e.currentTarget) {
@@ -191,10 +319,12 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       aria-labelledby="modal-title"
     >
       <div
-        className="glass-panel-elevated rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="glass-panel-elevated rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         style={{
-          backgroundColor: theme?.modalBg || 'var(--surface-elevated)',
-          border: `1px solid var(--border)`,
+          background: theme?.modalBg || 'rgba(18,20,24,0.92)',
+          borderRadius: '24px',
+          border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.2)}`,
+          boxShadow: '0 30px 60px rgba(0,0,0,0.45)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -222,338 +352,156 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
 
         {/* Profile Content */}
         <div style={{ padding: 'var(--space-6)', paddingTop: 'var(--space-4)' }}>
-          {!isEditing ? (
-            /* View Mode - Beautiful Profile Layout */
-            <>
-              {/* Headshot Section */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-6)' }}>
-                {brother.profile_image_url ? (
-                  <img
-                    src={brother.profile_image_url}
-                    alt={brother.name}
-                    style={{
-                      width: '200px',
-                      height: '200px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: `4px solid ${theme?.accent || '#c9a857'}`,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '200px',
-                      height: '200px',
-                      borderRadius: '50%',
-                      backgroundColor: theme?.accent || '#c9a857',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '48px',
-                      fontWeight: 'bold',
-                      border: `4px solid ${theme?.accent || '#c9a857'}`,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {brother.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
 
-              {/* Name */}
-              <h1
-                id="modal-title"
+        {!isEditing ? (
+          <>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '32px',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+              }}
+            >
+              <div
                 style={{
-                  fontSize: '36px',
-                  fontFamily: theme?.titleFont || 'var(--font-display)',
-                  color: theme?.nodeText || 'var(--text)',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  marginBottom: 'var(--space-2)',
-                  textTransform: 'capitalize',
+                  flex: '0 0 240px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '18px',
                 }}
               >
-                {brother.name}
-              </h1>
-
-              {/* Key Info Tags */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-6)' }}>
-                {brother.pledge_class && (
-                  <span
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: theme?.accent || '#c9a857',
-                      color: 'white',
-                      borderRadius: '0px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      border: `2px solid ${theme?.accent || '#c9a857'}`,
-                    }}
-                  >
-                    {brother.pledge_class}
-                  </span>
-                )}
-                {brother.graduation_year && (
-                  <span
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: theme?.background || '#f8f7f3',
-                      color: theme?.nodeText || 'var(--text)',
-                      border: `2px solid ${theme?.accent || '#c9a857'}`,
-                      borderRadius: '0px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    Class of {brother.graduation_year}
-                  </span>
-                )}
-                <span
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: brother.status === 'studying' ? '#10b981' : '#6b7280',
-                    color: 'white',
-                    borderRadius: '0px',
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    letterSpacing: '0.5px',
-                    border: `2px solid ${brother.status === 'studying' ? '#10b981' : '#6b7280'}`,
-                  }}
-                >
-                  {brother.status === 'studying' ? 'Currently Studying' : 'Graduated'}
-                </span>
-              </div>
-
-              {/* Major */}
-              {brother.major && (
-                <div style={{ 
-                  textAlign: 'center', 
-                  marginBottom: 'var(--space-6)',
-                  padding: 'var(--space-4)',
-                  background: palette.panelBg,
-                  border: `1px solid ${palette.fieldBorder}`,
-                  borderRadius: '0px',
-                }}>
-                  <p style={{ 
-                    color: palette.bodyText, 
-                    fontSize: 'var(--text-base)', 
-                    fontWeight: '500',
-                    margin: 0,
-                  }}>
-                    {brother.major}
-                  </p>
-                </div>
-              )}
-
-              {/* Career Aspirations */}
-              {brother.career_aspirations && (
-                <div style={{ 
-                  marginBottom: 'var(--space-6)',
-                  padding: 'var(--space-5)',
-                  background: palette.panelBg,
-                  border: `2px solid ${palette.connectBorder}`,
-                  borderRadius: '0px',
-                }}>
-                  <h3 style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '700', 
-                    color: palette.heading,
-                    marginBottom: 'var(--space-3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}>
-                    Career Aspirations
-                  </h3>
-                  <p style={{ 
-                    color: palette.bodyText, 
-                    lineHeight: '1.7',
-                    fontSize: '15px',
-                    margin: 0,
-                  }}>
-                    {brother.career_aspirations}
-                  </p>
-                </div>
-              )}
-
-              {/* Description (Fun Facts) */}
-              {brother.fun_facts && (
-                <div style={{ 
-                  marginBottom: 'var(--space-6)',
-                  padding: 'var(--space-5)',
-                  background: palette.panelBg,
-                  border: `2px solid ${palette.connectBorder}`,
-                  borderRadius: '0px',
-                }}>
-                  <h3 style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '700', 
-                    color: palette.heading,
-                    marginBottom: 'var(--space-3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}>
-                    About
-                  </h3>
-                  <p style={{ 
-                    color: palette.bodyText, 
-                    lineHeight: '1.7',
-                    fontSize: '15px',
-                    margin: 0,
-                  }}>
-                    {brother.fun_facts}
-                  </p>
-                </div>
-              )}
-
-              {/* Links Section */}
-              {(brother.linkedin_url || brother.instagram_url || brother.email) && (
-                <div style={{ 
-                  marginBottom: 'var(--space-6)',
-                  padding: '16px 20px',
-                  background: palette.connectBg,
-                  border: `2px solid ${palette.connectBorder}`,
-                  borderRadius: '0px',
-                }}>
-                  <h3 style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '700', 
-                    color: palette.heading,
-                    marginBottom: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}>
-                    Connect
-                  </h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-                    {brother.linkedin_url && (
-                      <a
-                        href={brother.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '48px',
-                          height: '48px',
-                          backgroundColor: '#0077b5',
-                          color: 'white',
-                          borderRadius: '0px',
-                          textDecoration: 'none',
-                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = palette.linkGlow;
-                          e.currentTarget.style.filter = 'brightness(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.filter = 'brightness(1)';
-                        }}
-                        title="LinkedIn"
-                      >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {brother.instagram_url && (
-                      <a
-                        href={brother.instagram_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '48px',
-                          height: '48px',
-                          background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
-                          color: 'white',
-                          borderRadius: '0px',
-                          textDecoration: 'none',
-                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = palette.linkGlow;
-                          e.currentTarget.style.filter = 'brightness(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.filter = 'brightness(1)';
-                        }}
-                        title="Instagram"
-                      >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {brother.email && (
-                      <a
-                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(brother.email)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '48px',
-                          height: '48px',
-                          backgroundColor: '#ea4335',
-                          color: 'white',
-                          borderRadius: '0px',
-                          textDecoration: 'none',
-                          transition: 'transform 0.2s, box-shadow 0.2s, filter 0.2s',
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = palette.linkGlow;
-                          e.currentTarget.style.filter = 'brightness(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.filter = 'brightness(1)';
-                        }}
-                        title={`Email: ${brother.email}`}
-                      >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
-                        </svg>
-                      </a>
-                    )}
+                {renderAvatar}
+                {socialLinks.length > 0 && (
+                  <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '16px' }}>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: '10px' }}>
+                      Connect
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+                      {socialLinks.map((link) => (
+                        <a
+                          key={link.id}
+                          href={link.href}
+                          target={link.href.startsWith('http') ? '_blank' : undefined}
+                          rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          style={socialButtonBase}
+                          onMouseEnter={(event) => {
+                            event.currentTarget.style.transform = 'translateY(-2px)';
+                            event.currentTarget.style.boxShadow = '0 10px 18px rgba(0,0,0,0.25)';
+                          }}
+                          onMouseLeave={(event) => {
+                            event.currentTarget.style.transform = 'translateY(0)';
+                            event.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          {link.icon}
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Edit Button */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-6)' }}>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn btn-primary"
-                  style={{
-                    padding: 'var(--space-3) var(--space-6)',
-                  }}
-                >
-                  Edit Profile
-                </button>
+                )}
+                {brother.email && (
+                  <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '14px 18px' }}>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.08em', opacity: 0.7 }}>Email</div>
+                    <div style={{ fontWeight: 600 }}>{brother.email}</div>
+                  </div>
+                )}
               </div>
-            </>
-          ) : (
-            /* Edit Mode - Form Layout */
+
+              <div style={{ flex: '1 1 360px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div>
+                  <h1
+                    id="modal-title"
+                    style={{
+                      fontSize: '34px',
+                      fontFamily: theme?.titleFont || 'var(--font-display)',
+                      color: theme?.nodeText || '#1f1f1f',
+                      fontWeight: 700,
+                      margin: 0,
+                    }}
+                  >
+                    {brother.name}
+                  </h1>
+                  <p style={{ color: palette.bodyText, opacity: 0.75, marginTop: '4px', marginBottom: 0 }}>
+                    {brother.major || brother.pledge_class || 'Nu Chapter Brother'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {brother.pledge_class && (
+                    <span
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.4)}`,
+                        background: hexToRgba(theme?.accent || '#c9a857', 0.12),
+                        fontSize: '11px',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: palette.heading,
+                      }}
+                    >
+                      {brother.pledge_class}
+                    </span>
+                  )}
+                  {brother.graduation_year && (
+                    <span
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
+                        background: hexToRgba(theme?.accent || '#c9a857', 0.08),
+                        fontSize: '11px',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: palette.heading,
+                      }}
+                    >
+                      Class of {brother.graduation_year}
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '999px',
+                      border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
+                      background: hexToRgba(theme?.accent || '#c9a857', 0.08),
+                      fontSize: '11px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: palette.heading,
+                    }}
+                  >
+                    {brother.status === 'studying' ? 'Active Brother' : 'Alumni'}
+                  </span>
+                </div>
+
+                {brother.major && (
+                  <div style={infoCardStyle}>
+                    <div style={cardHeadingStyle}>Major</div>
+                    <p style={cardBodyStyle}>{brother.major}</p>
+                  </div>
+                )}
+
+                {brother.career_aspirations && (
+                  <div style={infoCardStyle}>
+                    <div style={cardHeadingStyle}>Career Aspirations</div>
+                    <p style={cardBodyStyle}>{brother.career_aspirations}</p>
+                  </div>
+                )}
+
+                {brother.fun_facts && (
+                  <div style={infoCardStyle}>
+                    <div style={cardHeadingStyle}>About</div>
+                    <p style={cardBodyStyle}>{brother.fun_facts}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <div>
             <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>

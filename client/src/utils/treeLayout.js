@@ -337,6 +337,7 @@ export const calculateTreeLayout = ({
       },
       position: position || { x: 0, y: 0 },
       style: nodeStyle,
+      className: 'tree-node-card',
     });
   });
 
@@ -360,9 +361,11 @@ export const calculateTreeLayout = ({
 
   // Create edges - only if both nodes exist
   const edgeColor = theme.edgeColor || theme.accent || '#666666';
-  const edgeStrokeWidthDefault = theme.edgeStrokeWidth || 2;
-  const edgeBaseColor = theme.edgeStrokeColor || hexToRgba(edgeColor, 1.0);
+  const edgeStrokeWidthDefault = theme.edgeStrokeWidth || 3;
+  const edgeBaseColor =
+    theme.edgeBaseColor || theme.edgeStrokeColor || hexToRgba(edgeColor, 1.0);
   const edgeShadow = theme.edgeShadow;
+  const edgeGlowColor = theme.edgeGlowColor;
   
   relationships.forEach(rel => {
     if (!rel || !rel.big_id || !rel.little_id) return;
@@ -393,11 +396,13 @@ export const calculateTreeLayout = ({
         opacity: edgeOpacity,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
+        vectorEffect: 'non-scaling-stroke',
         zIndex: 5,
         shapeRendering: 'geometricPrecision',
+        filter: edgeShadow || undefined,
       };
-      if (edgeShadow) {
-        edgeStyle.filter = edgeShadow;
+      if (edgeGlowColor) {
+        edgeStyle.paintOrder = 'stroke';
       }
       
       const edge = {
