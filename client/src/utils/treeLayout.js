@@ -71,8 +71,8 @@ export const calculateTreeLayout = ({
   const subtreeWidthCache = new Map();
   
   // Node dimensions
-  const nodeWidth = 220;
-  const nodeHeight = 120;
+  const nodeWidth = 260;
+  const nodeHeight = 140;
   const {
     horizontalSpacing,
     baseVerticalSpacing,

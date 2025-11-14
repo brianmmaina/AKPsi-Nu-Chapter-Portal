@@ -148,6 +148,12 @@ const TREE_LAYER_CSS = `
     opacity: 0.35;
   }
 }
+body.tree-exporting .tree-controls-panel,
+body.tree-exporting .tree-summary-card,
+body.tree-exporting .tree-toast {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 `;
 
 const BOTTOM_BUFFER = 4;
@@ -286,8 +292,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   
   // Use the safe family theme as familyKey
   const familyKey = safeFamilyTheme;
-  const leftGutter = familyKey === 'greed' ? LEFT_TREE_GUTTER + 50 : LEFT_TREE_GUTTER;
-  const rightGutter = familyKey === 'greed' ? RIGHT_TREE_GUTTER + 30 : RIGHT_TREE_GUTTER;
+  const leftGutter =
+    LEFT_TREE_GUTTER + (isGreed ? 18 : isWolfpack ? 12 : 0);
+  const rightGutter = Math.max(
+    50,
+    RIGHT_TREE_GUTTER + (isGreed ? -12 : isWolfpack ? -6 : 0),
+  );
   
   // Define presentation and flags after theme is initialized (before early return)
   // These must be defined even if family is undefined, to maintain hook order
@@ -315,6 +325,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const isGreed = safeFamilyTheme === 'greed';
   const isPride = safeFamilyTheme === 'pride';
   const isWolfpack = safeFamilyTheme === 'wolfpack';
+  const isWideFamily = isGreed || isWolfpack;
   
   // Define focusBrotherNode AFTER theme and familyKey are initialized
   const focusBrotherNode = useCallback(
@@ -377,15 +388,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   );
   
   const defaultViewport = useMemo(() => {
-    if (isEmpire) return { x: 0, y: 0, zoom: 0.45 };
-    if (isPower) return { x: 0, y: 0, zoom: 0.5 };
-    if (isGreed) return { x: 0, y: 0, zoom: 0.52 };
-    if (isPride) return { x: 0, y: 0, zoom: 0.53 };
-    if (isWolfpack) return { x: 0, y: 0, zoom: 0.54 };
-    return { x: 0, y: 0, zoom: 0.55 };
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.48 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.52 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.5 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.54 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.52 };
+    return { x: 0, y: 0, zoom: 0.56 };
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
   
-  const minZoom = isEmpire ? 0.12 : 0.18;
+  const minZoom = isWideFamily ? 0.12 : isEmpire ? 0.15 : 0.22;
   const maxZoom = isEmpire ? 1.4 : 2;
   
   const composedBackground = useMemo(() => {
@@ -441,12 +452,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   const layoutSettings = useMemo(() => {
     const base = {
-      horizontalSpacing: 320,
-      baseVerticalSpacing: 190,
-      pledgeVerticalSpacing: 165,
-      multiChildCompression: 0.85,
-      siblingPadding: 60,
-      prongDropFactor: 1.18,
+      horizontalSpacing: 280,
+      baseVerticalSpacing: 205,
+      pledgeVerticalSpacing: 185,
+      multiChildCompression: 0.88,
+      siblingPadding: 52,
+      prongDropFactor: 1.16,
     };
 
     if (isEmpire) {
@@ -461,19 +472,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     if (isPower) {
       return {
         ...base,
-        horizontalSpacing: 300,
-        multiChildCompression: 0.82,
-        siblingPadding: 54,
+        horizontalSpacing: 285,
+        siblingPadding: 50,
       };
     }
 
     if (isGreed) {
       return {
         ...base,
-        horizontalSpacing: 310,
-        siblingPadding: 56,
-        baseVerticalSpacing: 225,
-        pledgeVerticalSpacing: 205,
+        horizontalSpacing: 250,
+        siblingPadding: 42,
+        baseVerticalSpacing: 210,
+        pledgeVerticalSpacing: 190,
+        multiChildCompression: 0.82,
       };
     }
 
@@ -488,8 +499,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     if (isWolfpack) {
       return {
         ...base,
-        horizontalSpacing: 330,
-        siblingPadding: 64,
+        horizontalSpacing: 255,
+        siblingPadding: 44,
+        baseVerticalSpacing: 210,
+        pledgeVerticalSpacing: 190,
       };
     }
 
@@ -522,7 +535,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const rawPledge = brother.pledge_class || 'Unassigned';
       const pledgeLabel = rawPledge.toUpperCase();
       const statusLabel = statusLabelForBrother(brother);
-      const classLabel = brother.graduation_year ? `Class of ${brother.graduation_year}` : null;
       const isPlaceholder = !brother.name || /^unassigned/i.test(brother.name.trim());
       const isTransfer = brother.is_transfer === 1 && palette.supportsTransfer;
       const placeholderText = 'Awaiting lineage assignment';
@@ -535,8 +547,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               style={{ 
             display: 'flex',
             flexDirection: 'column',
-            gap: 6,
-            maxWidth: 240,
+            gap: 8,
+            maxWidth: 260,
             whiteSpace: 'normal',
             color: palette.bodyColor,
               }}
@@ -604,18 +616,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               >
                 {majorLabel}
               </div>
-            )}
-            {classLabel && (
-              <div
-              style={{ 
-                  fontSize: '10px',
-                  color: palette.classColor,
-                  letterSpacing: '0.2px',
-                  lineHeight: 1.3,
-              }}
-            >
-                {classLabel}
-            </div>
             )}
             {isTransfer && (
               <div
@@ -1102,15 +1102,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   const fitTreeView = useCallback(
     (duration = 500, paddingMultiplier) => {
+      const defaultPadding = isEmpire ? 1.05 : isWideFamily ? 1.04 : 1.1;
       const effectivePadding =
         typeof paddingMultiplier === 'number'
           ? paddingMultiplier
-          : isEmpire
-            ? 1.05
-            : 1.15;
+          : defaultPadding;
       fitTreeToViewport(duration, effectivePadding);
     },
-    [fitTreeToViewport, isEmpire],
+    [fitTreeToViewport, isEmpire, isWideFamily],
   );
 
   const closeProfile = useCallback(
@@ -1273,9 +1272,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         throw new Error('Flow wrapper not found');
       }
 
+      document.body.classList.add('tree-exporting');
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const pixelRatio = Math.min(
+        4,
+        (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1) * 1.8,
+      );
+
       const dataUrl = await toPng(flowWrapper, {
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio,
         backgroundColor: theme?.background || '#0a0f1a',
       });
 
@@ -1290,6 +1297,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       console.error('Export failed:', error);
       showToast('Export failed. Please try again.');
     } finally {
+      document.body.classList.remove('tree-exporting');
       setIsPreparingExport(false);
     }
   }, [fitTreeView, showToast, theme?.background, safeFamily?.name]);

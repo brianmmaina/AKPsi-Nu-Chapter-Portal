@@ -3,6 +3,22 @@ import { createPortal } from 'react-dom';
 import { brothers as brothersApi } from '../api';
 import { hexToRgba } from '../utils/color';
 
+const linkedinSvg = `
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="10" fill="#000000"/>
+  <circle cx="20" cy="23" r="5" fill="#ffffff"/>
+  <rect x="15" y="30" width="10" height="24" fill="#ffffff"/>
+  <path d="M33 30h9v4.8C43.2 32.2 45.8 30 49.8 30c5.9 0 10.2 4.2 10.2 11.7V54h-10v-9.8c0-2.6-1.2-4.6-3.8-4.6-2.6 0-4.4 2-4.4 4.7V54H33V30z" fill="#ffffff"/>
+</svg>`;
+const emailSvg = `
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="10" fill="#000000"/>
+  <rect x="10" y="20" width="44" height="24" rx="4" fill="none" stroke="#ffffff" stroke-width="4"/>
+  <path d="M12 22l20 14 20-14" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+const LINKEDIN_ICON_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(linkedinSvg)}`;
+const EMAIL_ICON_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(emailSvg)}`;
+
 const isHexDark = (color) => {
   if (!color || typeof color !== 'string') {
     return false;
@@ -206,16 +222,14 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       id: 'linkedin',
       label: 'LinkedIn',
       href: brother.linkedin_url,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M4.98 3.5a2.5 2.5 0 1 1-.01 5.001 2.5 2.5 0 0 1 .01-5zm-.02 7.5h5v9h-5v-9zm7 0h4.78v1.31h.07c.66-1.14 2.27-2.35 4.68-2.35 5 0 5.93 3.01 5.93 6.93v6.11h-5v-5.41c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85v5.51h-4.58v-11z" />
-        </svg>
-      ),
+      icon: null,
+      iconSrc: LINKEDIN_ICON_SRC,
     },
     brother.instagram_url && {
       id: 'instagram',
       label: 'Instagram',
       href: brother.instagram_url,
+      iconSrc: null,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -228,12 +242,8 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       id: 'email',
       label: 'Email',
       href: `mailto:${brother.email}`,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="3" y="5" width="18" height="14" rx="3" />
-          <path d="M3 7.5 12 13l9-5.5" />
-        </svg>
-      ),
+      icon: null,
+      iconSrc: EMAIL_ICON_SRC,
     },
   ].filter(Boolean);
 
@@ -414,7 +424,15 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                             event.currentTarget.style.boxShadow = 'none';
                           }}
                         >
-                          {link.icon}
+                          {link.iconSrc ? (
+                            <img
+                              src={link.iconSrc}
+                              alt={`${link.label} icon`}
+                              style={{ width: 20, height: 20, display: 'block' }}
+                            />
+                          ) : (
+                            link.icon
+                          )}
                         </a>
                       ))}
                     </div>
