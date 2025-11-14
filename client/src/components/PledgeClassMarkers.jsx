@@ -4,7 +4,6 @@ import { hexToRgba } from '../utils/color';
 const PledgeClassMarkers = ({
   markers = [],
   projectPosition,
-  headerHeight = 136,
   bottomBuffer = 4,
   highlightedLevel,
   hoveredLevel,
@@ -48,11 +47,12 @@ const PledgeClassMarkers = ({
     <div
       className="tree-pledge-markers"
       style={{
-        left: 0,
+        position: 'absolute',
         top: 0,
+        left: 0,
         width: '90px',
         height: '100%',
-        paddingTop: `calc(${headerHeight}px + env(safe-area-inset-top, 0px))`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px))`,
         paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomBuffer}px)`,
       }}
     >

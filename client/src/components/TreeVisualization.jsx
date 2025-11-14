@@ -154,7 +154,6 @@ const TREE_LAYER_CSS = `
 }
 `;
 
-const HEADER_HEIGHT = 136;
 const BOTTOM_BUFFER = 4;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
@@ -670,17 +669,28 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition; // New React Flow API (replaces deprecated project)
   const projectMarkerPosition = useCallback(
     (markerY) => {
+      let screenY;
       try {
         if (flowToScreenPosition && typeof flowToScreenPosition === 'function') {
-          return flowToScreenPosition({ x: 0, y: markerY });
+          const p = flowToScreenPosition({ x: 0, y: markerY });
+          screenY = p.y;
+        } else {
+          const vp =
+            reactFlowInstance?.getViewport?.() ??
+            viewport ??
+            defaultViewport ??
+            { x: 0, y: 0, zoom: 1 };
+          screenY = markerY * vp.zoom + vp.y;
         }
-      } catch (error) {
-        console.warn('Failed to convert marker position:', error);
+      } catch {
+        const vp = viewport ?? defaultViewport ?? { x: 0, y: 0, zoom: 1 };
+        screenY = markerY * vp.zoom + vp.y;
       }
-      const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
-      return { y: (markerY * currentViewport.zoom) + currentViewport.y };
+      const wrapperRect = flowWrapperRef.current?.getBoundingClientRect();
+      const containerTop = wrapperRect?.top ?? 0;
+      return { y: screenY - containerTop };
     },
-    [flowToScreenPosition, viewport, defaultViewport],
+    [flowToScreenPosition, viewport, defaultViewport, reactFlowInstance],
   );
 
   const pledgeSummary = useMemo(() => {
@@ -1689,7 +1699,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           key={`pledge-markers-${viewport.x}-${viewport.y}-${viewport.zoom}`}
           markers={pledgeClassMarkers}
           projectPosition={projectMarkerPosition}
-          headerHeight={HEADER_HEIGHT}
           bottomBuffer={BOTTOM_BUFFER}
           highlightedLevel={highlightedPledgeClass}
           hoveredLevel={hoveredMarkerLevel}
