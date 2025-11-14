@@ -292,6 +292,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   
   // Use the safe family theme as familyKey
   const familyKey = safeFamilyTheme;
+  
+  // Compute boolean flags using stable values (no hooks, just computed values)
+  const isEmpire = safeFamilyTheme === 'empire';
+  const isPower = safeFamilyTheme === 'power';
+  const isGreed = safeFamilyTheme === 'greed';
+  const isPride = safeFamilyTheme === 'pride';
+  const isWolfpack = safeFamilyTheme === 'wolfpack';
+  const isWideFamily = isGreed || isWolfpack;
+  
   const leftGutter =
     LEFT_TREE_GUTTER + (isGreed ? 18 : isWolfpack ? 12 : 0);
   const rightGutter = Math.max(
@@ -299,9 +308,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     RIGHT_TREE_GUTTER + (isGreed ? -12 : isWolfpack ? -6 : 0),
   );
   
-  // Define presentation and flags after theme is initialized (before early return)
-  // These must be defined even if family is undefined, to maintain hook order
-  // Use stable computed values to avoid uninitialized variable errors
+  // Define presentation after theme is initialized (before early return)
   const presentation = useMemo(() => {
     try {
       // Use safeFamilyTheme directly instead of familyKey to avoid potential issues
@@ -318,14 +325,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return FAMILY_PRESENTATION.empire || FAMILY_PRESENTATION.default || {};
     }
   }, [safeFamilyTheme]);
-  
-  // Compute boolean flags using stable values (no hooks, just computed values)
-  const isEmpire = safeFamilyTheme === 'empire';
-  const isPower = safeFamilyTheme === 'power';
-  const isGreed = safeFamilyTheme === 'greed';
-  const isPride = safeFamilyTheme === 'pride';
-  const isWolfpack = safeFamilyTheme === 'wolfpack';
-  const isWideFamily = isGreed || isWolfpack;
   
   // Define focusBrotherNode AFTER theme and familyKey are initialized
   const focusBrotherNode = useCallback(
