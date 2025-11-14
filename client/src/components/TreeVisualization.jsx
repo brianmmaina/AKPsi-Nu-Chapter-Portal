@@ -93,9 +93,6 @@ const TREE_LAYER_CSS = `
   filter: brightness(var(--node-hover-brightness, 1.02));
 }
 .tree-controls-panel {
-  position: absolute;
-  bottom: 24px;
-  left: 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1664,6 +1661,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           position="bottom-left"
           className="tree-controls-panel"
           style={{
+            left: LEFT_GUTTER + 24,
+            bottom: 24,
             pointerEvents: 'auto',
             background: theme.controlsPanelBg || 'rgba(0,0,0,0.35)',
             border: theme.controlsBorder || '1px solid rgba(255,255,255,0.2)',
