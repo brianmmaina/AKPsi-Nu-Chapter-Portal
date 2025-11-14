@@ -439,6 +439,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, [theme, composedBackground, isEmpire, isTreeReady]);
 
+  const toScreenPosition = useCallback(
+    (point) => {
+      if (reactFlowInstance?.flowToScreenPosition) {
+        return reactFlowInstance.flowToScreenPosition(point);
+      }
+      const currentZoom = viewport?.zoom ?? 1;
+      const offsetX = viewport?.x ?? 0;
+      const offsetY = viewport?.y ?? 0;
+      return {
+        x: point.x * currentZoom + offsetX,
+        y: point.y * currentZoom + offsetY,
+      };
+    },
+    [reactFlowInstance, viewport],
+  );
+
   const silhouetteStyle = useMemo(() => {
     if (!isTreeReady) {
       return null;
@@ -1084,22 +1100,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   // Define fitPaddingForBounds and fitTreeView BEFORE they're used in other callbacks
   // This prevents "Can't find variable" errors
-  const toScreenPosition = useCallback(
-    (point) => {
-      if (reactFlowInstance?.flowToScreenPosition) {
-        return reactFlowInstance.flowToScreenPosition(point);
-      }
-      const currentZoom = viewport?.zoom ?? 1;
-      const offsetX = viewport?.x ?? 0;
-      const offsetY = viewport?.y ?? 0;
-      return {
-        x: point.x * currentZoom + offsetX,
-        y: point.y * currentZoom + offsetY,
-      };
-    },
-    [reactFlowInstance, viewport],
-  );
-
   const fitTreeToViewport = useCallback(
     (duration = 500, paddingMultiplier = 1.15) => {
       const bounds = treeBoundsRef.current;
