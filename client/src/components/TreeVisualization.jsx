@@ -1664,8 +1664,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           className="tree-controls-panel"
           style={{
             position: 'absolute',
-            left: 24,
-            bottom: 24,
+            right: 24,
+            top: 24,
             pointerEvents: 'auto',
             background: 'transparent',
             border: 'none',
