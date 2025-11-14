@@ -1262,30 +1262,29 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const handleExportTree = useCallback(async () => {
     setIsPreparingExport(true);
     showToast('Preparing export…');
-    
+
+    const cleanup = () => {
+      document.body.classList.remove('printing-tree');
+      setIsPreparingExport(false);
+    };
+
     try {
-      // Fit view to show entire tree
       fitTreeView();
-      
-      // Wait for view to settle
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Add print-specific class to body for print styles
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       document.body.classList.add('printing-tree');
-      
-      // Trigger print dialog
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
       window.print();
-      
-      // Clean up after print dialog closes
+
       setTimeout(() => {
-        document.body.classList.remove('printing-tree');
-        setIsPreparingExport(false);
+        cleanup();
         showToast('Export ready. Use browser print dialog to save as PDF.');
       }, 100);
     } catch (error) {
       console.error('Export failed:', error);
+      cleanup();
       showToast('Export failed. Please try again.');
-      setIsPreparingExport(false);
     }
   }, [fitTreeView, showToast]);
 
@@ -1518,6 +1517,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       {toast && (
         <div
+          className="tree-toast"
           key={toast.id}
           style={{
             position: 'absolute',
@@ -1647,7 +1647,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         />
       )}
 
-                  <div
+      <div
+        className="tree-summary-card"
                     style={{
                       position: 'absolute',
           right: 24,

@@ -348,3 +348,38 @@
   }
 }
 
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  body.printing-tree {
+    background: #ffffff !important;
+  }
+
+  body.printing-tree .family-tree-page,
+  body.printing-tree .family-tree-content,
+  body.printing-tree .tree-root,
+  body.printing-tree .tree-root__body {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.printing-tree .tree-root__body {
+    overflow: visible !important;
+  }
+
+  body.printing-tree .react-flow {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  body.printing-tree .akpsi-topbar,
+  body.printing-tree .tree-controls-panel,
+  body.printing-tree .profile-modal-overlay,
+  body.printing-tree .tree-toast,
+  body.printing-tree .tree-summary-card,
+  body.printing-tree .tree-pledge-markers {
+    display: none !important;
+  }
+}
+
