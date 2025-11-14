@@ -718,30 +718,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       // Validate layout result before setting
       if (layoutResult && layoutResult.nodes && layoutResult.edges) {
         if (Array.isArray(layoutResult.nodes) && Array.isArray(layoutResult.edges)) {
-          // Apply pledge class marker highlighting for Empire
-          if (isEmpire && pledgeClassMarkers.length > 0) {
-            // Check both highlighted (clicked) and hovered states
-            const activeMarkerLevel = highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
-            
-            if (activeMarkerLevel !== null) {
-              const activeMarker = pledgeClassMarkers.find(m => m.level === activeMarkerLevel);
-              if (activeMarker && activeMarker.nodeIds) {
-                const activeNodeIds = new Set(activeMarker.nodeIds);
-                layoutResult.nodes.forEach((node) => {
-                  if (activeNodeIds.has(node.id)) {
-                    // Apply highlight style to nodes in this pledge class level
-                    const existingShadow = node.style?.boxShadow || '';
-                    const glowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2; // Stronger when clicked
-                    const brightness = highlightedPledgeClass !== null ? 1.1 : 1.05; // Brighter when clicked
-                    node.style.boxShadow = `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${glowOpacity})`;
-                    node.style.filter = `brightness(${brightness})`;
-                    node.style.transition = 'filter 0.3s ease, box-shadow 0.3s ease';
-                  }
-                });
-              }
-            }
-          }
-          
           setNodes(layoutResult.nodes);
           setEdges(layoutResult.edges);
         } else {
@@ -767,10 +743,72 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     renderNodeContent,
     loading,
     isEmpire,
-    highlightedPledgeClass,
-    hoveredMarkerLevel,
-    pledgeClassMarkers,
   ]);
+
+  // Separate effect to apply pledge class marker highlighting (Empire only)
+  // This runs after nodes are set, avoiding infinite loops
+  useEffect(() => {
+    if (!isEmpire || !nodes || nodes.length === 0 || pledgeClassMarkers.length === 0) {
+      return;
+    }
+
+    // Check both highlighted (clicked) and hovered states
+    const activeMarkerLevel = highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
+    
+    if (activeMarkerLevel === null) {
+      // No active marker - ensure nodes are reset to default styles
+      setNodes((currentNodes) => 
+        currentNodes.map((node) => {
+          // Reset any previous highlighting
+          const baseStyle = { ...node.style };
+          delete baseStyle.filter;
+          // Remove highlight glow from boxShadow if present
+          if (baseStyle.boxShadow && baseStyle.boxShadow.includes('rgba(201, 168, 87')) {
+            const shadows = baseStyle.boxShadow.split(', ');
+            const filteredShadows = shadows.filter(s => !s.includes('rgba(201, 168, 87'));
+            baseStyle.boxShadow = filteredShadows.join(', ') || '0 4px 12px rgba(0,0,0,0.08)';
+          }
+          return { ...node, style: baseStyle };
+        })
+      );
+      return;
+    }
+
+    const activeMarker = pledgeClassMarkers.find(m => m.level === activeMarkerLevel);
+    if (!activeMarker || !activeMarker.nodeIds) {
+      return;
+    }
+
+    const activeNodeIds = new Set(activeMarker.nodeIds);
+    setNodes((currentNodes) => 
+      currentNodes.map((node) => {
+        const isHighlighted = activeNodeIds.has(node.id);
+        if (!isHighlighted) {
+          // Reset non-highlighted nodes
+          const baseStyle = { ...node.style };
+          delete baseStyle.filter;
+          if (baseStyle.boxShadow && baseStyle.boxShadow.includes('rgba(201, 168, 87')) {
+            const shadows = baseStyle.boxShadow.split(', ');
+            const filteredShadows = shadows.filter(s => !s.includes('rgba(201, 168, 87'));
+            baseStyle.boxShadow = filteredShadows.join(', ') || '0 4px 12px rgba(0,0,0,0.08)';
+          }
+          return { ...node, style: baseStyle };
+        }
+
+        // Apply highlight style to nodes in this pledge class level
+        const existingShadow = node.style?.boxShadow || '0 4px 12px rgba(0,0,0,0.08)';
+        const glowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2; // Stronger when clicked
+        const brightness = highlightedPledgeClass !== null ? 1.1 : 1.05; // Brighter when clicked
+        const newStyle = {
+          ...node.style,
+          boxShadow: `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${glowOpacity})`,
+          filter: `brightness(${brightness})`,
+          transition: 'filter 0.3s ease, box-shadow 0.3s ease',
+        };
+        return { ...node, style: newStyle };
+      })
+    );
+  }, [isEmpire, highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
