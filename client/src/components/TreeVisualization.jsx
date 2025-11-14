@@ -1141,6 +1141,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     [reactFlowInstance, maxZoom, minZoom],
   );
 
+  const fitTreeView = useCallback(
+    (duration = 500, paddingMultiplier) => {
+      const effectivePadding =
+        typeof paddingMultiplier === 'number'
+          ? paddingMultiplier
+          : isEmpire
+            ? 1.05
+            : 1.15;
+      fitTreeToViewport(duration, effectivePadding);
+    },
+    [fitTreeToViewport, isEmpire],
+  );
+
   const closeProfile = useCallback(
     (restoreViewport = true) => {
       if (restoreViewport) {
