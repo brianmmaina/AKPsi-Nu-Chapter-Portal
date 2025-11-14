@@ -1,10 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Create mocks using vi.hoisted (required for vi.mock factory)
-const { mockPost, mockGet, mockPut } = vi.hoisted(() => ({
+const {
+  mockPost,
+  mockGet,
+  mockPut,
+  mockRequestInterceptor,
+  mockResponseInterceptor,
+} = vi.hoisted(() => ({
   mockPost: vi.fn(),
   mockGet: vi.fn(),
   mockPut: vi.fn(),
+  mockRequestInterceptor: vi.fn(),
+  mockResponseInterceptor: vi.fn(),
 }));
 
 // Mock axios BEFORE importing api
@@ -15,6 +23,14 @@ vi.mock('axios', () => {
         post: mockPost,
         get: mockGet,
         put: mockPut,
+        interceptors: {
+          request: {
+            use: mockRequestInterceptor,
+          },
+          response: {
+            use: mockResponseInterceptor,
+          },
+        },
       })),
     },
   };
@@ -73,11 +89,10 @@ describe('API Client', () => {
       const brotherData = { name: 'John Doe', family_id: 1 };
       mockPost.mockResolvedValue({ data: { id: 1, success: true } });
       
-      await brothers.create(brotherData, 'password');
+      await brothers.create(brotherData);
       
       expect(mockPost).toHaveBeenCalledWith('/brothers', {
         ...brotherData,
-        password: 'password',
       });
     });
 
@@ -85,11 +100,10 @@ describe('API Client', () => {
       const updateData = { name: 'John Updated' };
       mockPut.mockResolvedValue({ data: { success: true } });
       
-      await brothers.update(1, updateData, 'password');
+      await brothers.update(1, updateData);
       
       expect(mockPut).toHaveBeenCalledWith('/brothers/1', {
         ...updateData,
-        password: 'password',
       });
     });
   });

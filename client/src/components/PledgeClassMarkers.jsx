@@ -23,7 +23,26 @@ const PledgeClassMarkers = ({
   const labelBg = theme?.pledgeMarkerLabelBg || 'rgba(255,255,255,0.35)';
   const labelBorder = theme?.pledgeMarkerLabelBorder || 'rgba(255,255,255,0.55)';
   const labelShadow = theme?.pledgeMarkerShadow || '0 6px 16px rgba(0,0,0,0.18)';
-  const yearText = theme?.pledgeMarkerYearText || hexToRgba(markerText, 0.8);
+  const isGradientValue = (value) =>
+    typeof value === 'string' && value.toLowerCase().includes('gradient');
+  const yearText =
+    theme?.pledgeMarkerYearText ||
+    (isGradientValue(markerText) ? 'rgba(255,255,255,0.85)' : hexToRgba(markerText, 0.8));
+  const getHoverStripeBackground = () => {
+    if (isGradientValue(markerAccent)) {
+      return markerAccent;
+    }
+    return `linear-gradient(to bottom, ${markerAccent}, ${markerAccentEnd})`;
+  };
+  const getRestingStripeBackground = () => {
+    if (isGradientValue(markerAccent)) {
+      return markerAccent;
+    }
+    return `linear-gradient(to bottom, ${hexToRgba(markerAccent, 0.8)}, ${hexToRgba(
+      markerAccentEnd,
+      0.8,
+    )})`;
+  };
 
   return (
     <div
@@ -66,8 +85,8 @@ const PledgeClassMarkers = ({
                 width: '4px',
                 height: '24px',
                 background: isHovered || isHighlighted
-                  ? `linear-gradient(to bottom, ${markerAccent}, ${markerAccentEnd})`
-                  : `linear-gradient(to bottom, ${hexToRgba(markerAccent, 0.8)}, ${hexToRgba(markerAccentEnd, 0.8)})`,
+                  ? getHoverStripeBackground()
+                  : getRestingStripeBackground(),
                 borderRadius: '2px',
                 transition: 'all 0.2s ease',
                 opacity: isHovered || isHighlighted ? 1 : 0.85,
