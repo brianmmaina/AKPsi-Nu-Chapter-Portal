@@ -70,8 +70,8 @@ export const calculateTreeLayout = ({
   const subtreeWidthCache = new Map();
   
   // Node dimensions
-  const nodeWidth = 180;
-  const nodeHeight = 100;
+  const nodeWidth = 220;
+  const nodeHeight = 120;
   const {
     horizontalSpacing,
     baseVerticalSpacing,
@@ -356,6 +356,10 @@ export const calculateTreeLayout = ({
     onTreeBounds({
       width: maxX - minX,
       height: maxY - minY,
+      minX,
+      maxX,
+      minY,
+      maxY,
     });
   }
 
@@ -375,9 +379,6 @@ export const calculateTreeLayout = ({
     const littleExists = brothers.some(b => b && b.id === rel.little_id);
     
     if (bigExists && littleExists) {
-      const childCount = (childrenMap.get(rel.big_id) || []).length;
-      const isSingleChild = childCount <= 1;
-      const edgeType = isSingleChild ? 'step' : (theme.edgeType || 'smoothstep');
       const isLineageEdge =
         lineageHighlightSet &&
         lineageHighlightSet.has(String(rel.big_id)) &&
@@ -409,14 +410,12 @@ export const calculateTreeLayout = ({
         id: `e${rel.big_id}-${rel.little_id}`,
         source: String(rel.big_id),
         target: String(rel.little_id),
-        type: edgeType,
+        type: 'curved',
         animated: theme.edgeAnimated !== undefined ? theme.edgeAnimated : false,
         style: edgeStyle,
         markerEnd: MarkerType.ArrowClosed,
         markerEndColor: edgeStrokeColor, // Match arrow color to edge
-        data: {
-          isSingleChild,
-        },
+        data: {},
       };
       layoutEdges.push(edge);
     }
