@@ -8,13 +8,15 @@ import { hexToRgba } from './color';
 
 const NODE_PALETTES = {
   empire: {
-    background: '#fff6e8',
-    border: '1.6px solid rgba(145, 104, 29, 0.75)',
-    color: '#24170b',
+    background: 'rgba(255, 255, 255, 0.35)', // Glassy elevation effect
+    border: '1px solid rgba(145, 104, 29, 0.85)', // Increased border contrast (slightly more visible)
+    color: '#3d3526', // Warm dark gray for better readability
     borderRadius: '4px',
     padding: '14px 16px 14px 26px',
     minHeight: '108px',
-    boxShadow: '0 20px 36px rgba(58, 33, 3, 0.22), 0 8px 18px rgba(201, 168, 87, 0.26)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Soft glassy elevation shadow
+    backdropFilter: 'blur(8px)', // Glassy effect
+    WebkitBackdropFilter: 'blur(8px)', // Safari support
     backgroundImage: 'linear-gradient(90deg, rgba(201,168,87,0.68) 0px, rgba(201,168,87,0.68) 9px, transparent 9px), radial-gradient(circle at 18% 12%, rgba(201,168,87,0.24), transparent 55%)',
     backgroundSize: '9px 100%, 100% 100%',
     backgroundRepeat: 'no-repeat, no-repeat',
@@ -112,7 +114,7 @@ export const getBaseNodeStyle = (familyKey, theme, nodeWidth, nodeHeight, status
     // Family styles have fixed backgrounds and are designed to work for both statuses
     // Create a complete style object with family-specific overrides
     const familyStyleCopy = { ...familyStyle };
-    return {
+    const baseStyle = {
       background: familyStyleCopy.background || (status === 'studying' ? theme.nodeStudying : theme.nodeGraduated),
       color: familyStyleCopy.color || theme.nodeText || '#333333',
       border: familyStyleCopy.border || `2px solid ${theme.nodeBorder || '#cccccc'}`,
@@ -128,6 +130,16 @@ export const getBaseNodeStyle = (familyKey, theme, nodeWidth, nodeHeight, status
       backgroundRepeat: familyStyleCopy.backgroundRepeat || undefined,
       backgroundPosition: familyStyleCopy.backgroundPosition || undefined,
     };
+    
+    // Apply backdrop filter for glassy effect (Empire)
+    if (familyStyleCopy.backdropFilter) {
+      baseStyle.backdropFilter = familyStyleCopy.backdropFilter;
+      baseStyle.WebkitBackdropFilter = familyStyleCopy.WebkitBackdropFilter;
+    }
+    
+    // Apply border color override if specified (Empire) - borderColor is already included in border property
+    
+    return baseStyle;
   }
 
   // Fallback to base theme styles if no family palette

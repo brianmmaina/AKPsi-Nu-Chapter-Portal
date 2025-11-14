@@ -565,6 +565,87 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     };
   }, [brothers]);
 
+  // Calculate pledge class markers for left-side vertical stripes (Empire only)
+  const pledgeClassMarkers = useMemo(() => {
+    if (!isEmpire || !isTreeReady || !nodes || !Array.isArray(nodes) || nodes.length === 0) {
+      return [];
+    }
+    
+    try {
+      // Group nodes by their Y position (generation level)
+      // Each level is spaced by pledgeVerticalSpacing
+      const levelMap = new Map(); // level -> { y, nodes, pledgeClasses }
+      const pledgeVerticalSpacing = layoutSettings.pledgeVerticalSpacing || 145;
+      
+      nodes.forEach((node) => {
+        if (!node || !node.position || typeof node.position.y !== 'number') return;
+        if (!node.data || !node.data.brother) return;
+        
+        const y = node.position.y;
+        // Calculate which level this node belongs to (rounded to nearest pledgeVerticalSpacing)
+        const level = Math.round(y / pledgeVerticalSpacing);
+        
+        if (!levelMap.has(level)) {
+          levelMap.set(level, {
+            level,
+            y: level * pledgeVerticalSpacing, // Actual Y position for this level
+            nodes: [],
+            pledgeClasses: new Set(),
+          });
+        }
+        
+        const levelData = levelMap.get(level);
+        levelData.nodes.push(node);
+        if (node.data.brother.pledge_class) {
+          levelData.pledgeClasses.add(node.data.brother.pledge_class.trim().toUpperCase());
+        }
+      });
+      
+      // Convert to array and sort by level
+      const markers = Array.from(levelMap.values())
+        .filter((levelData) => levelData.nodes.length > 0)
+        .sort((a, b) => a.level - b.level)
+        .map((levelData) => {
+          // Get the most common pledge class name for this level, or combine them
+          const pledgeClasses = Array.from(levelData.pledgeClasses);
+          let label = '';
+          if (pledgeClasses.length === 1) {
+            label = pledgeClasses[0];
+          } else if (pledgeClasses.length > 1) {
+            // Multiple pledge classes at this level - use a combined label
+            label = pledgeClasses.join(' / ');
+          } else {
+            label = 'Level ' + (levelData.level + 1);
+          }
+          
+          // Get optional year from nodes if available
+          const years = levelData.nodes
+            .map((n) => n.data?.brother?.graduation_year)
+            .filter((y) => y && typeof y === 'number')
+            .sort((a, b) => b - a); // Most recent first
+          const yearLabel = years.length > 0 ? `Class of ${years[0]}` : '';
+          
+          return {
+            level: levelData.level,
+            y: levelData.y,
+            label,
+            yearLabel,
+            nodeIds: levelData.nodes.map((n) => n.id),
+            pledgeClasses: pledgeClasses,
+          };
+        });
+      
+      return markers;
+    } catch (error) {
+      console.warn('Error calculating pledge class markers:', error);
+      return [];
+    }
+  }, [isEmpire, isTreeReady, nodes, layoutSettings]);
+  
+  // State for highlighting nodes when marker is clicked
+  const [highlightedPledgeClass, setHighlightedPledgeClass] = useState(null);
+  const [hoveredMarkerLevel, setHoveredMarkerLevel] = useState(null);
+
   /**
    * Calculates tree layout and creates React Flow nodes/edges
    * 
@@ -637,6 +718,30 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       // Validate layout result before setting
       if (layoutResult && layoutResult.nodes && layoutResult.edges) {
         if (Array.isArray(layoutResult.nodes) && Array.isArray(layoutResult.edges)) {
+          // Apply pledge class marker highlighting for Empire
+          if (isEmpire && pledgeClassMarkers.length > 0) {
+            // Check both highlighted (clicked) and hovered states
+            const activeMarkerLevel = highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
+            
+            if (activeMarkerLevel !== null) {
+              const activeMarker = pledgeClassMarkers.find(m => m.level === activeMarkerLevel);
+              if (activeMarker && activeMarker.nodeIds) {
+                const activeNodeIds = new Set(activeMarker.nodeIds);
+                layoutResult.nodes.forEach((node) => {
+                  if (activeNodeIds.has(node.id)) {
+                    // Apply highlight style to nodes in this pledge class level
+                    const existingShadow = node.style?.boxShadow || '';
+                    const glowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2; // Stronger when clicked
+                    const brightness = highlightedPledgeClass !== null ? 1.1 : 1.05; // Brighter when clicked
+                    node.style.boxShadow = `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${glowOpacity})`;
+                    node.style.filter = `brightness(${brightness})`;
+                    node.style.transition = 'filter 0.3s ease, box-shadow 0.3s ease';
+                  }
+                });
+              }
+            }
+          }
+          
           setNodes(layoutResult.nodes);
           setEdges(layoutResult.edges);
         } else {
@@ -662,6 +767,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     renderNodeContent,
     loading,
     isEmpire,
+    highlightedPledgeClass,
+    hoveredMarkerLevel,
+    pledgeClassMarkers,
   ]);
 
   /**
@@ -1280,6 +1388,118 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         />
       </ReactFlow>
 
+      {/* Left-side Pledge Class Markers (Empire only) */}
+      {isEmpire && pledgeClassMarkers.length > 0 && (
+        <div
+          key={`pledge-markers-${viewport.x}-${viewport.y}-${viewport.zoom}`} // Force re-render on viewport change
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '80px', // Fixed width for marker area
+            height: '100%',
+            pointerEvents: 'auto',
+            zIndex: 2, // Above background, below nodes
+            paddingTop: `calc(136px + env(safe-area-inset-top, 0px))`, // HEADER_HEIGHT = 136
+            paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 4px)`, // BOTTOM_BUFFER = 4
+          }}
+        >
+          {pledgeClassMarkers.map((marker, idx) => {
+            // Use ReactFlow's project() to convert flow coordinates to screen coordinates
+            let screenY;
+            try {
+              if (project && typeof project === 'function') {
+                const projected = project({ x: 0, y: marker.y });
+                screenY = projected.y;
+              } else {
+                // Fallback to manual calculation
+                const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
+                screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
+              }
+            } catch (error) {
+              console.warn('Failed to project marker position:', error);
+              const currentViewport = viewport || defaultViewport || { x: 0, y: 0, zoom: 1 };
+              screenY = (marker.y * currentViewport.zoom) + currentViewport.y;
+            }
+            
+            const isHighlighted = highlightedPledgeClass === marker.level;
+            const isHovered = hoveredMarkerLevel === marker.level;
+            
+            return (
+              <div
+                key={`pledge-marker-${marker.level}-${idx}`}
+                style={{
+                  position: 'absolute',
+                  left: '0',
+                  top: `${screenY}px`,
+                  width: '100%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  pointerEvents: 'auto',
+                  transition: 'opacity 0.2s ease',
+                }}
+                onMouseEnter={() => setHoveredMarkerLevel(marker.level)}
+                onMouseLeave={() => setHoveredMarkerLevel(null)}
+                onClick={() => {
+                  // Toggle highlight - click again to clear
+                  setHighlightedPledgeClass(isHighlighted ? null : marker.level);
+                }}
+              >
+                {/* Vertical bar */}
+                <div
+                  style={{
+                    width: '4px',
+                    height: '24px',
+                    background: isHovered || isHighlighted
+                      ? 'linear-gradient(to bottom, #e5c98f, #c5a666)' // Brighter on hover
+                      : 'linear-gradient(to bottom, #d9b87b, #be9d5b)', // Default gradient
+                    borderRadius: '2px',
+                    transition: 'all 0.2s ease',
+                    opacity: isHovered || isHighlighted ? 1 : 0.9,
+                    cursor: 'pointer',
+                  }}
+                />
+                
+                {/* Label card */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    background: 'rgba(255, 255, 255, 0.35)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 255, 255, 0.55)',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    color: '#3d3526',
+                    fontSize: '10px',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    maxWidth: '200px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    transition: 'all 0.2s ease',
+                    opacity: isHovered || isHighlighted ? 1 : 0.85,
+                    transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontWeight: 600, lineHeight: 1.2 }}>
+                    {marker.label.length > 15 ? marker.label.substring(0, 15) + '...' : marker.label}
+                  </div>
+                  {marker.yearLabel && (
+                    <div style={{ fontSize: '9px', opacity: 0.7, marginTop: '2px' }}>
+                      {marker.yearLabel}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (

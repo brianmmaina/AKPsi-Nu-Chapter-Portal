@@ -4,7 +4,7 @@ export const getThemeStyles = (themeName) => {
     // From family-tree-corrected.md: #f8f7f3 cream, #c9a857 gold primary
     empire: {
       background: '#f1e7d1',
-      backgroundGrid: '#e6d9bd',
+      backgroundGrid: '#d9c7a8', // Increased opacity ~5% (from #e6d9bd to #d9c7a8) for better grid visibility
       backgroundTexture: 'radial-gradient(closest-side, rgba(201,168,87,0.08), rgba(0,0,0,0) 60%)',
       nodeStudying: '#fff7ea',
       nodeGraduated: '#fff7ea',

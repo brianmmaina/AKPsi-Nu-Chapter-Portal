@@ -200,7 +200,7 @@ export const useSearch = (family, brothers, onFocusNode, onToast, onSwitchFamily
       // Use provided families list if available, otherwise fetch
       let familiesList = allFamilies;
       if (!familiesList || !Array.isArray(familiesList) || familiesList.length === 0) {
-        const response = await familiesApi.getAll();
+      const response = await familiesApi.getAll();
         familiesList = response.data || [];
       }
 
@@ -386,7 +386,7 @@ export const useSearch = (family, brothers, onFocusNode, onToast, onSwitchFamily
               }
             } else {
               // No switch function provided, just show message
-              if (onToast) {
+            if (onToast) {
                 if (matchCount === 1) {
                   onToast({ 
                     message: `Found ${target.name} in ${familyName}.`, 

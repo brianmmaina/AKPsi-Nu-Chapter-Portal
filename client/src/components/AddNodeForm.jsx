@@ -102,7 +102,7 @@ const AddNodeForm = ({ parentBrother, existingBrothers = [], familyId, onClose, 
     } catch (error) {
       // Log error in development only
       if (import.meta.env.DEV) {
-        console.error('Error adding brother:', error);
+      console.error('Error adding brother:', error);
       }
       const errorMessage = error.response?.data?.error || error.message || 'Failed to add brother. Please try again.';
       onToast?.({ 
