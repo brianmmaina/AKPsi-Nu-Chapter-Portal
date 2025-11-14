@@ -483,8 +483,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         ...base,
         horizontalSpacing: 310,
         siblingPadding: 56,
-        baseVerticalSpacing: 215,
-        pledgeVerticalSpacing: 195,
+        baseVerticalSpacing: 225,
+        pledgeVerticalSpacing: 205,
       };
     }
 
