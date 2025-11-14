@@ -232,7 +232,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     },
     [nodes, reactFlowInstance, safeLineageHighlight],
   );
-
+  
   const defaultViewport = useMemo(() => {
     if (isEmpire) return { x: 0, y: 0, zoom: 0.45 };
     if (isPower) return { x: 0, y: 0, zoom: 0.5 };
@@ -264,7 +264,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return bgTexture || undefined;
     }
   }, [presentation, theme]);
-  
+
   const containerStyle = useMemo(() => {
     // Safety checks: ensure theme is fully initialized
     if (!theme || typeof theme !== 'object' || !theme.background) {
@@ -950,7 +950,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       }
 
       restorePointerEvents();
-      setSelectedBrother(null);
+    setSelectedBrother(null);
       setSelectedBrotherId(null);
       setIsModalOpen(false);
       setViewportBeforeModal(null);
@@ -1318,12 +1318,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         </div>
       </div>
     );
-  }
+        }
 
   // Render combined header if provided by parent
   const headerProps = useMemo(() => {
     if (!renderCombinedHeader) return null;
-    return {
+          return {
       searchPalette,
       safeLineageHighlight,
       handleExportTree,
@@ -1583,16 +1583,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             
             const isHighlighted = highlightedPledgeClass === marker.level;
             const isHovered = hoveredMarkerLevel === marker.level;
-            
-            return (
-              <div
+              
+              return (
+                <div
                 key={`pledge-marker-${marker.level}-${idx}`}
-                style={{
-                  position: 'absolute',
+        style={{
+          position: 'absolute',
                   left: '0',
-                  top: `${screenY}px`,
-                  width: '100%',
-                  transform: 'translateY(-50%)',
+                    top: `${screenY}px`,
+                    width: '100%',
+                    transform: 'translateY(-50%)',
                   display: 'flex',
                   alignItems: 'center',
                   pointerEvents: 'auto',
@@ -1603,11 +1603,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 onClick={() => {
                   // Toggle highlight - click again to clear
                   setHighlightedPledgeClass(isHighlighted ? null : marker.level);
-                }}
-              >
+                  }}
+                >
                 {/* Vertical bar */}
-                <div
-                  style={{
+                  <div
+                    style={{
                     width: '4px',
                     height: '24px',
                     background: isHovered || isHighlighted
@@ -1622,7 +1622,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 
                 {/* Label card */}
                 <div
-                  style={{
+                        style={{
                     position: 'absolute',
                     left: '12px',
                     background: 'rgba(255, 255, 255, 0.35)',
@@ -1633,7 +1633,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                     padding: '6px 10px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     color: '#3d3526',
-                    fontSize: '10px',
+                          fontSize: '10px',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                     maxWidth: '200px',
@@ -1652,10 +1652,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                     <div style={{ fontSize: '9px', opacity: 0.7, marginTop: '2px' }}>
                       {marker.yearLabel}
                     </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
+              );
           })}
         </div>
       )}
@@ -1695,7 +1695,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           onToast={onToast}
         />
       )}
-      </div>
+    </div>
     </>
   );
 };

@@ -8,6 +8,83 @@ import TreeVisualization from './TreeVisualization';
 import SearchBar from './SearchBar';
 import MajorResultsPanel from './MajorResultsPanel';
 
+const TOP_BAR_CSS = `
+  .akpsi-topbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 20px 16px;
+    color: #000000;
+    pointer-events: auto;
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  }
+
+  .akpsi-topbar.akpsi-topbar--hidden {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .akpsi-topbar-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+  }
+
+  .akpsi-topbar-row--primary {
+    gap: 16px;
+  }
+
+  .akpsi-topbar-left,
+  .akpsi-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .akpsi-topbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .akpsi-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .akpsi-topbar-row--secondary {
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .akpsi-topbar-row-left {
+    flex: 1;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .akpsi-search-bar {
+    width: 100%;
+  }
+
+  .akpsi-topbar-row-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .akpsi-topbar * {
+    color: #000000 !important;
+  }
+`;
+
 import { hexToRgba } from '../utils/color';
 
 import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
@@ -122,11 +199,6 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           
           // Determine if theme is dark (for contrast adjustments)
           const isDarkTheme = selectedFamily.theme === 'power' || selectedFamily.theme === 'pride' || selectedFamily.theme === 'wolfpack' || selectedFamily.theme === 'greed';
-          const isLightTheme = selectedFamily.theme === 'empire';
-          
-          // Theme-aware text colors
-          const activeTabColor = themeAccent;
-          
           // Theme-aware background colors for tabs
           const activeTabBg = isDarkTheme 
             ? hexToRgba(themeAccent, 0.25)
@@ -165,18 +237,14 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           const clearMajorHandler = clearActiveMajor || (() => {});
           const preparingExport = Boolean(headerPreparingExport);
 
-          const topBarVisibilityStyles = isProfileOpen
-            ? { opacity: 0, transform: 'translateY(-8px)', pointerEvents: 'none' }
-            : { opacity: 1, transform: 'translateY(0)', pointerEvents: 'auto' };
-
           return (
 
-            <div
-              style={{
-                position: 'fixed',
-                top: 'env(safe-area-inset-top, 0px)',
-                left: 0,
-                right: 0,
+      <div 
+        style={{
+          position: 'fixed',
+          top: 'env(safe-area-inset-top, 0px)',
+          left: 0,
+          right: 0,
                 zIndex: 50,
                 padding: '12px 20px 12px 20px',
                 pointerEvents: 'none',
@@ -186,6 +254,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
               {/* Unified Glass Container */}
 
               <div
+                className={`akpsi-topbar ${isProfileOpen ? 'akpsi-topbar--hidden' : ''}`}
                 style={{
                   backdropFilter: 'blur(12px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -193,141 +262,110 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   borderRadius: '18px',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
                   border: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
-                  pointerEvents: topBarVisibilityStyles.pointerEvents,
                   color: '#000000',
-                  transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
-                  opacity: topBarVisibilityStyles.opacity,
-                  transform: topBarVisibilityStyles.transform,
                 }}
               >
+                <style>{TOP_BAR_CSS}</style>
 
-                {/* Top Panel: Family Name, Navigation Tabs, Back Button */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
-                    padding: '12px 20px',
-                    gap: '16px',
-                  }}
-                >
-                  {/* Family Name / Crest / Search */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '18px',
-                          fontWeight: 700,
-                          color: '#000000',
-                        }}
-                      >
-                        {presentation.crestLetter || 'A'}
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '14px',
-                          fontFamily: themeTitleFont,
-                          fontWeight: 600,
-                          color: '#000000',
-                          letterSpacing: '0.03em',
-                        }}
-                      >
-                        {selectedFamily.name}
-                      </span>
+                <div className="akpsi-topbar-row akpsi-topbar-row--primary">
+                  <div className="akpsi-topbar-left">
+                    <div
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        color: '#000000',
+                      }}
+                    >
+                      {presentation.crestLetter || 'A'}
                     </div>
-                    <SearchBar
-                      brothers={brothersIndex}
-                      onSelectBrother={selectBrotherHandler}
-                      onSelectMajor={selectMajorHandler}
-                      palette={searchPalette}
-                    />
-                    {activeMajor && (
-                      <MajorResultsPanel
-                        major={activeMajor}
-                        results={majorResults}
-                        onSelectBrother={selectBrotherHandler}
-                        onClear={clearMajorHandler}
-                      />
-                    )}
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        fontFamily: themeTitleFont,
+                        fontWeight: 600,
+                        color: '#000000',
+                        letterSpacing: '0.03em',
+                      }}
+                    >
+                      {selectedFamily.name}
+                    </span>
                   </div>
+                  <div className="akpsi-topbar-center">
+                    <div className="akpsi-tabs">
+                      {families.map((family) => {
+                        const isActive = selectedFamily.id === family.id;
+                        const familyTheme = getThemeStyles(family.theme);
+                        const familyAccent = familyTheme?.accent || '#c9a857';
+                        const familyText = familyTheme?.nodeText || '#3b2b16';
+                        const isFamilyDark = ['power', 'pride', 'wolfpack', 'greed'].includes(family.theme);
+                        const tabActiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.25) : hexToRgba(familyAccent, 0.30);
+                        const tabInactiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.12) : 'rgba(255, 230, 170, 0.25)';
+                        const tabInactiveHoverBg = isFamilyDark ? hexToRgba(familyAccent, 0.18) : 'rgba(255, 230, 170, 0.35)';
+                        const tabActiveColor = familyAccent;
+                        const tabInactiveColor = isFamilyDark ? hexToRgba(familyText, 0.75) : hexToRgba(familyText, 0.65);
 
-                  {/* Centered Navigation Tabs */}
-                  <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    {families.map((family) => {
-                      const isActive = selectedFamily.id === family.id;
-                      const familyTheme = getThemeStyles(family.theme);
-                      const familyAccent = familyTheme?.accent || '#c9a857';
-                      const familyText = familyTheme?.nodeText || '#3b2b16';
-                      const isFamilyDark = ['power', 'pride', 'wolfpack', 'greed'].includes(family.theme);
-                      const tabActiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.25) : hexToRgba(familyAccent, 0.30);
-                      const tabInactiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.12) : 'rgba(255, 230, 170, 0.25)';
-                      const tabInactiveHoverBg = isFamilyDark ? hexToRgba(familyAccent, 0.18) : 'rgba(255, 230, 170, 0.35)';
-                      const tabActiveColor = familyAccent;
-                      const tabInactiveColor = isFamilyDark ? hexToRgba(familyText, 0.75) : hexToRgba(familyText, 0.65);
-
-                      return (
-                        <button
-                          key={family.id}
-                          onClick={() => setSelectedFamily(family)}
-                          style={{
-                            position: 'relative',
-                            padding: '8px 20px',
-                            borderRadius: '18px',
-                            background: isActive ? tabActiveBg : tabInactiveBg,
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 200ms ease',
-                            fontWeight: isActive ? 700 : 600,
-                            fontSize: '13px',
-                            fontFamily: themeBodyFont,
-                            color: '#000000',
-                            letterSpacing: '0.02em',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.background = tabInactiveHoverBg;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.background = tabInactiveBg;
-                            }
-                          }}
-                          aria-label={`Switch to ${family.name} family`}
-                          aria-current={isActive ? 'true' : 'false'}
-                        >
-                          {family.name}
-                          {isActive && (
-                            <span
-                              style={{
-                                position: 'absolute',
-                                bottom: '4px',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                width: '60%',
-                                height: '3px',
-                                backgroundColor: familyAccent,
-                                borderRadius: '999px',
-                              }}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={family.id}
+                            onClick={() => setSelectedFamily(family)}
+                            style={{
+                              position: 'relative',
+                              padding: '8px 20px',
+                              borderRadius: '18px',
+                              background: isActive ? tabActiveBg : tabInactiveBg,
+                              backdropFilter: 'blur(8px)',
+                              WebkitBackdropFilter: 'blur(8px)',
+                              border: 'none',
+                              cursor: 'pointer',
+                              transition: 'all 200ms ease',
+                              fontWeight: isActive ? 700 : 600,
+                              fontSize: '13px',
+                              fontFamily: themeBodyFont,
+                              color: '#000000',
+                              letterSpacing: '0.02em',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.background = tabInactiveHoverBg;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.background = inactiveTabBg;
+                              }
+                            }}
+                            aria-label={`Switch to ${family.name} family`}
+                            aria-current={isActive ? 'true' : 'false'}
+                          >
+                            {family.name}
+                            {isActive && (
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  bottom: '4px',
+                                  left: '50%',
+                                  transform: 'translateX(-50%)',
+                                  width: '60%',
+                                  height: '3px',
+                                  backgroundColor: familyAccent,
+                                  borderRadius: '999px',
+                                }}
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-
-                  {/* Back Button (Right) */}
-                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <div className="akpsi-topbar-right">
                     <button
                       onClick={onChangeFamily}
                       style={{
@@ -357,139 +395,85 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                   </div>
                 </div>
 
-                {/* Bottom Panel: Search and Controls (Compacted) */}
-
-                {headerProps && (
-
-                  <div
-
-                    style={{
-
-                      display: 'flex',
-
-                      alignItems: 'center',
-
-                      justifyContent: 'flex-end', // Changed from 'space-between' to 'flex-end' since search is removed
-
-                      padding: '10px 20px 12px 20px',
-
-                      gap: '10px',
-
-                      borderTop: `1px solid ${hexToRgba('#c9a857', 0.08)}`,
-
-                    }}
-
-                  >
-
-                    {/* Search Input + Button (Left) - Deactivated */}
-                    {/* Search functionality is deactivated for now - will be implemented later */}
-
-                    {/* Controls (Right) */}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-
-                      {/* Highlight Toggle */}
-
-                      <select
-                        value={highlightState.lineageHighlightMode}
-                        onChange={(event) => highlightState.setLineageHighlightMode(event.target.value)}
-
-                        style={{
-
-                          background: 'rgba(255, 255, 255, 0.65)',
-
-                          backdropFilter: 'blur(10px)',
-
-                          WebkitBackdropFilter: 'blur(10px)',
-
-                          color: '#000000',
-                          fontFamily: themeBodyFont,
-
-                          border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
-
-                          borderRadius: '20px',
-
-                          padding: '6px 14px',
-
-                          fontSize: '12px',
-
-                          fontWeight: 600,
-
-                          textTransform: 'uppercase',
-
-                          letterSpacing: '0.08em',
-
-                          cursor: 'pointer',
-
-                          appearance: 'none',
-
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-
-                        }}
-
-                      >
-                        <option value="off">Highlight: Off</option>
-
-                        <option value="ancestors">Highlight: Ancestors</option>
-
-                        <option value="descendants">Highlight: Descendants</option>
-
-                        <option value="both">Highlight: Lineage</option>
-
-                      </select>
-
-                      {/* Export / Print Button */}
-
-                      <button
-
-                        type="button"
-
-                        onClick={exportHandler}
-                        disabled={preparingExport}
-
-                        style={{
-
-                          background: themeAccent,
-
-                          color: '#000000',
-                          fontFamily: themeBodyFont,
-
-                          border: 'none',
-
-                          padding: '6px 16px',
-
-                          borderRadius: '20px',
-
-                          fontWeight: 600,
-
-                          fontSize: '12px',
-
-                          cursor: preparingExport ? 'wait' : 'pointer',
-
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-
-                          opacity: preparingExport ? 0.65 : 1,
-
-                          transition: 'all 200ms ease',
-
-                          whiteSpace: 'nowrap',
-
-                        }}
-
-                        >
-                          {preparingExport ? 'Preparing…' : 'Export / Print'}
-
-                      </button>
-
+                <div className="akpsi-topbar-row akpsi-topbar-row--secondary">
+                  <div className="akpsi-topbar-row-left">
+                    <div className="akpsi-search-bar">
+                      <SearchBar
+                        brothers={brothersIndex}
+                        onSelectBrother={selectBrotherHandler}
+                        onSelectMajor={selectMajorHandler}
+                        palette={searchPalette}
+                      />
                     </div>
+                    {activeMajor && (
+                      <MajorResultsPanel
+                        major={activeMajor}
+                        results={majorResults}
+                        onSelectBrother={selectBrotherHandler}
+                        onClear={clearMajorHandler}
+                      />
+                    )}
+                  </div>
+                  <div className="akpsi-topbar-row-right">
+                    <select
+                      value={highlightState.lineageHighlightMode}
+                      onChange={(event) => highlightState.setLineageHighlightMode(event.target.value)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.65)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        color: '#000000',
+                        fontFamily: themeBodyFont,
+                        border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
+                        borderRadius: '20px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                      }}
+                    >
+                      <option value="off">Highlight: Off</option>
+                      <option value="ancestors">Highlight: Ancestors</option>
+                      <option value="descendants">Highlight: Descendants</option>
+                      <option value="both">Highlight: Lineage</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={exportHandler}
+                      disabled={preparingExport}
+                      style={{
+                        background: themeAccent,
+                        color: '#000000',
+                        fontFamily: themeBodyFont,
+                        border: 'none',
+                        padding: '6px 16px',
+                        borderRadius: '20px',
+                        fontWeight: 600,
+                        fontSize: '12px',
+                        cursor: preparingExport ? 'wait' : 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                        opacity: preparingExport ? 0.65 : 1,
+                        transition: 'all 200ms ease',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {preparingExport ? 'Preparing…' : 'Export / Print'}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
                   </div>
 
                 )}
 
-              </div>
+        </div>
 
-            </div>
+      </div>
 
           );
 
