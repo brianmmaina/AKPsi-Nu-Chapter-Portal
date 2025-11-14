@@ -20,11 +20,15 @@ const PledgeClassMarkers = ({
 
   const markerAccent = theme?.pledgeMarkerAccent || theme?.accent || '#d9b87b';
   const markerAccentEnd = theme?.pledgeMarkerAccentEnd || markerAccent;
-  const familyKey = theme?.key;
+  const familyKey = theme?.key || theme?.familyKey;
   const useLightText = familyKey === 'power' || familyKey === 'pride';
   const markerText = useLightText ? 'rgba(255,255,255,0.94)' : 'rgba(0,0,0,0.92)';
-  const labelBg = theme?.pledgeMarkerLabelBg || 'rgba(255,255,255,0.35)';
-  const labelBorder = theme?.pledgeMarkerLabelBorder || 'rgba(255,255,255,0.55)';
+  const labelBg = useLightText
+    ? 'rgba(6, 10, 20, 0.78)'
+    : theme?.pledgeMarkerLabelBg || 'rgba(255,255,255,0.35)';
+  const labelBorder = useLightText
+    ? '1px solid rgba(255,255,255,0.25)'
+    : theme?.pledgeMarkerLabelBorder || 'rgba(255,255,255,0.55)';
   const labelShadow = theme?.pledgeMarkerShadow || '0 6px 16px rgba(0,0,0,0.18)';
   const isGradientValue = (value) =>
     typeof value === 'string' && value.toLowerCase().includes('gradient');

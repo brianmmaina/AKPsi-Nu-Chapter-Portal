@@ -272,6 +272,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         controlsPanelBg: themeResult.controlsPanelBg,
         controlsBorder: themeResult.controlsBorder,
         controlsShadow: themeResult.controlsShadow,
+        key: themeResult.key || safeFamilyTheme,
+        familyKey: safeFamilyTheme,
       };
       
       return safeTheme;
@@ -284,6 +286,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   
   // Use the safe family theme as familyKey
   const familyKey = safeFamilyTheme;
+  const leftGutter = familyKey === 'greed' ? LEFT_TREE_GUTTER + 50 : LEFT_TREE_GUTTER;
+  const rightGutter = familyKey === 'greed' ? RIGHT_TREE_GUTTER + 30 : RIGHT_TREE_GUTTER;
   
   // Define presentation and flags after theme is initialized (before early return)
   // These must be defined even if family is undefined, to maintain hook order
@@ -847,7 +851,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             treeBoundsRef.current = bounds;
           }
         },
-    leftMargin: LEFT_TREE_GUTTER,
+        leftMargin: leftGutter,
         });
 
       // Validate layout result before setting
@@ -878,6 +882,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     renderNodeContent,
     loading,
     isEmpire,
+    leftGutter,
   ]);
 
   // Separate effect to apply pledge class marker highlighting (Empire only)
@@ -1071,10 +1076,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       const paddedWidth = bounds.width * paddingMultiplier;
       const paddedHeight = bounds.height * paddingMultiplier;
-      const usableWidth = Math.max(
-        200,
-        viewportWidth - LEFT_TREE_GUTTER - RIGHT_TREE_GUTTER,
-      );
+      const usableWidth = Math.max(200, viewportWidth - leftGutter - rightGutter);
       const rawScale = Math.min(
         usableWidth / paddedWidth,
         viewportHeight / paddedHeight,
@@ -1082,8 +1084,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const nextZoom = Math.min(maxZoom, Math.max(minZoom, rawScale));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
-      const nextX =
-        LEFT_TREE_GUTTER + usableWidth / 2 - centerX * nextZoom;
+      const nextX = leftGutter + usableWidth / 2 - centerX * nextZoom;
       const nextY = viewportHeight / 2 - centerY * nextZoom;
 
       try {
@@ -1096,7 +1097,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         reactFlowInstance.fitView?.({ padding: 0.3, duration });
       }
     },
-    [reactFlowInstance, maxZoom, minZoom],
+    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter],
   );
 
   const fitTreeView = useCallback(
@@ -1262,7 +1263,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // Export handler - must be called before any conditional returns
   const handleExportTree = useCallback(async () => {
     setIsPreparingExport(true);
-    showToast('Preparing export…');
 
     try {
       fitTreeView();
