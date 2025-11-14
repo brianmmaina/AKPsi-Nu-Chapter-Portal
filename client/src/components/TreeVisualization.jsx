@@ -697,66 +697,66 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
     
     try {
-      // Group nodes by their Y position (generation level)
-      // Each level is spaced by pledgeVerticalSpacing
-      const levelMap = new Map(); // level -> { y, nodes, pledgeClasses }
-      const pledgeVerticalSpacing = layoutSettings.pledgeVerticalSpacing || 145;
+      const levelMap = new Map(); // levelIndex -> aggregated data
       
       nodes.forEach((node) => {
-        if (!node || !node.position || typeof node.position.y !== 'number') return;
-        if (!node.data || !node.data.brother) return;
+        if (!node || !node.data || !node.data.brother) return;
+        const levelIndex =
+          typeof node.data.levelIndex === 'number'
+            ? node.data.levelIndex
+            : null;
+        if (levelIndex === null) return;
+        const layoutY =
+          typeof node.data.layoutY === 'number'
+            ? node.data.layoutY
+            : node.position?.y ?? 0;
         
-        const y = node.position.y;
-        // Calculate which level this node belongs to (rounded to nearest pledgeVerticalSpacing)
-        const level = Math.round(y / pledgeVerticalSpacing);
-        
-        if (!levelMap.has(level)) {
-          levelMap.set(level, {
-            level,
-            y: level * pledgeVerticalSpacing, // Actual Y position for this level
+        if (!levelMap.has(levelIndex)) {
+          levelMap.set(levelIndex, {
+            level: levelIndex,
+            sumY: 0,
+            count: 0,
             nodes: [],
             pledgeClasses: new Set(),
           });
         }
         
-        const levelData = levelMap.get(level);
+        const levelData = levelMap.get(levelIndex);
+        levelData.sumY += layoutY;
+        levelData.count += 1;
         levelData.nodes.push(node);
         if (node.data.brother.pledge_class) {
           levelData.pledgeClasses.add(node.data.brother.pledge_class.trim().toUpperCase());
         }
       });
       
-      // Convert to array and sort by level
       const markers = Array.from(levelMap.values())
-        .filter((levelData) => levelData.nodes.length > 0)
+        .filter((levelData) => levelData.count > 0)
         .sort((a, b) => a.level - b.level)
         .map((levelData) => {
-          // Get the most common pledge class name for this level, or combine them
           const pledgeClasses = Array.from(levelData.pledgeClasses);
           let label = '';
           if (pledgeClasses.length === 1) {
             label = pledgeClasses[0];
           } else if (pledgeClasses.length > 1) {
-            // Multiple pledge classes at this level - use a combined label
             label = pledgeClasses.join(' / ');
           } else {
             label = 'Level ' + (levelData.level + 1);
           }
           
-          // Get optional year from nodes if available
           const years = levelData.nodes
             .map((n) => n.data?.brother?.graduation_year)
             .filter((y) => y && typeof y === 'number')
-            .sort((a, b) => b - a); // Most recent first
+            .sort((a, b) => b - a);
           const yearLabel = years.length > 0 ? `Class of ${years[0]}` : '';
           
           return {
             level: levelData.level,
-            y: levelData.y,
+            y: levelData.sumY / levelData.count,
             label,
             yearLabel,
             nodeIds: levelData.nodes.map((n) => n.id),
-            pledgeClasses: pledgeClasses,
+            pledgeClasses,
           };
         });
       
@@ -765,7 +765,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       console.warn('Error calculating pledge class markers:', error);
       return [];
     }
-  }, [isTreeReady, nodes, layoutSettings]);
+  }, [isTreeReady, nodes]);
   
   // State for highlighting nodes when marker is clicked
   const [highlightedPledgeClass, setHighlightedPledgeClass] = useState(null);

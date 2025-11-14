@@ -295,6 +295,7 @@ export const calculateTreeLayout = ({
     nodePositions.set(brother.id, {
       x: info.x,
       y: remappedLevel * pledgeVerticalSpacing,
+      level: remappedLevel,
     });
   });
 
@@ -306,7 +307,11 @@ export const calculateTreeLayout = ({
       return;
     }
     
-    const position = nodePositions.get(brother.id);
+    const positionInfo = nodePositions.get(brother.id);
+    const position = positionInfo
+      ? { x: positionInfo.x, y: positionInfo.y }
+      : { x: 0, y: 0 };
+    const levelIndex = positionInfo?.level ?? 0;
     const status = brother.status === 'studying' ? 'studying' : 'graduated';
     
     // Get base node style using utility (pass actual status)
@@ -334,8 +339,10 @@ export const calculateTreeLayout = ({
       data: {
         label: nodeLabel,
         brother: brother,
+        levelIndex,
+        layoutY: position.y,
       },
-      position: position || { x: 0, y: 0 },
+      position,
       style: nodeStyle,
       className: 'tree-node-card',
     });
