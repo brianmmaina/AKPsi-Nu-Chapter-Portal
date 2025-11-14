@@ -111,8 +111,36 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         renderCombinedHeader={(headerProps) => {
 
           const presentation = FAMILY_PRESENTATION[selectedFamily.theme] || FAMILY_PRESENTATION.default;
-
           
+          // Get active theme styles for dynamic styling
+          const activeTheme = getThemeStyles(selectedFamily.theme);
+          const themeAccent = activeTheme?.accent || '#c9a857';
+          const themeText = activeTheme?.nodeText || '#3b2b16';
+          const themeTitleFont = activeTheme?.titleFont || 'Cinzel, serif';
+          const themeBodyFont = activeTheme?.bodyFont || 'Inter, system-ui, sans-serif';
+          
+          // Determine if theme is dark (for contrast adjustments)
+          const isDarkTheme = selectedFamily.theme === 'power' || selectedFamily.theme === 'pride' || selectedFamily.theme === 'wolfpack' || selectedFamily.theme === 'greed';
+          const isLightTheme = selectedFamily.theme === 'empire';
+          
+          // Theme-aware text colors
+          const activeTabColor = themeAccent;
+          const inactiveTabColor = isDarkTheme ? hexToRgba(themeText, 0.75) : hexToRgba(themeText, 0.65);
+          const familyNameColor = isDarkTheme ? hexToRgba(themeText, 0.92) : hexToRgba(themeText, 0.85);
+          
+          // Theme-aware background colors for tabs
+          const activeTabBg = isDarkTheme 
+            ? hexToRgba(themeAccent, 0.25)
+            : hexToRgba(themeAccent, 0.30);
+          const inactiveTabBg = isDarkTheme
+            ? hexToRgba(themeAccent, 0.12)
+            : 'rgba(255, 230, 170, 0.25)';
+          const inactiveTabHoverBg = isDarkTheme
+            ? hexToRgba(themeAccent, 0.18)
+            : 'rgba(255, 230, 170, 0.35)';
+          
+          // Theme-aware underline color
+          const underlineColor = themeAccent;
 
           return (
 
@@ -128,7 +156,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                 right: 0,
 
-                zIndex: 21,
+                zIndex: 30, // Lower than modal (100) but above tree content (1-12)
 
                 padding: '12px 20px 12px 20px',
 
@@ -226,11 +254,11 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         fontSize: '14px',
 
-                        fontFamily: 'Cinzel, serif',
+                        fontFamily: themeTitleFont,
 
                         fontWeight: 600,
 
-                        color: presentation.header?.textColor || 'rgba(59, 43, 22, 0.72)',
+                        color: familyNameColor,
 
                         letterSpacing: '0.03em',
 
@@ -272,7 +300,35 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                       const familyTheme = getThemeStyles(family.theme);
 
-                      const familyPrimary = familyTheme?.accent || '#c9a857';
+                      const familyAccent = familyTheme?.accent || '#c9a857';
+
+                      const familyText = familyTheme?.nodeText || '#3b2b16';
+
+                      const isFamilyDark = family.theme === 'power' || family.theme === 'pride' || family.theme === 'wolfpack' || family.theme === 'greed';
+
+                      // Theme-aware styling for each tab based on its own theme
+
+                      const tabActiveBg = isFamilyDark 
+
+                        ? hexToRgba(familyAccent, 0.25)
+
+                        : hexToRgba(familyAccent, 0.30);
+
+                      const tabInactiveBg = isFamilyDark
+
+                        ? hexToRgba(familyAccent, 0.12)
+
+                        : 'rgba(255, 230, 170, 0.25)';
+
+                      const tabInactiveHoverBg = isFamilyDark
+
+                        ? hexToRgba(familyAccent, 0.18)
+
+                        : 'rgba(255, 230, 170, 0.35)';
+
+                      const tabActiveColor = familyAccent;
+
+                      const tabInactiveColor = isFamilyDark ? hexToRgba(familyText, 0.75) : hexToRgba(familyText, 0.65);
 
                       
 
@@ -292,11 +348,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                             borderRadius: '18px',
 
-                            background: isActive 
-
-                              ? 'rgba(199, 165, 92, 0.30)' 
-
-                              : 'rgba(255, 230, 170, 0.25)',
+                            background: isActive ? tabActiveBg : tabInactiveBg,
 
                             backdropFilter: 'blur(8px)',
 
@@ -308,11 +360,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                             transition: 'all 200ms ease',
 
-                            fontWeight: 600,
+                            fontWeight: isActive ? 700 : 600,
 
                             fontSize: '13px',
 
-                            color: isActive ? familyPrimary : 'rgba(74, 74, 74, 0.85)',
+                            fontFamily: themeBodyFont,
+
+                            color: isActive ? tabActiveColor : tabInactiveColor,
 
                             letterSpacing: '0.02em',
 
@@ -322,7 +376,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                             if (!isActive) {
 
-                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                              e.currentTarget.style.background = tabInactiveHoverBg;
 
                             }
 
@@ -332,7 +386,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                             if (!isActive) {
 
-                              e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                              e.currentTarget.style.background = tabInactiveBg;
 
                             }
 
@@ -364,7 +418,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                                 height: '3px',
 
-                                backgroundColor: '#C7A55C',
+                                backgroundColor: familyAccent,
 
                                 borderRadius: '999px',
 
@@ -396,9 +450,11 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         fontSize: '13px',
 
+                        fontFamily: themeBodyFont,
+
                         borderRadius: '18px',
 
-                        background: 'rgba(255, 230, 170, 0.25)',
+                        background: inactiveTabBg,
 
                         backdropFilter: 'blur(8px)',
 
@@ -406,7 +462,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         border: 'none',
 
-                        color: '#c9a857',
+                        color: themeAccent,
 
                         cursor: 'pointer',
 
@@ -420,13 +476,13 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                       onMouseEnter={(e) => {
 
-                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.35)';
+                        e.currentTarget.style.background = inactiveTabHoverBg;
 
                       }}
 
                       onMouseLeave={(e) => {
 
-                        e.currentTarget.style.background = 'rgba(255, 230, 170, 0.25)';
+                        e.currentTarget.style.background = inactiveTabBg;
 
                       }}
 
@@ -487,7 +543,8 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                           WebkitBackdropFilter: 'blur(10px)',
 
-                          color: headerProps.searchPalette.inputColor || '#3b2b16',
+                          color: themeText,
+                          fontFamily: themeBodyFont,
 
                           border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
 
@@ -535,9 +592,10 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
 
                         style={{
 
-                          background: headerProps.theme.accent || '#c9a857',
+                          background: themeAccent,
 
-                          color: headerProps.familyKey === 'power' || headerProps.familyKey === 'pride' ? '#1f1f1f' : '#2b2314',
+                          color: isDarkTheme ? '#1f1f1f' : '#2b2314',
+                          fontFamily: themeBodyFont,
 
                           border: 'none',
 
