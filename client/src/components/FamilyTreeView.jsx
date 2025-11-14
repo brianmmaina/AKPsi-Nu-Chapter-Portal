@@ -21,6 +21,12 @@ const PAGE_LAYOUT_CSS = `
     position: relative;
     overflow: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .family-tree-content > * {
+    flex: 1;
+    min-height: 0;
   }
 `;
 

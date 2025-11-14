@@ -58,18 +58,21 @@ const CurvedEdge = ({
 };
 
 const TREE_LAYER_CSS = `
-.tree-page-root {
+.tree-root {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  min-height: 100%;
+  min-height: 0;
   position: relative;
 }
-.tree-canvas-wrapper {
+.tree-root__body {
   flex: 1;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 .tree-pledge-markers {
   pointer-events: none;
@@ -397,12 +400,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, [presentation, theme]);
   
-  const pageRootStyle = useMemo(() => {
+  const treeRootStyle = useMemo(() => {
     const baseBackground = theme?.background || '#f5f5f5';
       return {
         width: '100%',
       height: '100%',
-      minHeight: '100%',
+      minHeight: 0,
       display: 'flex',
       flexDirection: 'column',
         position: 'relative',
@@ -413,12 +416,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     };
   }, [theme, composedBackground]);
 
-  const canvasStyle = useMemo(() => {
+  const treeBodyStyle = useMemo(() => {
       return {
       flex: 1,
         width: '100%',
       height: '100%',
-      minHeight: '100%',
+      minHeight: 0,
       position: 'relative',
         pointerEvents: 'auto',
       overflow: 'hidden',
@@ -1545,12 +1548,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   return (
     <>
       <style>{TREE_LAYER_CSS}</style>
-      <div className="tree-page-root" style={pageRootStyle}>
+      <div className="tree-root" style={treeRootStyle}>
         {/* Combined header rendered by parent */}
         {renderCombinedHeader && headerProps && renderCombinedHeader(headerProps)}
         <div
-          className="tree-canvas-wrapper"
-          style={canvasStyle}
+          className="tree-root__body"
+          style={treeBodyStyle}
           ref={flowWrapperRef}
         >
 
