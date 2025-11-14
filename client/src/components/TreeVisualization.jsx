@@ -93,39 +93,50 @@ const TREE_LAYER_CSS = `
   filter: brightness(var(--node-hover-brightness, 1.02));
 }
 .tree-controls-panel {
-  border-radius: 18px;
-  overflow: hidden;
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  padding: 10px;
+  z-index: 30;
 }
 .tree-controls-panel .react-flow__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background: transparent !important;
 }
 .tree-controls-panel .react-flow__controls-button {
+  position: relative;
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  margin: 2px;
+  width: 36px;
+  height: 36px;
+  margin: 0;
 }
 .tree-controls-panel .react-flow__controls-button svg {
   width: 18px;
   height: 18px;
 }
 .tree-controls {
-  z-index: 30 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.tree-controls__reset {
+.tree-controls button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: none;
-  border-radius: 12px;
-  padding: 8px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(0,0,0,0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.tree-controls__reset:hover {
+.tree-controls button:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
@@ -1650,23 +1661,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             padding: '6px 10px',
           }}
         >
-          <Controls
-            className="tree-controls"
-            style={{ pointerEvents: 'auto' }}
-            showInteractive={false}
-          />
-          <button
-            type="button"
-            className="tree-controls__reset"
-            onClick={() => fitTreeToViewport(450)}
+          <div className="tree-controls" style={{ pointerEvents: 'auto' }}>
+            <Controls
+              showInteractive={false}
+            />
+            <button
+              type="button"
+              onClick={() => fitTreeToViewport(450)}
         style={{
-              background: hexToRgba(theme?.accent || '#ffffff', 0.16),
-              color: theme?.nodeText || '#1f1f1f',
-              border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.24)}`,
-            }}
-          >
-            Reset View
-          </button>
+                background: hexToRgba(theme?.accent || '#ffffff', 0.16),
+                color: theme?.nodeText || '#1f1f1f',
+                border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.24)}`,
+              }}
+            >
+              Reset
+            </button>
+                  </div>
         </Panel>
         <MiniMap 
           nodeColor={theme.minimapNode}
