@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import ReactFlow, {
-  MiniMap,
-  Controls,
   Background,
   Panel,
   MarkerType,
@@ -1666,40 +1664,41 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           className="tree-controls-panel"
           style={{
             position: 'absolute',
-            left: '50%',
-            bottom: 32,
-            transform: 'translateX(-50%)',
+            left: 24,
+            bottom: 24,
             pointerEvents: 'auto',
             background: 'transparent',
             border: 'none',
             boxShadow: 'none',
             backdropFilter: 'none',
             WebkitBackdropFilter: 'none',
-            color: theme.nodeText || '#1f1f1f',
             padding: 0,
           }}
         >
-          <div className="tree-controls" style={{ pointerEvents: 'auto' }}>
-            <Controls
-              showInteractive={false}
-            />
-            <button
-              type="button"
-              onClick={() => fitTreeToViewport(450)}
-        style={{
-                background: hexToRgba(theme?.accent || '#ffffff', 0.16),
-                color: theme?.nodeText || '#1f1f1f',
-                border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.24)}`,
-              }}
-            >
-              Reset
-            </button>
-                  </div>
+          <button
+            type="button"
+            onClick={() => fitTreeToViewport(450)}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '999px',
+              border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.35)}`,
+              background: hexToRgba(theme?.accent || '#ffffff', 0.16),
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: theme?.nodeText || '#1f1f1f',
+              boxShadow: '0 10px 24px rgba(0,0,0,0.25)',
+            }}
+          >
+            Reset
+          </button>
         </Panel>
-        <MiniMap 
-          nodeColor={theme.minimapNode}
-          style={{ backgroundColor: theme.minimapBg }}
-        />
       </ReactFlow>
 
       {pledgeClassMarkers.length > 0 && (
@@ -1718,6 +1717,36 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           theme={theme}
         />
       )}
+
+      <div
+        style={{
+          position: 'absolute',
+          right: 24,
+          bottom: 24,
+          background: hexToRgba(theme.background || '#000000', 0.92),
+          border: `1px solid ${hexToRgba(theme.accent || '#ffffff', 0.4)}`,
+          color: theme.nodeText || '#ffffff',
+          fontSize: 11,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          padding: '10px 14px',
+          borderRadius: 12,
+          pointerEvents: 'none',
+          boxShadow: '0 10px 24px rgba(0,0,0,0.35)',
+          minWidth: 160,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>Tree Summary</div>
+        <div>{`${pledgeSummary.totalBrothers} Brothers`}</div>
+        <div>{`${pledgeSummary.uniquePledgeClasses} Pledge Classes`}</div>
+        {pledgeSummary.placeholderCount > 0 && (
+          <div style={{ textTransform: 'none', fontSize: 10, marginTop: 4, opacity: 0.8 }}>
+            {`${pledgeSummary.placeholderCount} awaiting assignment`}
+          </div>
+        )}
+      </div>
 
       {/* Show helpful message if no relationships exist */}
       {!loading && brothers.length > 0 && relationships.length === 0 && (
