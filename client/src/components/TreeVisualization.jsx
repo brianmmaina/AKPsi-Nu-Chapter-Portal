@@ -161,6 +161,16 @@ const LEFT_TREE_GUTTER = 140;
 const RIGHT_TREE_GUTTER = 80;
 const CARD_WIDTH = 280;
 const CARD_MIN_HEIGHT = 110;
+const CARD_CONTENT_MAX_WIDTH = CARD_WIDTH - 32;
+const CARD_TOKENS = {
+  badgeFont: 10,
+  metaLabel: 9,
+  metaValue: 12,
+  nameSize: 16,
+  gap: 8,
+};
+const BASE_VERTICAL_SPACING = CARD_MIN_HEIGHT + 40;
+const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -453,8 +463,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const layoutSettings = useMemo(() => {
     const base = {
       horizontalSpacing: 320,
-      baseVerticalSpacing: 150,
-      pledgeVerticalSpacing: 135,
+      baseVerticalSpacing: BASE_VERTICAL_SPACING,
+      pledgeVerticalSpacing: BASE_PLEDGE_SPACING,
       multiChildCompression: 0.88,
       siblingPadding: 60,
       prongDropFactor: 1.08,
@@ -536,13 +546,46 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       const majorLabel = brother.major ? brother.major.trim() : null;
 
+      const renderMeta = (label, value) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div
+            style={{
+              fontSize: CARD_TOKENS.metaLabel,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              opacity: 0.65,
+            }}
+          >
+            {label}
+          </div>
+          <div
+            style={{
+              fontSize: CARD_TOKENS.metaValue,
+              fontWeight: 600,
+              color: palette.bodyColor,
+            }}
+          >
+            {value}
+          </div>
+        </div>
+      );
+
+      const metadata = [];
+      if (majorLabel) metadata.push(renderMeta('Major', majorLabel));
+      if (brother.graduation_year) {
+        metadata.push(renderMeta('Graduation', `Class of ${brother.graduation_year}`));
+      }
+      if (brother.big_brother) {
+        metadata.push(renderMeta('Big', brother.big_brother));
+      }
+
       return (
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 6,
-            maxWidth: CARD_WIDTH - 32,
+            gap: CARD_TOKENS.gap,
+            maxWidth: CARD_CONTENT_MAX_WIDTH,
             whiteSpace: 'normal',
             color: palette.bodyColor,
           }}
@@ -551,13 +594,13 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
+              gap: 6,
+              flexWrap: 'wrap',
             }}
           >
-              <div 
-                style={{ 
-                  fontSize: '9px',
+            <div
+              style={{
+                fontSize: CARD_TOKENS.badgeFont,
                 letterSpacing: '0.8px',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
@@ -565,56 +608,28 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 background: palette.badgeBg,
                 color: palette.badgeColor,
                 fontWeight: 600,
-                }}
-              >
+              }}
+            >
               {pledgeLabel}
-              </div>
-            <div 
-              style={{ 
-                fontSize: '10px',
+            </div>
+            <div
+              style={{
+                fontSize: CARD_TOKENS.badgeFont,
                 color: palette.statusColor,
                 letterSpacing: '0.35px',
                 fontWeight: 600,
-                  textTransform: 'uppercase',
+                textTransform: 'uppercase',
+                padding: '4px 10px',
+                borderRadius: 999,
+                background: palette.statusBadgeBg ?? 'rgba(0,0,0,0.07)',
               }}
             >
               {statusLabel}
             </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}
-          >
-              <div 
-                style={{ 
-                fontFamily: themeToUse.titleFont,
-                fontSize: palette.nameSize || '14px',
-                letterSpacing: palette.nameTracking || '0.4px',
-                lineHeight: 1.28,
-                color: palette.nameColor,
-                }}
-              >
-              {effectiveName}
-              </div>
-            {majorLabel && (
-              <div 
-                style={{ 
-                  fontSize: '11px',
-                  color: palette.classColor,
-                  letterSpacing: '0.2px',
-                  lineHeight: 1.3,
-                }}
-              >
-                {majorLabel}
-              </div>
-            )}
             {isTransfer && (
               <div
-              style={{ 
-                  fontSize: '9px',
+                style={{
+                  fontSize: CARD_TOKENS.badgeFont,
                   letterSpacing: '0.5px',
                   textTransform: 'uppercase',
                   color: palette.transferColor,
@@ -622,12 +637,25 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                 }}
               >
                 Transfer
-            </div>
+              </div>
             )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div
+              style={{
+                fontFamily: themeToUse.titleFont,
+                fontSize: CARD_TOKENS.nameSize,
+                letterSpacing: palette.nameTracking || '0.4px',
+                lineHeight: 1.28,
+                color: palette.nameColor,
+              }}
+            >
+              {effectiveName}
+            </div>
             {isPlaceholder && (
-              <div 
-                style={{ 
-                  fontSize: '10px',
+              <div
+                style={{
+                  fontSize: 11,
                   color: palette.placeholderColor || palette.statusColor,
                   fontStyle: 'italic',
                   lineHeight: 1.4,
@@ -637,8 +665,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
               </div>
             )}
           </div>
-          </div>
-        );
+          {metadata.length > 0 && (
+            <div
+              style={{
+                display: 'grid',
+                gap: 8,
+                gridTemplateColumns: metadata.length > 1 ? 'repeat(2, minmax(0,1fr))' : '1fr',
+              }}
+            >
+              {metadata}
+            </div>
+          )}
+        </div>
+      );
     } catch (error) {
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
@@ -901,37 +940,43 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const updatedNodes = currentNodes.map((node) => {
         const nodeLevel = node?.data?.levelIndex;
         const matches = activeLevel === null || nodeLevel === activeLevel;
-        const targetFilter =
-          activeLevel === null
-            ? undefined
-            : matches
-              ? 'brightness(1.08)'
-              : 'saturate(0.65) brightness(0.82)';
-        const targetOpacity = matches || activeLevel === null ? 1 : 0.35;
-
         const style = { ...(node.style || {}) };
         const prevFilter = style.filter;
         const prevOpacity =
           style.opacity === undefined ? 1 : Number(style.opacity);
+        const prevZIndex = style.zIndex ?? 1;
 
-        if (prevFilter === targetFilter && prevOpacity === targetOpacity) {
+        let nextFilter;
+        if (activeLevel === null) {
+          nextFilter = undefined;
+        } else if (matches) {
+          nextFilter = 'drop-shadow(0 0 12px rgba(0,0,0,0.15)) brightness(1.05)';
+        } else {
+          nextFilter = 'saturate(0.55) brightness(0.78)';
+        }
+        const nextOpacity = matches || activeLevel === null ? 1 : 0.32;
+        const nextZIndex = matches ? 3 : 1;
+
+        if (
+          prevFilter === nextFilter &&
+          prevOpacity === nextOpacity &&
+          prevZIndex === nextZIndex
+        ) {
           return node;
         }
 
-        if (targetFilter) {
-          style.filter = targetFilter;
+        if (nextFilter) {
+          style.filter = nextFilter;
         } else {
           delete style.filter;
         }
-
-        if (targetOpacity !== 1) {
-          style.opacity = targetOpacity;
+        if (nextOpacity !== 1) {
+          style.opacity = nextOpacity;
         } else {
           delete style.opacity;
         }
-
+        style.zIndex = nextZIndex;
         style.transition = 'filter 0.25s ease, opacity 0.25s ease';
-
         hasChanges = true;
         return { ...node, style };
       });
@@ -1262,6 +1307,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, [fitTreeView, showToast, theme?.background, safeFamily?.name]);
 
+  const handleResetView = useCallback(() => {
+    fitTreeView(450);
+    showToast('View reset. Drag or scroll to explore the full tree.');
+  }, [fitTreeView, showToast]);
+
   // Build brother index for search (name + major)
   const brothersIndex = useMemo(() => {
     if (!Array.isArray(brothers)) {
@@ -1580,7 +1630,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         >
           <button
             type="button"
-            onClick={() => fitTreeToViewport(450)}
+            onClick={handleResetView}
         style={{
               width: 48,
               height: 48,
