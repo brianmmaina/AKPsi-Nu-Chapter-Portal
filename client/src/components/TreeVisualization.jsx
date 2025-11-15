@@ -171,6 +171,8 @@ const CARD_TOKENS = {
 };
 const BASE_VERTICAL_SPACING = CARD_MIN_HEIGHT + 40;
 const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
+const SAFE_VIEWPORT_WIDTH = 1280;
+const SAFE_VIEWPORT_HEIGHT = 700;
 const READABILITY_ZOOM = {
   empire: 0.64,
   power: 0.7,
@@ -1098,10 +1100,22 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       const paddedWidth = bounds.width * paddingMultiplier;
       const paddedHeight = bounds.height * paddingMultiplier;
-      const usableWidth = Math.max(200, viewportWidth - leftGutter - rightGutter);
+      const maxTreeWidth =
+        SAFE_VIEWPORT_WIDTH - leftGutter - rightGutter;
+      const maxTreeHeight = SAFE_VIEWPORT_HEIGHT;
+
+      const clampedTreeWidth = Math.max(
+        220,
+        Math.min(viewportWidth - leftGutter - rightGutter, maxTreeWidth),
+      );
+      const clampedTreeHeight = Math.max(
+        320,
+        Math.min(viewportHeight, maxTreeHeight),
+      );
+
       const rawScale = Math.min(
-        usableWidth / paddedWidth,
-        viewportHeight / paddedHeight,
+        clampedTreeWidth / paddedWidth,
+        clampedTreeHeight / paddedHeight,
       );
       const comfortableMinZoom = isEmpire ? 0.38 : 0.42;
       const scaleBias = layoutSettings?.scaleBias || 1.1;
@@ -1110,8 +1124,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const nextZoom = Math.min(maxZoom, Math.max(minZoom, desiredZoom));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
-      const nextX = leftGutter + usableWidth / 2 - centerX * nextZoom;
-      const nextY = viewportHeight / 2 - centerY * nextZoom;
+      const viewportCenterX = leftGutter + clampedTreeWidth / 2;
+      const verticalSafeOffset = Math.max((viewportHeight - clampedTreeHeight) / 2, 0);
+      const viewportCenterY = verticalSafeOffset + clampedTreeHeight / 2;
+      const nextX = viewportCenterX - centerX * nextZoom;
+      const nextY = viewportCenterY - centerY * nextZoom;
 
       try {
         reactFlowInstance.setViewport(
