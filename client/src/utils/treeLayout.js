@@ -157,8 +157,13 @@ export const calculateTreeLayout = ({
    * @param {number} x - X position (center of subtree)
    * @param {number} y - Y position (generation level)
    */
-  const positionNode = (nodeId, x, y) => {
-    nodePositions.set(nodeId, { x: x + leftMargin, y });
+  const depthLevelMap = new Map();
+
+  const positionNode = (nodeId, x, y, depthLevel = 0) => {
+    nodePositions.set(nodeId, { x: x + leftMargin, y, depthLevel });
+    const currentDepthNodes = depthLevelMap.get(depthLevel) || [];
+    currentDepthNodes.push(nodeId);
+    depthLevelMap.set(depthLevel, currentDepthNodes);
     
     const children = childrenMap.get(nodeId) || [];
     if (children.length === 0) {
@@ -185,9 +190,9 @@ export const calculateTreeLayout = ({
       const outerY = y + baseVerticalSpacing;
       const centerY = y + baseVerticalSpacing * (prongDropFactor || 1.12);
 
-      positionNode(children[0], leftX, outerY);
-      positionNode(children[2], rightX, outerY);
-      positionNode(children[1], x, centerY);
+      positionNode(children[0], leftX, outerY, depthLevel + 1);
+      positionNode(children[2], rightX, outerY, depthLevel + 1);
+      positionNode(children[1], x, centerY, depthLevel + 1);
       return;
     }
 
@@ -202,7 +207,7 @@ export const calculateTreeLayout = ({
       const pad = index > 0 ? siblingPadding : 0;
       accumulatedWidth += pad;
       const childX = startX + accumulatedWidth + width / 2;
-      positionNode(childId, childX, y + baseVerticalSpacing);
+      positionNode(childId, childX, y + baseVerticalSpacing, depthLevel + 1);
       accumulatedWidth += width;
     });
   };
@@ -329,27 +334,26 @@ export const calculateTreeLayout = ({
     });
   });
 
-  const levelBuckets = new Map();
+  const pyramidLevels = new Map();
   nodePositions.forEach((pos, id) => {
-    const levelKey =
-      typeof pos.level === 'number'
-        ? pos.level
-        : Math.round(pos.y / Math.max(1, pledgeVerticalSpacing));
-    if (!levelBuckets.has(levelKey)) {
-      levelBuckets.set(levelKey, []);
+    const levelKey = pos.depthLevel ?? 0;
+    if (!pyramidLevels.has(levelKey)) {
+      pyramidLevels.set(levelKey, []);
     }
-    levelBuckets.get(levelKey).push(id);
+    pyramidLevels.get(levelKey).push(id);
   });
 
-  levelBuckets.forEach((nodeIds) => {
+  const totalDepth = Math.max(...pyramidLevels.keys());
+  pyramidLevels.forEach((nodeIds, level) => {
+    const widthMultiplier = 1 + (totalDepth - level) * 0.35;
+    const columnSpacing = horizontalSpacing * widthMultiplier;
+    const startX = -((nodeIds.length - 1) * columnSpacing) / 2;
+
     nodeIds.sort((a, b) => {
       const posA = nodePositions.get(a);
       const posB = nodePositions.get(b);
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
-
-    const columnSpacing = horizontalSpacing;
-    const startX = -((nodeIds.length - 1) * columnSpacing) / 2;
 
     nodeIds.forEach((nodeId, index) => {
       const pos = nodePositions.get(nodeId);
