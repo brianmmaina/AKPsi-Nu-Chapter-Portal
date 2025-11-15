@@ -8,6 +8,11 @@ import {
 } from './nodeStyles';
 import { hexToRgba } from './color';
 
+const CARD_WIDTH = 280;
+const CARD_MIN_HEIGHT = 110;
+const MIN_NODE_GAP_X = 40;
+const MIN_NODE_GAP_Y = 30;
+
 /**
  * Calculates tree layout and creates React Flow nodes and edges
  * 
@@ -69,10 +74,19 @@ export const calculateTreeLayout = ({
   const layoutEdges = [];
   const nodePositions = new Map();
   const subtreeWidthCache = new Map();
+
+  const shiftSubtree = (nodeId, deltaX = 0, deltaY = 0) => {
+    const info = nodePositions.get(nodeId);
+    if (!info) return;
+    info.x += deltaX;
+    info.y += deltaY;
+    const children = childrenMap.get(nodeId) || [];
+    children.forEach((childId) => shiftSubtree(childId, deltaX, deltaY));
+  };
   
   // Node dimensions
-  const nodeWidth = 260;
-  const nodeHeight = 140;
+  const nodeWidth = CARD_WIDTH;
+  const nodeHeight = CARD_MIN_HEIGHT;
   const {
     horizontalSpacing,
     baseVerticalSpacing,
@@ -299,6 +313,63 @@ export const calculateTreeLayout = ({
       level: remappedLevel,
     });
   });
+
+  const levelBuckets = new Map();
+  nodePositions.forEach((pos, id) => {
+    const levelKey =
+      typeof pos.level === 'number'
+        ? pos.level
+        : Math.round(pos.y / Math.max(1, pledgeVerticalSpacing));
+    if (!levelBuckets.has(levelKey)) {
+      levelBuckets.set(levelKey, []);
+    }
+    levelBuckets.get(levelKey).push(id);
+  });
+
+  levelBuckets.forEach((nodeIds) => {
+    nodeIds.sort((a, b) => {
+      const posA = nodePositions.get(a);
+      const posB = nodePositions.get(b);
+      return (posA?.x ?? 0) - (posB?.x ?? 0);
+    });
+    let lastRight = -Infinity;
+    nodeIds.forEach((nodeId) => {
+      const pos = nodePositions.get(nodeId);
+      if (!pos) return;
+      const left = pos.x;
+      if (left < lastRight + MIN_NODE_GAP_X) {
+        const shift = lastRight + MIN_NODE_GAP_X - left;
+        shiftSubtree(nodeId, shift, 0);
+      }
+      const updated = nodePositions.get(nodeId);
+      const right = (updated?.x ?? pos.x) + CARD_WIDTH;
+      lastRight = Math.max(lastRight, right);
+    });
+  });
+
+  const nodeEntries = Array.from(nodePositions.entries());
+  for (let i = 0; i < nodeEntries.length; i += 1) {
+    for (let j = i + 1; j < nodeEntries.length; j += 1) {
+      const [idA, posA] = nodeEntries[i];
+      const [idB, posB] = nodeEntries[j];
+      if (!posA || !posB) continue;
+      const overlapX =
+        Math.min(posA.x + CARD_WIDTH, posB.x + CARD_WIDTH) -
+        Math.max(posA.x, posB.x);
+      const overlapY =
+        Math.min(posA.y + CARD_MIN_HEIGHT, posB.y + CARD_MIN_HEIGHT) -
+        Math.max(posA.y, posB.y);
+      if (overlapX > MIN_NODE_GAP_X / 2 && overlapY > 0) {
+        if (posA.y <= posB.y) {
+          const delta = posA.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posB.y;
+          shiftSubtree(idB, 0, delta);
+        } else {
+          const delta = posB.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posA.y;
+          shiftSubtree(idA, 0, delta);
+        }
+      }
+    }
+  }
 
   // Create React Flow nodes
   brothers.forEach(brother => {

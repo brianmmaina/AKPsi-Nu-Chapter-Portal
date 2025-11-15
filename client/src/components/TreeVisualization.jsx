@@ -159,6 +159,8 @@ body.tree-exporting .tree-toast {
 const BOTTOM_BUFFER = 4;
 const LEFT_TREE_GUTTER = 140;
 const RIGHT_TREE_GUTTER = 80;
+const CARD_WIDTH = 280;
+const CARD_MIN_HEIGHT = 110;
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -450,46 +452,42 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   const layoutSettings = useMemo(() => {
     const base = {
-      horizontalSpacing: 280,
-      baseVerticalSpacing: 205,
-      pledgeVerticalSpacing: 185,
+      horizontalSpacing: 320,
+      baseVerticalSpacing: 150,
+      pledgeVerticalSpacing: 135,
       multiChildCompression: 0.88,
-      siblingPadding: 52,
-      prongDropFactor: 1.16,
+      siblingPadding: 60,
+      prongDropFactor: 1.08,
     };
 
     if (isEmpire) {
       return {
         ...base,
-        horizontalSpacing: 300,
-        multiChildCompression: 0.82,
-        siblingPadding: 54,
+        horizontalSpacing: 310,
+        siblingPadding: 58,
       };
-      }
+    }
 
     if (isPower) {
       return {
         ...base,
-        horizontalSpacing: 285,
-        siblingPadding: 50,
+        horizontalSpacing: 315,
+        siblingPadding: 58,
       };
     }
 
     if (isGreed) {
       return {
         ...base,
-        horizontalSpacing: 250,
-        siblingPadding: 42,
-        baseVerticalSpacing: 210,
-        pledgeVerticalSpacing: 190,
-        multiChildCompression: 0.82,
+        horizontalSpacing: 290,
+        siblingPadding: 60,
       };
     }
 
     if (isPride) {
       return {
         ...base,
-        horizontalSpacing: 305,
+        horizontalSpacing: 315,
         siblingPadding: 58,
       };
     }
@@ -497,10 +495,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     if (isWolfpack) {
       return {
         ...base,
-        horizontalSpacing: 285,
-        siblingPadding: 60,
-        baseVerticalSpacing: 210,
-        pledgeVerticalSpacing: 190,
+        horizontalSpacing: 300,
+        siblingPadding: 64,
       };
     }
 
@@ -541,16 +537,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       const majorLabel = brother.major ? brother.major.trim() : null;
 
       return (
-            <div 
-              style={{ 
+        <div
+          style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
-            maxWidth: 260,
+            gap: 6,
+            maxWidth: CARD_WIDTH - 32,
             whiteSpace: 'normal',
             color: palette.bodyColor,
-              }}
-            >
+          }}
+        >
           <div
             style={{
               display: 'flex',
