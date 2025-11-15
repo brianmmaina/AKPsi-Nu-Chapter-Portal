@@ -18,7 +18,11 @@ import { useTreeData } from '../hooks/useTreeData';
 import { useLineageHighlight } from '../hooks/useLineageHighlight';
 import { useTreeLayout } from '../hooks/useTreeLayout';
 import { useTreeViewport } from '../hooks/useTreeViewport';
-import { LEFT_TREE_GUTTER, RIGHT_TREE_GUTTER } from '../utils/constants';
+import {
+  FAMILY_LAYOUT_RULES,
+  LEFT_TREE_GUTTER,
+  RIGHT_TREE_GUTTER,
+} from '../utils/constants';
 import { toPng } from 'html-to-image';
 
 /**
@@ -435,15 +439,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   );
   
   const defaultViewport = useMemo(() => {
-    if (isEmpire) return { x: 0, y: 0, zoom: 0.65 };
-    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
-    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
-    if (isPride) return { x: 0, y: 0, zoom: 0.72 };
-    if (isWolfpack) return { x: 0, y: 0, zoom: 0.75 };
-    return { x: 0, y: 0, zoom: 0.7 };
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.56 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.56 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.58 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.58 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.6 };
+    return { x: 0, y: 0, zoom: 0.58 };
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
   
-  const minZoom = isEmpire ? 0.3 : 0.35;
+  const minZoom = 0.08;
   const maxZoom = isEmpire ? 1.4 : 2;
   
   const composedBackground = useMemo(() => {
@@ -498,68 +502,21 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   }, [isTreeReady]);
 
   const layoutSettings = useMemo(() => {
-    const base = {
-      horizontalSpacing: CARD_WIDTH + 32,
-      baseVerticalSpacing: CARD_MIN_HEIGHT + 30,
-      pledgeVerticalSpacing: CARD_MIN_HEIGHT + 18,
-      multiChildCompression: 0.9,
-      siblingPadding: 52,
-      prongDropFactor: 1.05,
-      scaleBias: 1.1,
+    const rules = FAMILY_LAYOUT_RULES[safeFamilyTheme] || {};
+    const baseRules = {
+      ...FAMILY_LAYOUT_RULES.base,
+      ...rules,
     };
 
     if (isEmpire) {
       return {
-        ...base,
-        horizontalSpacing: CARD_WIDTH + 24,
-        siblingPadding: 50,
-        prongDropFactor: 1.02,
-        scaleBias: 1.04,
-      };
-      }
-
-    if (isPower) {
-      return {
-        ...base,
-        horizontalSpacing: CARD_WIDTH + 40,
-        siblingPadding: 56,
-        scaleBias: 1.08,
+        ...baseRules,
+        scaleBias: 1.0,
       };
     }
 
-    if (isGreed) {
-      return {
-        ...base,
-        horizontalSpacing: CARD_WIDTH + 48,
-        siblingPadding: 64,
-        baseVerticalSpacing: CARD_MIN_HEIGHT + 34,
-        pledgeVerticalSpacing: CARD_MIN_HEIGHT + 24,
-        multiChildCompression: 0.86,
-        scaleBias: 1.12,
-      };
-    }
-
-    if (isPride) {
-      return {
-        ...base,
-        horizontalSpacing: CARD_WIDTH + 36,
-        siblingPadding: 56,
-      };
-    }
-
-    if (isWolfpack) {
-      return {
-        ...base,
-        horizontalSpacing: CARD_WIDTH + 52,
-        siblingPadding: 66,
-        baseVerticalSpacing: CARD_MIN_HEIGHT + 36,
-        pledgeVerticalSpacing: CARD_MIN_HEIGHT + 26,
-        scaleBias: 1.15,
-      };
-    }
-
-    return base;
-  }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
+    return baseRules;
+  }, [safeFamilyTheme, isEmpire]);
 
   const {
     treeBoundsRef,

@@ -6,12 +6,13 @@ import {
   applyHighlightStyle,
   applyLineageHighlightStyle,
 } from './nodeStyles';
+import { FAMILY_LAYOUT_RULES } from './constants';
 import { hexToRgba } from './color';
 
 const CARD_WIDTH = 280;
 const CARD_MIN_HEIGHT = 110;
-const MIN_NODE_GAP_X = 40;
-const MIN_NODE_GAP_Y = 30;
+
+const snapValue = (value, snap = 10) => Math.round(value / snap) * snap;
 
 /**
  * Calculates tree layout and creates React Flow nodes and edges
@@ -87,14 +88,25 @@ export const calculateTreeLayout = ({
   // Node dimensions
   const nodeWidth = CARD_WIDTH;
   const nodeHeight = CARD_MIN_HEIGHT;
+  const familyRules = FAMILY_LAYOUT_RULES[familyKey] || {};
   const {
-    horizontalSpacing,
-    baseVerticalSpacing,
-    pledgeVerticalSpacing,
-    multiChildCompression,
-    siblingPadding,
-    prongDropFactor,
-  } = layoutSettings;
+    columnWidth = CARD_WIDTH + 40,
+    rowHeight = CARD_MIN_HEIGHT + 24,
+    minColumnGap = 30,
+    minRowGap = 18,
+    minColumnWidth = CARD_WIDTH + 30,
+    columnSnap = 10,
+    maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || 1000,
+  } = FAMILY_LAYOUT_RULES.base
+    ? { ...FAMILY_LAYOUT_RULES.base, ...familyRules }
+    : familyRules;
+
+  const horizontalSpacing = Math.max(columnWidth, minColumnWidth);
+  const baseVerticalSpacing = rowHeight;
+  const pledgeVerticalSpacing = rowHeight;
+  const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
+  const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH);
+  const prongDropFactor = layoutSettings?.prongDropFactor ?? 1.05;
 
   /**
    * Recursively calculates the width needed for a subtree
@@ -336,9 +348,15 @@ export const calculateTreeLayout = ({
     nodeIds.forEach((nodeId) => {
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
+      const snappedX = snapValue(pos.x, columnSnap);
+      if (snappedX !== pos.x) {
+        pos.x = snappedX;
+        nodePositions.set(nodeId, pos);
+      }
       const left = pos.x;
-      if (left < lastRight + MIN_NODE_GAP_X) {
-        const shift = lastRight + MIN_NODE_GAP_X - left;
+      const minGap = Math.max(minColumnGap, siblingPadding * 0.8);
+      if (left < lastRight + minGap) {
+        const shift = lastRight + minGap - left;
         shiftSubtree(nodeId, shift, 0);
       }
       const updated = nodePositions.get(nodeId);
@@ -347,29 +365,23 @@ export const calculateTreeLayout = ({
     });
   });
 
-  const nodeEntries = Array.from(nodePositions.entries());
-  for (let i = 0; i < nodeEntries.length; i += 1) {
-    for (let j = i + 1; j < nodeEntries.length; j += 1) {
-      const [idA, posA] = nodeEntries[i];
-      const [idB, posB] = nodeEntries[j];
-      if (!posA || !posB) continue;
-      const overlapX =
-        Math.min(posA.x + CARD_WIDTH, posB.x + CARD_WIDTH) -
-        Math.max(posA.x, posB.x);
-      const overlapY =
-        Math.min(posA.y + CARD_MIN_HEIGHT, posB.y + CARD_MIN_HEIGHT) -
-        Math.max(posA.y, posB.y);
-      if (overlapX > MIN_NODE_GAP_X / 2 && overlapY > 0) {
-        if (posA.y <= posB.y) {
-          const delta = posA.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posB.y;
-          shiftSubtree(idB, 0, delta);
-        } else {
-          const delta = posB.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posA.y;
-          shiftSubtree(idA, 0, delta);
-        }
-      }
-    }
+  const limitWidth = maxTreeWidth || Number.MAX_SAFE_INTEGER;
+  let currentMinX = Infinity;
+  let currentMaxX = -Infinity;
+  nodePositions.forEach((pos) => {
+    currentMinX = Math.min(currentMinX, pos.x);
+    currentMaxX = Math.max(currentMaxX, pos.x + CARD_WIDTH);
+  });
+  const currentWidth = currentMaxX - currentMinX;
+  if (currentWidth > limitWidth) {
+    const scale = limitWidth / currentWidth;
+    nodePositions.forEach((pos, id) => {
+      const centeredX = (pos.x - currentMinX - currentWidth / 2) * scale;
+      const clampedX = snapValue(centeredX + limitWidth / 2, columnSnap);
+      nodePositions.set(id, { ...pos, x: clampedX });
+    });
   }
+
 
   // Create React Flow nodes
   brothers.forEach(brother => {
