@@ -105,17 +105,14 @@ export const calculateTreeLayout = ({
 
   const slotWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8) + minColumnGap;
   const horizontalSpacing = slotWidth;
-  const maxColumns = Math.max(
-    7,
-    Math.floor((maxTreeWidth || slotWidth * 9) / slotWidth),
-  );
+  const leafCount =
+    brothers.filter((brother) => brother && childrenMap.get(brother.id)?.length === 0).length || 1;
+  const widthBudget = Number.isFinite(maxTreeWidth)
+    ? maxTreeWidth
+    : slotWidth * Math.min(Math.max(leafCount * 2 + 5, 15), 41);
+  const maxColumns = Math.max(7, Math.floor(widthBudget / slotWidth));
   const baseColumns = maxColumns % 2 === 0 ? maxColumns + 1 : maxColumns;
-  const leafCount = brothers.filter((brother) => {
-    if (!brother || typeof brother.id === 'undefined') return false;
-    const kids = childrenMap.get(brother.id) || [];
-    return kids.length === 0;
-  }).length || 1;
-  const desiredColumns = Math.min(Math.max(baseColumns, leafCount * 2 + 1), Math.max(baseColumns, 61));
+  const desiredColumns = Math.min(Math.max(baseColumns, leafCount * 2 + 1), 81);
   const columnCenters = [];
   const half = (desiredColumns - 1) / 2;
   for (let i = -half; i <= half; i += 1) {
@@ -374,9 +371,10 @@ export const calculateTreeLayout = ({
     const requestedSlots = [];
 
     nodeIds.forEach((nodeId) => {
-      const parentId = relationshipsMap.get(nodeId);
-      const parentSlot = parentSlotMap.get(parentId);
-      const childCount = parentId !== undefined ? (childrenMap.get(parentId) || []).length || 1 : 1;
+      const parentId = relationshipsMap.get(Number(nodeId));
+      const parentSlot = parentSlotMap.get(String(parentId));
+      const childCount =
+        parentId !== undefined ? (childrenMap.get(parentId) || []).length || 1 : 1;
       if (parentSlot !== undefined) {
         const span = Math.max(1, Math.ceil(childCount / 2));
         for (let i = -span; i <= span; i += 1) {
@@ -412,7 +410,7 @@ export const calculateTreeLayout = ({
       const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      parentSlotMap.set(nodeId, clampedIndex);
+      parentSlotMap.set(String(nodeId), clampedIndex);
       nodePositions.set(nodeId, { ...pos, x: columnCenters[clampedIndex] });
     });
   });
