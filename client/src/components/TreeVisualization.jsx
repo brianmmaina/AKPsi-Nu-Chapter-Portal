@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } fr
 import ReactFlow, {
   Background,
   Panel,
-  MarkerType,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -15,9 +14,11 @@ import { getThemeStyles } from '../themes';
 import { hexToRgba } from '../utils/color';
 import { FAMILY_PRESENTATION } from '../constants/familyPresentation';
 import { statusLabelForBrother, getNodePalette } from '../utils/nodeRenderer';
-import { calculateTreeLayout } from '../utils/treeLayout';
 import { useTreeData } from '../hooks/useTreeData';
 import { useLineageHighlight } from '../hooks/useLineageHighlight';
+import { useTreeLayout } from '../hooks/useTreeLayout';
+import { useTreeViewport } from '../hooks/useTreeViewport';
+import { LEFT_TREE_GUTTER, RIGHT_TREE_GUTTER } from '../utils/constants';
 import { toPng } from 'html-to-image';
 
 /**
@@ -157,8 +158,6 @@ body.tree-exporting .tree-toast {
 `;
 
 const BOTTOM_BUFFER = 4;
-const LEFT_TREE_GUTTER = 140;
-const RIGHT_TREE_GUTTER = 80;
 const CARD_WIDTH = 280;
 const CARD_MIN_HEIGHT = 110;
 const CARD_CONTENT_MAX_WIDTH = CARD_WIDTH - 32;
@@ -171,15 +170,6 @@ const CARD_TOKENS = {
 };
 const BASE_VERTICAL_SPACING = CARD_MIN_HEIGHT + 40;
 const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
-const SAFE_VIEWPORT_WIDTH = 1280;
-const SAFE_VIEWPORT_HEIGHT = 700;
-const READABILITY_ZOOM = {
-  empire: 0.58,
-  power: 0.7,
-  pride: 0.72,
-  greed: 0.74,
-  wolfpack: 0.76,
-};
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -208,14 +198,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const [isFullscreen, setIsFullscreen] = useState(false);
   const edgeTypes = useMemo(() => ({ curved: CurvedEdge }), []);
   const initialViewportRef = useRef(null);
-  const treeBoundsRef = useRef({ width: 0, height: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 });
   const flowWrapperRef = useRef(null);
   const toastTimeoutRef = useRef(null);
   const highlightTimeoutRef = useRef(null);
   const reactFlowInstance = useReactFlow();
   const setCenter = reactFlowInstance?.setCenter;
   const getViewport = reactFlowInstance?.getViewport;
-  const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition;
 
   // Use custom hooks for data loading, search, and lineage highlighting
   // Pass safeFamily (can be null) - hooks must handle this gracefully
@@ -573,6 +561,24 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     return base;
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
 
+  const {
+    treeBoundsRef,
+    fitTreeView,
+    handleZoom,
+    handleFullscreenToggle,
+    projectMarkerPosition,
+  } = useTreeViewport({
+    reactFlowInstance,
+    flowWrapperRef,
+    leftGutter,
+    rightGutter,
+    isEmpire,
+    familyKey,
+    minZoom,
+    maxZoom,
+    scaleBias: layoutSettings?.scaleBias || 1,
+  });
+
 
   // Single node renderer using extracted palette utility
   // Must be defined AFTER theme and familyKey are initialized
@@ -785,50 +791,31 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
   }, [theme, familyKey, handleEditBrother]);
-  
-  const projectMarkerPosition = useCallback(
-    (markerY) => {
-      let screenY;
-      try {
-        if (flowToScreenPosition && typeof flowToScreenPosition === 'function') {
-          const p = flowToScreenPosition({ x: 0, y: markerY });
-          screenY = p.y;
-        } else {
-          const vp =
-            reactFlowInstance?.getViewport?.() ??
-            viewport ??
-            defaultViewport ??
-            { x: 0, y: 0, zoom: 1 };
-          screenY = markerY * vp.zoom + vp.y;
-        }
-      } catch {
-        const vp = viewport ?? defaultViewport ?? { x: 0, y: 0, zoom: 1 };
-        screenY = markerY * vp.zoom + vp.y;
-      }
-      const wrapperRect = flowWrapperRef.current?.getBoundingClientRect();
-      const containerTop = wrapperRect?.top ?? 0;
-      return { y: screenY - containerTop };
-    },
-    [flowToScreenPosition, viewport, defaultViewport, reactFlowInstance],
-  );
 
-  const pledgeSummary = useMemo(() => {
-    const classes = new Set();
-    let placeholderCount = 0;
-    brothers.forEach((brother) => {
-      if (!brother?.name || /^unassigned/i.test(brother.name.trim())) {
-        placeholderCount += 1;
+  const { nodes: layoutNodes, edges: layoutEdges, stats: treeStats } = useTreeLayout({
+    brothers,
+    relationships,
+    familyKey,
+    theme,
+    layoutSettings,
+    highlightBrotherId,
+    lineageHighlightSet,
+    renderNodeContent,
+    onTreeBounds: (bounds) => {
+      if (bounds && typeof bounds === 'object') {
+        treeBoundsRef.current = bounds;
       }
-      if (brother?.pledge_class) {
-        classes.add(brother.pledge_class.trim().toUpperCase());
-      }
-    });
-    return {
-      totalBrothers: brothers.length,
-      uniquePledgeClasses: classes.size,
-      placeholderCount,
-    };
-  }, [brothers]);
+    },
+    leftMargin: leftGutter,
+  });
+
+  useEffect(() => {
+    setNodes(layoutNodes);
+  }, [layoutNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(layoutEdges);
+  }, [layoutEdges, setEdges]);
 
   // Calculate pledge class markers for left-side vertical stripes (Empire only)
   const pledgeClassMarkers = useMemo(() => {
@@ -915,113 +902,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   // Ref to track current highlight state and prevent infinite loops
   const lastHighlightStateRef = useRef({ highlighted: null, hovered: null });
 
-  /**
-   * Calculates tree layout and creates React Flow nodes/edges
-   * 
-   * Uses the extracted calculateTreeLayout utility function
-   * 
-   * @effect
-   * @dependencies {Array} brothers - List of all brothers
-   * @dependencies {Array} relationships - Parent-child relationships
-   * @dependencies {Object} theme - Theme configuration for styling
-   */
-  useEffect(() => {
-    // Don't clear nodes/edges if loading - wait for data
-    if (!loading && brothers.length === 0) {
-      setNodes([]);
-      setEdges([]);
-      return;
-    }
-
-    if (brothers.length === 0) {
-      return; // Still loading, don't process yet
-    }
-
-    // CRITICAL: Ensure theme and familyKey are fully initialized before proceeding
-    // This prevents "Cannot access uninitialized variable" errors in production
-    if (!theme || typeof theme !== 'object') {
-      console.warn('Theme not initialized, skipping layout calculation');
-      return;
-    }
-    
-    if (!theme.nodeStudying || typeof theme.nodeStudying === 'undefined') {
-      console.warn('Theme missing nodeStudying, skipping layout calculation');
-      return;
-    }
-    
-    if (!theme.nodeGraduated || typeof theme.nodeGraduated === 'undefined') {
-      console.warn('Theme missing nodeGraduated, skipping layout calculation');
-      return;
-    }
-    
-    if (!familyKey || typeof familyKey !== 'string') {
-      console.warn('FamilyKey not initialized, skipping layout calculation');
-      return;
-    }
-    
-    // Ensure renderNodeContent is a valid function
-    if (!renderNodeContent || typeof renderNodeContent !== 'function') {
-      console.warn('renderNodeContent is not a function, skipping layout calculation');
-      return;
-    }
-
-    try {
-      // Use extracted layout calculation utility
-      const layoutResult = calculateTreeLayout({
-        brothers,
-        relationships,
-        familyKey,
-        theme,
-        layoutSettings,
-      highlightBrotherId,
-      lineageHighlightSet: lineageHighlightSet,
-      renderNodeContent,
-      isEmpire,
-        onTreeBounds: (bounds) => {
-          if (bounds && typeof bounds === 'object') {
-            treeBoundsRef.current = bounds;
-          }
-        },
-        leftMargin: leftGutter,
-        });
-
-      // Validate layout result before setting
-      if (layoutResult && layoutResult.nodes && layoutResult.edges) {
-        if (Array.isArray(layoutResult.nodes) && Array.isArray(layoutResult.edges)) {
-          setNodes(layoutResult.nodes);
-          setEdges(layoutResult.edges);
-        } else {
-          console.warn('Layout result invalid, nodes or edges are not arrays');
-        }
-      } else {
-        console.warn('Layout result missing nodes or edges');
-      }
-    } catch (error) {
-      console.error('Error calculating tree layout:', error);
-      // Set empty arrays on error to prevent rendering issues
-      setNodes([]);
-      setEdges([]);
-    }
-  }, [
-    brothers,
-    relationships,
-    familyKey,
-    layoutSettings,
-    highlightBrotherId,
-    lineageHighlightSet,
-    theme,
-    renderNodeContent,
-    loading,
-    isEmpire,
-    leftGutter,
-  ]);
-
   // Dim non-target levels and highlight the active pledge level
   useEffect(() => {
     if (!nodes || nodes.length === 0) {
       return;
     }
-
+    
     const activeLevel =
       highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
     const currentState = { level: activeLevel, markerCount: pledgeClassMarkers.length };
@@ -1070,7 +956,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         }
         if (nextOpacity !== 1) {
           style.opacity = nextOpacity;
-        } else {
+      } else {
           delete style.opacity;
         }
         style.zIndex = nextZIndex;
@@ -1141,82 +1027,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, []);
 
-  // Define fitPaddingForBounds and fitTreeView BEFORE they're used in other callbacks
-  // This prevents "Can't find variable" errors
-  const fitTreeToViewport = useCallback(
-    (duration = 500, paddingMultiplier = 1.15) => {
-      const bounds = treeBoundsRef.current;
-      if (!reactFlowInstance || !bounds || !bounds.width || !bounds.height) {
-        reactFlowInstance?.fitView?.({ padding: 0.24, duration });
-        return;
-      }
-
-      const wrapper = flowWrapperRef.current;
-      const rect = wrapper?.getBoundingClientRect();
-      const viewportWidth = rect?.width ?? window.innerWidth;
-      const viewportHeight = rect?.height ?? window.innerHeight;
-      if (!viewportWidth || !viewportHeight) {
-        reactFlowInstance.fitView?.({ padding: 0.24, duration });
-        return;
-      }
-
-      const paddedWidth = bounds.width * paddingMultiplier;
-      const paddedHeight = bounds.height * paddingMultiplier;
-      const maxTreeWidth =
-        SAFE_VIEWPORT_WIDTH - leftGutter - rightGutter;
-      const maxTreeHeight = SAFE_VIEWPORT_HEIGHT;
-
-      const clampedTreeWidth = Math.max(
-        220,
-        Math.min(viewportWidth - leftGutter - rightGutter, maxTreeWidth),
-      );
-      const clampedTreeHeight = Math.max(
-        320,
-        Math.min(viewportHeight, maxTreeHeight),
-      );
-
-      const rawScale = Math.min(
-        clampedTreeWidth / paddedWidth,
-        clampedTreeHeight / paddedHeight,
-      );
-      const comfortableMinZoom = isEmpire ? 0.38 : 0.42;
-      const scaleBias = layoutSettings?.scaleBias || 1.1;
-      const readabilityFloor = READABILITY_ZOOM[familyKey] || 0.7;
-      const desiredZoom = Math.max(rawScale * scaleBias, comfortableMinZoom, readabilityFloor);
-      const nextZoom = Math.min(maxZoom, Math.max(minZoom, desiredZoom));
-      const centerX = bounds.minX + bounds.width / 2;
-      const centerY = bounds.minY + bounds.height / 2;
-      const viewportCenterX = leftGutter + clampedTreeWidth / 2;
-      const verticalSafeOffset = Math.max((viewportHeight - clampedTreeHeight) / 2, 0);
-      const viewportCenterY = verticalSafeOffset + clampedTreeHeight / 2;
-      const nextX = viewportCenterX - centerX * nextZoom;
-      const nextY = viewportCenterY - centerY * nextZoom;
-
-      try {
-        reactFlowInstance.setViewport(
-          { x: nextX, y: nextY, zoom: nextZoom },
-          { duration },
-        );
-      } catch (err) {
-        console.warn('fitTreeToViewport failed:', err);
-        reactFlowInstance.fitView?.({ padding: 0.3, duration });
-      }
-    },
-    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter, isEmpire, layoutSettings, familyKey],
-  );
-
-  const fitTreeView = useCallback(
-    (duration = 500, paddingMultiplier) => {
-      const defaultPadding = isEmpire ? 0.98 : 0.94;
-      const effectivePadding =
-        typeof paddingMultiplier === 'number'
-          ? paddingMultiplier
-          : defaultPadding;
-      fitTreeToViewport(duration, effectivePadding);
-    },
-    [fitTreeToViewport, isEmpire],
-  );
-
   const closeProfile = useCallback(
     (restoreViewport = true) => {
       if (restoreViewport) {
@@ -1225,7 +1035,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           if (targetViewport && reactFlowInstance?.setViewport) {
             reactFlowInstance.setViewport(targetViewport, { duration: 300 });
         } else {
-          fitTreeToViewport(400, isEmpire ? 1.1 : 1.15);
+          fitTreeView(400, isEmpire ? 1.1 : 1.15);
           }
         } catch (e) {
           console.warn('Failed to restore viewport:', e);
@@ -1246,7 +1056,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       reactFlowInstance,
       isEmpire,
       restorePointerEvents,
-      fitTreeToViewport,
+      fitTreeView,
     ],
   );
 
@@ -1291,11 +1101,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return;
     }
     try {
-      fitTreeToViewport(400);
+      fitTreeView(400);
     } catch (error) {
       console.warn('Failed to fit tree after layout:', error);
     }
-  }, [isTreeReady, nodes.length, safeFamily?.id, fitTreeToViewport]);
+  }, [isTreeReady, nodes.length, safeFamily?.id, fitTreeView]);
 
 
   useEffect(() => {
@@ -1307,7 +1117,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       if (event.key === '0') {
         event.preventDefault();
-        fitTreeToViewport(450, isEmpire ? 1.05 : 1.15);
+        fitTreeView(450, isEmpire ? 1.05 : 1.15);
         return;
       }
 
@@ -1337,7 +1147,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeToViewport]);
+  }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeView]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1415,41 +1225,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       setIsPreparingExport(false);
     }
   }, [fitTreeView, showToast, theme?.background, safeFamily?.name]);
-
-  const handleZoom = useCallback(
-    (direction) => {
-      if (!reactFlowInstance?.getViewport || !reactFlowInstance?.zoomTo) {
-        return;
-      }
-      try {
-        const current = reactFlowInstance.getViewport();
-        const factor = direction === 'in' ? 1.15 : 0.85;
-        const nextZoom = Math.max(minZoom, Math.min(maxZoom, current.zoom * factor));
-        reactFlowInstance.zoomTo(nextZoom, 200);
-      } catch (error) {
-        console.warn('Zoom adjustment failed:', error);
-      }
-    },
-    [reactFlowInstance, minZoom, maxZoom],
-  );
-
-  const handleFullscreenToggle = useCallback(() => {
-    const host = flowWrapperRef.current;
-    if (!host) {
-      return;
-    }
-    try {
-      if (!document.fullscreenElement) {
-        if (host.requestFullscreen) {
-          host.requestFullscreen();
-        }
-      } else if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    } catch (error) {
-      console.warn('Fullscreen toggle failed:', error);
-    }
-  }, []);
 
   const handleResetView = useCallback(() => {
     fitTreeView(450);
@@ -1866,11 +1641,11 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 4 }}>Tree Summary</div>
-        <div>{`${pledgeSummary.totalBrothers} Brothers`}</div>
-        <div>{`${pledgeSummary.uniquePledgeClasses} Pledge Classes`}</div>
-        {pledgeSummary.placeholderCount > 0 && (
+        <div>{`${treeStats.total} Brothers`}</div>
+        <div>{`${treeStats.classes} Pledge Classes`}</div>
+        {treeStats.placeholders > 0 && (
           <div style={{ textTransform: 'none', fontSize: 10, marginTop: 4, opacity: 0.8 }}>
-            {`${pledgeSummary.placeholderCount} awaiting assignment`}
+            {`${treeStats.placeholders} awaiting assignment`}
         </div>
       )}
       </div>

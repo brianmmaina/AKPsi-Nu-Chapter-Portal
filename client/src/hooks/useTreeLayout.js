@@ -36,12 +36,21 @@ export const useTreeLayout = ({
       ? layoutResult.pledgeMarkers
       : [];
 
+    const uniqueClasses = new Set();
+    let placeholderCount = 0;
+    brothers.forEach((bro) => {
+      if (!bro?.name || /^unassigned/i.test(bro.name.trim())) {
+        placeholderCount += 1;
+      }
+      if (bro?.pledge_class) {
+        uniqueClasses.add(bro.pledge_class.trim().toUpperCase());
+      }
+    });
+
     const stats = {
       total: brothers.length,
-      classes: pledgeMarkers.length,
-      placeholders: brothers.filter(
-        (bro) => !bro?.name || /^unassigned/i.test(bro.name.trim()),
-      ).length,
+      classes: uniqueClasses.size,
+      placeholders: placeholderCount,
     };
 
     return {
