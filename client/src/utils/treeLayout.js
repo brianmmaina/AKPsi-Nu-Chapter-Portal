@@ -357,53 +357,55 @@ export const calculateTreeLayout = ({
 
   const totalDepth = Math.max(...pyramidLevels.keys());
   pyramidLevels.forEach((nodeIds, level) => {
-    const centerIndex = (columnCenters.length - 1) / 2;
+    const centerIndex = Math.floor(columnCenters.length / 2);
     nodeIds.sort((a, b) => {
       const posA = nodePositions.get(a);
       const posB = nodePositions.get(b);
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
 
+    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
     const requestedSlots = [];
+
     nodeIds.forEach((nodeId) => {
       const parentId = relationshipsMap.get(Number(nodeId));
       const parentSlot = parentSlotMap.get(String(parentId));
+      const childCount = (childrenMap.get(parentId) || []).length || 1;
       if (parentSlot !== undefined) {
-        requestedSlots.push(parentSlot);
+        const span = Math.max(1, Math.ceil(childCount / 2));
+        for (let i = -span; i <= span; i += 1) {
+          const slotIndex = parentSlot + i;
+          if (slotIndex >= 0 && slotIndex < columnCenters.length) {
+            requestedSlots.push(slotIndex);
+          }
+        }
       }
     });
 
     const uniqueSlots = Array.from(new Set(requestedSlots)).sort((a, b) => a - b);
-    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
     const allocatedSlots = [];
-
-    if (uniqueSlots.length > 0) {
-      uniqueSlots.forEach((slot) => {
-        if (allocatedSlots.length < slotsNeeded) {
-          allocatedSlots.push(slot);
-        }
-      });
-    }
-
-    let offset = 0;
-    while (allocatedSlots.length < slotsNeeded) {
-      if (offset === 0) {
-        allocatedSlots.push(centerIndex);
-      } else {
-        allocatedSlots.push(centerIndex - offset);
-        if (allocatedSlots.length < slotsNeeded) {
-          allocatedSlots.push(centerIndex + offset);
-        }
+    uniqueSlots.forEach((slot) => {
+      if (allocatedSlots.length < slotsNeeded) {
+        allocatedSlots.push(slot);
       }
+    });
+
+    let offset = 1;
+    while (allocatedSlots.length < slotsNeeded) {
+      const leftSlot = centerIndex - offset;
+      const rightSlot = centerIndex + offset;
+      if (leftSlot >= 0) allocatedSlots.push(leftSlot);
+      if (allocatedSlots.length >= slotsNeeded) break;
+      if (rightSlot < columnCenters.length) allocatedSlots.push(rightSlot);
       offset += 1;
     }
 
     allocatedSlots.sort((a, b) => a - b);
     nodeIds.forEach((nodeId, index) => {
+      const slotIndex = allocatedSlots[index % allocatedSlots.length];
+      const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      const slotIndex = allocatedSlots[index] ?? centerIndex;
-      const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
       parentSlotMap.set(nodeId, clampedIndex);
       nodePositions.set(nodeId, { ...pos, x: columnCenters[clampedIndex] });
     });
