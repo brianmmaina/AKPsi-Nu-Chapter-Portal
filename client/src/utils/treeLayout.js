@@ -11,6 +11,8 @@ import { hexToRgba } from './color';
 
 const CARD_WIDTH = 280;
 const CARD_MIN_HEIGHT = 110;
+const MIN_NODE_GAP_X = 30;
+const MIN_NODE_GAP_Y = 18;
 
 const snapValue = (value, snap = 10) => Math.round(value / snap) * snap;
 
@@ -89,23 +91,23 @@ export const calculateTreeLayout = ({
   const nodeWidth = CARD_WIDTH;
   const nodeHeight = CARD_MIN_HEIGHT;
   const familyRules = FAMILY_LAYOUT_RULES[familyKey] || {};
-  const {
-    columnWidth = CARD_WIDTH + 40,
-    rowHeight = CARD_MIN_HEIGHT + 24,
-    minColumnGap = 30,
-    minRowGap = 18,
-    minColumnWidth = CARD_WIDTH + 30,
-    columnSnap = 10,
-    maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || 1000,
-  } = FAMILY_LAYOUT_RULES.base
+  const mergedRules = FAMILY_LAYOUT_RULES.base
     ? { ...FAMILY_LAYOUT_RULES.base, ...familyRules }
     : familyRules;
+  const {
+    columnWidth = CARD_WIDTH + 60,
+    rowHeight = CARD_MIN_HEIGHT + 32,
+    minColumnGap = 32,
+    minRowGap = 20,
+    columnSnap = 8,
+    maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || Infinity,
+  } = mergedRules;
 
-  const horizontalSpacing = Math.max(columnWidth, minColumnWidth);
-  const baseVerticalSpacing = rowHeight;
-  const pledgeVerticalSpacing = rowHeight;
+  const horizontalSpacing = Math.max(columnWidth, CARD_WIDTH + minColumnGap);
+  const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap);
+  const pledgeVerticalSpacing = baseVerticalSpacing;
   const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
-  const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH);
+  const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH + minColumnGap * 0.4);
   const prongDropFactor = layoutSettings?.prongDropFactor ?? 1.05;
 
   /**
@@ -365,21 +367,44 @@ export const calculateTreeLayout = ({
     });
   });
 
-  const limitWidth = maxTreeWidth || Number.MAX_SAFE_INTEGER;
-  let currentMinX = Infinity;
-  let currentMaxX = -Infinity;
-  nodePositions.forEach((pos) => {
-    currentMinX = Math.min(currentMinX, pos.x);
-    currentMaxX = Math.max(currentMaxX, pos.x + CARD_WIDTH);
-  });
-  const currentWidth = currentMaxX - currentMinX;
-  if (currentWidth > limitWidth) {
-    const scale = limitWidth / currentWidth;
-    nodePositions.forEach((pos, id) => {
-      const centeredX = (pos.x - currentMinX - currentWidth / 2) * scale;
-      const clampedX = snapValue(centeredX + limitWidth / 2, columnSnap);
-      nodePositions.set(id, { ...pos, x: clampedX });
+  if (Number.isFinite(maxTreeWidth) && maxTreeWidth > 0) {
+    let currentMinX = Infinity;
+    let currentMaxX = -Infinity;
+    nodePositions.forEach((pos) => {
+      currentMinX = Math.min(currentMinX, pos.x);
+      currentMaxX = Math.max(currentMaxX, pos.x + CARD_WIDTH);
     });
+    const currentWidth = currentMaxX - currentMinX;
+    if (currentWidth > maxTreeWidth) {
+      const scale = maxTreeWidth / currentWidth;
+      nodePositions.forEach((pos, id) => {
+        const centeredX = (pos.x - currentMinX - currentWidth / 2) * scale;
+        const clampedX = snapValue(centeredX + maxTreeWidth / 2, columnSnap);
+        nodePositions.set(id, { ...pos, x: clampedX });
+      });
+    }
+  }
+
+  const nodeEntries = Array.from(nodePositions.entries());
+  for (let i = 0; i < nodeEntries.length; i += 1) {
+    for (let j = i + 1; j < nodeEntries.length; j += 1) {
+      const [idA, posA] = nodeEntries[i];
+      const [idB, posB] = nodeEntries[j];
+      if (!posA || !posB) continue;
+      const overlapX =
+        Math.min(posA.x + CARD_WIDTH, posB.x + CARD_WIDTH) - Math.max(posA.x, posB.x);
+      const overlapY =
+        Math.min(posA.y + CARD_MIN_HEIGHT, posB.y + CARD_MIN_HEIGHT) - Math.max(posA.y, posB.y);
+      if (overlapX > MIN_NODE_GAP_X && overlapY > -MIN_NODE_GAP_Y) {
+        if (posA.y <= posB.y) {
+          const deltaY = posA.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posB.y;
+          shiftSubtree(idB, 0, deltaY);
+        } else {
+          const deltaY = posB.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posA.y;
+          shiftSubtree(idA, 0, deltaY);
+        }
+      }
+    }
   }
 
 
