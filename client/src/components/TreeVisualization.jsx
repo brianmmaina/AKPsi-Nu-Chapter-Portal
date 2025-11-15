@@ -559,6 +559,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     return base;
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
 
+  const handleEditBrother = useCallback(
+    (event, brother) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openProfileModal(brother, { edit: true });
+    },
+    [openProfileModal],
+  );
 
   // Single node renderer using extracted palette utility
   // Must be defined AFTER theme and familyKey are initialized
@@ -1505,16 +1515,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     setMajorResults([]);
   }, []);
 
-  const handleEditBrother = useCallback(
-    (event, brother) => {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      openProfileModal(brother, { edit: true });
-    },
-    [openProfileModal],
-  );
 
   const isProfileOpen = Boolean(selectedBrotherId);
 
