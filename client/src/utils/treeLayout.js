@@ -347,24 +347,18 @@ export const calculateTreeLayout = ({
       const posB = nodePositions.get(b);
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
-    let lastRight = -Infinity;
-    nodeIds.forEach((nodeId) => {
+
+    const columnSpacing = horizontalSpacing;
+    const startX = -((nodeIds.length - 1) * columnSpacing) / 2;
+
+    nodeIds.forEach((nodeId, index) => {
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      const snappedX = snapValue(pos.x, columnSnap);
+      const targetX = startX + index * columnSpacing;
+      const snappedX = snapValue(targetX, columnSnap);
       if (snappedX !== pos.x) {
-        pos.x = snappedX;
-        nodePositions.set(nodeId, pos);
+        nodePositions.set(nodeId, { ...pos, x: snappedX });
       }
-      const left = pos.x;
-      const minGap = Math.max(minColumnGap, siblingPadding * 0.8);
-      if (left < lastRight + minGap) {
-        const shift = lastRight + minGap - left;
-        shiftSubtree(nodeId, shift, 0);
-      }
-      const updated = nodePositions.get(nodeId);
-      const right = (updated?.x ?? pos.x) + CARD_WIDTH;
-      lastRight = Math.max(lastRight, right);
     });
   });
 
