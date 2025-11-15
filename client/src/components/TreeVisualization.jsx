@@ -175,10 +175,10 @@ const SAFE_VIEWPORT_WIDTH = 1280;
 const SAFE_VIEWPORT_HEIGHT = 700;
 const READABILITY_ZOOM = {
   empire: 0.58,
-  power: 0.7,
-  pride: 0.72,
-  greed: 0.74,
-  wolfpack: 0.76,
+  power: 0.63,
+  pride: 0.64,
+  greed: 0.66,
+  wolfpack: 0.68,
 };
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
