@@ -299,7 +299,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const isGreed = safeFamilyTheme === 'greed';
   const isPride = safeFamilyTheme === 'pride';
   const isWolfpack = safeFamilyTheme === 'wolfpack';
-  const isWideFamily = isGreed || isWolfpack;
   
   const leftGutter =
     LEFT_TREE_GUTTER + (isGreed ? 18 : isWolfpack ? 12 : 0);
@@ -387,15 +386,15 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   );
   
   const defaultViewport = useMemo(() => {
-    if (isEmpire) return { x: 0, y: 0, zoom: 0.48 };
-    if (isPower) return { x: 0, y: 0, zoom: 0.52 };
-    if (isGreed) return { x: 0, y: 0, zoom: 0.5 };
-    if (isPride) return { x: 0, y: 0, zoom: 0.54 };
-    if (isWolfpack) return { x: 0, y: 0, zoom: 0.52 };
-    return { x: 0, y: 0, zoom: 0.56 };
+    if (isEmpire) return { x: 0, y: 0, zoom: 0.65 };
+    if (isPower) return { x: 0, y: 0, zoom: 0.7 };
+    if (isGreed) return { x: 0, y: 0, zoom: 0.72 };
+    if (isPride) return { x: 0, y: 0, zoom: 0.72 };
+    if (isWolfpack) return { x: 0, y: 0, zoom: 0.75 };
+    return { x: 0, y: 0, zoom: 0.7 };
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
   
-  const minZoom = isWideFamily ? 0.12 : isEmpire ? 0.15 : 0.22;
+  const minZoom = isEmpire ? 0.3 : 0.35;
   const maxZoom = isEmpire ? 1.4 : 2;
   
   const composedBackground = useMemo(() => {
@@ -498,8 +497,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     if (isWolfpack) {
       return {
         ...base,
-        horizontalSpacing: 255,
-        siblingPadding: 44,
+        horizontalSpacing: 285,
+        siblingPadding: 60,
         baseVerticalSpacing: 210,
         pledgeVerticalSpacing: 190,
       };
@@ -618,7 +617,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
             )}
             {isTransfer && (
               <div
-                style={{
+              style={{ 
                   fontSize: '9px',
                   letterSpacing: '0.5px',
                   textTransform: 'uppercase',
@@ -884,107 +883,71 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     leftGutter,
   ]);
 
-  // Separate effect to apply pledge class marker highlighting (Empire only)
-  // This runs after nodes are set, avoiding infinite loops
+  // Dim non-target levels and highlight the active pledge level
   useEffect(() => {
-    if (!nodes || nodes.length === 0 || pledgeClassMarkers.length === 0) {
+    if (!nodes || nodes.length === 0) {
       return;
     }
 
-    // Check both highlighted (clicked) and hovered states
-    const activeMarkerLevel = highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
-    
-    // Prevent unnecessary updates if state hasn't changed
-    const currentState = { highlighted: highlightedPledgeClass, hovered: hoveredMarkerLevel };
+    const activeLevel =
+      highlightedPledgeClass !== null ? highlightedPledgeClass : hoveredMarkerLevel;
+    const currentState = { level: activeLevel, markerCount: pledgeClassMarkers.length };
     if (
-      lastHighlightStateRef.current.highlighted === currentState.highlighted &&
-      lastHighlightStateRef.current.hovered === currentState.hovered
+      lastHighlightStateRef.current.level === currentState.level &&
+      lastHighlightStateRef.current.markerCount === currentState.markerCount
     ) {
-      return; // State hasn't changed, skip update
+      return;
     }
     lastHighlightStateRef.current = currentState;
-    
-    if (activeMarkerLevel === null) {
-      // No active marker - ensure nodes are reset to default styles
-      setNodes((currentNodes) => {
-        let hasChanges = false;
-        const updatedNodes = currentNodes.map((node) => {
-          // Check if node has highlight styles
-          const hasHighlight = node.style?.filter?.includes('brightness') || 
-                               node.style?.boxShadow?.includes('rgba(201, 168, 87');
-          if (!hasHighlight) {
-            return node; // No changes needed
-          }
-          hasChanges = true;
-          
-          // Reset any previous highlighting
-          const baseStyle = { ...node.style };
-          delete baseStyle.filter;
-          // Remove highlight glow from boxShadow if present
-          if (baseStyle.boxShadow && baseStyle.boxShadow.includes('rgba(201, 168, 87')) {
-            const shadows = baseStyle.boxShadow.split(', ');
-            const filteredShadows = shadows.filter(s => !s.includes('rgba(201, 168, 87'));
-            baseStyle.boxShadow = filteredShadows.join(', ') || '0 4px 12px rgba(0,0,0,0.08)';
-          }
-          return { ...node, style: baseStyle };
-        });
-        return hasChanges ? updatedNodes : currentNodes;
-      });
-      return;
-    }
 
-    const activeMarker = pledgeClassMarkers.find(m => m.level === activeMarkerLevel);
-    if (!activeMarker || !activeMarker.nodeIds) {
-      return;
-    }
-
-    const activeNodeIds = new Set(activeMarker.nodeIds);
     setNodes((currentNodes) => {
       let hasChanges = false;
       const updatedNodes = currentNodes.map((node) => {
-        const isHighlighted = activeNodeIds.has(node.id);
-        const expectedGlowOpacity = highlightedPledgeClass !== null ? 0.4 : 0.2;
-        const expectedBrightness = highlightedPledgeClass !== null ? 1.1 : 1.05;
-        
-        // Check if node already has correct highlight styles
-        const currentGlowOpacity = node.style?.boxShadow?.match(/rgba\(201, 168, 87, ([\d.]+)\)/)?.[1];
-        const currentBrightness = node.style?.filter?.match(/brightness\(([\d.]+)\)/)?.[1];
-        const hasCorrectHighlight = 
-          isHighlighted &&
-          currentGlowOpacity === String(expectedGlowOpacity) &&
-          currentBrightness === String(expectedBrightness);
-        
-        if (hasCorrectHighlight) {
-          return node; // Already has correct highlight, no changes needed
-        }
-        
-        hasChanges = true;
-        
-        if (!isHighlighted) {
-          // Reset non-highlighted nodes
-          const baseStyle = { ...node.style };
-          delete baseStyle.filter;
-          if (baseStyle.boxShadow && baseStyle.boxShadow.includes('rgba(201, 168, 87')) {
-            const shadows = baseStyle.boxShadow.split(', ');
-            const filteredShadows = shadows.filter(s => !s.includes('rgba(201, 168, 87'));
-            baseStyle.boxShadow = filteredShadows.join(', ') || '0 4px 12px rgba(0,0,0,0.08)';
-          }
-          return { ...node, style: baseStyle };
+        const nodeLevel = node?.data?.levelIndex;
+        const matches = activeLevel === null || nodeLevel === activeLevel;
+        const targetFilter =
+          activeLevel === null
+            ? undefined
+            : matches
+              ? 'brightness(1.08)'
+              : 'saturate(0.65) brightness(0.82)';
+        const targetOpacity = matches || activeLevel === null ? 1 : 0.35;
+
+        const style = { ...(node.style || {}) };
+        const prevFilter = style.filter;
+        const prevOpacity =
+          style.opacity === undefined ? 1 : Number(style.opacity);
+
+        if (prevFilter === targetFilter && prevOpacity === targetOpacity) {
+          return node;
         }
 
-        // Apply highlight style to nodes in this pledge class level
-        const existingShadow = node.style?.boxShadow?.split(', ').find(s => !s.includes('rgba(201, 168, 87')) || '0 4px 12px rgba(0,0,0,0.08)';
-        const newStyle = {
-          ...node.style,
-          boxShadow: `${existingShadow}, 0 0 0 3px rgba(201, 168, 87, ${expectedGlowOpacity})`,
-          filter: `brightness(${expectedBrightness})`,
-          transition: 'filter 0.3s ease, box-shadow 0.3s ease',
-        };
-        return { ...node, style: newStyle };
+        if (targetFilter) {
+          style.filter = targetFilter;
+        } else {
+          delete style.filter;
+        }
+
+        if (targetOpacity !== 1) {
+          style.opacity = targetOpacity;
+        } else {
+          delete style.opacity;
+        }
+
+        style.transition = 'filter 0.25s ease, opacity 0.25s ease';
+
+        hasChanges = true;
+        return { ...node, style };
       });
+
       return hasChanges ? updatedNodes : currentNodes;
     });
-  }, [highlightedPledgeClass, hoveredMarkerLevel, pledgeClassMarkers, nodes.length]);
+  }, [
+    highlightedPledgeClass,
+    hoveredMarkerLevel,
+    pledgeClassMarkers.length,
+    nodes.length,
+  ]);
 
   /**
    * Handles node click events - selects brother and smoothly zooms to node
@@ -1080,7 +1043,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         usableWidth / paddedWidth,
         viewportHeight / paddedHeight,
       );
-      const nextZoom = Math.min(maxZoom, Math.max(minZoom, rawScale));
+      const comfortableMinZoom = isEmpire ? 0.38 : 0.42;
+      const desiredZoom = Math.max(rawScale, comfortableMinZoom);
+      const nextZoom = Math.min(maxZoom, Math.max(minZoom, desiredZoom));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
       const nextX = leftGutter + usableWidth / 2 - centerX * nextZoom;
@@ -1096,19 +1061,19 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         reactFlowInstance.fitView?.({ padding: 0.3, duration });
       }
     },
-    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter],
+    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter, isEmpire],
   );
 
   const fitTreeView = useCallback(
     (duration = 500, paddingMultiplier) => {
-      const defaultPadding = isEmpire ? 1.05 : isWideFamily ? 1.04 : 1.1;
+      const defaultPadding = isEmpire ? 1.02 : 1.05;
       const effectivePadding =
         typeof paddingMultiplier === 'number'
           ? paddingMultiplier
           : defaultPadding;
       fitTreeToViewport(duration, effectivePadding);
     },
-    [fitTreeToViewport, isEmpire, isWideFamily],
+    [fitTreeToViewport, isEmpire],
   );
 
   const closeProfile = useCallback(
