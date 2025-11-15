@@ -103,8 +103,17 @@ export const calculateTreeLayout = ({
     maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || Infinity,
   } = mergedRules;
 
-  const pairWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8);
-  const horizontalSpacing = Math.max(pairWidth, CARD_WIDTH + minColumnGap * 2);
+  const slotWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8) + minColumnGap;
+  const maxColumns = Math.max(
+    7,
+    Math.floor((maxTreeWidth || slotWidth * 9) / (slotWidth + minColumnGap)),
+  );
+  const baseColumns = maxColumns % 2 === 0 ? maxColumns + 1 : maxColumns;
+  const columnCenters = [];
+  const half = (baseColumns - 1) / 2;
+  for (let i = -half; i <= half; i += 1) {
+    columnCenters.push(i * slotWidth);
+  }
   const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap);
   const pledgeVerticalSpacing = baseVerticalSpacing;
   const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
@@ -345,9 +354,9 @@ export const calculateTreeLayout = ({
 
   const totalDepth = Math.max(...pyramidLevels.keys());
   pyramidLevels.forEach((nodeIds, level) => {
-    const widthMultiplier = 1 + (totalDepth - level) * 0.35;
-    const columnSpacing = horizontalSpacing * widthMultiplier;
-    const startX = -((nodeIds.length - 1) * columnSpacing) / 2;
+    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
+    const slotRange = Math.max(slotsNeeded, 3);
+    const centerIndex = (columnCenters.length - 1) / 2;
 
     nodeIds.sort((a, b) => {
       const posA = nodePositions.get(a);
@@ -355,14 +364,21 @@ export const calculateTreeLayout = ({
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
 
+    const assignedSlots = [];
+    for (let i = 0; i < slotRange; i += 1) {
+      const offset = Math.floor(i / 2) * (i % 2 === 0 ? 1 : -1);
+      const slotIndex = centerIndex + offset;
+      if (slotIndex >= 0 && slotIndex < columnCenters.length) {
+        assignedSlots.push(columnCenters[slotIndex]);
+      }
+    }
+
+    const usableSlots = assignedSlots.slice(0, nodeIds.length);
     nodeIds.forEach((nodeId, index) => {
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      const targetX = startX + index * columnSpacing;
-      const snappedX = snapValue(targetX, columnSnap);
-      if (snappedX !== pos.x) {
-        nodePositions.set(nodeId, { ...pos, x: snappedX });
-      }
+      const targetX = usableSlots[index] ?? usableSlots[usableSlots.length - 1];
+      nodePositions.set(nodeId, { ...pos, x: targetX });
     });
   });
 
