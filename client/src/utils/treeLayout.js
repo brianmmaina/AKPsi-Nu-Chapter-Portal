@@ -107,7 +107,7 @@ export const calculateTreeLayout = ({
   const horizontalSpacing = slotWidth;
   const maxColumns = Math.max(
     7,
-    Math.floor((maxTreeWidth || slotWidth * 9) / (slotWidth + minColumnGap)),
+    Math.floor((maxTreeWidth || slotWidth * 9) / slotWidth),
   );
   const baseColumns = maxColumns % 2 === 0 ? maxColumns + 1 : maxColumns;
   const columnCenters = [];
@@ -355,8 +355,7 @@ export const calculateTreeLayout = ({
 
   const totalDepth = Math.max(...pyramidLevels.keys());
   pyramidLevels.forEach((nodeIds, level) => {
-    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
-    const slotRange = Math.max(slotsNeeded, 3);
+    const slotCount = Math.min(columnCenters.length, Math.max(level * 2 + 1, nodeIds.length));
     const centerIndex = (columnCenters.length - 1) / 2;
 
     nodeIds.sort((a, b) => {
@@ -365,21 +364,27 @@ export const calculateTreeLayout = ({
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
 
-    const assignedSlots = [];
-    for (let i = 0; i < slotRange; i += 1) {
-      const offset = Math.floor(i / 2) * (i % 2 === 0 ? 1 : -1);
-      const slotIndex = centerIndex + offset;
-      if (slotIndex >= 0 && slotIndex < columnCenters.length) {
-        assignedSlots.push(columnCenters[slotIndex]);
+    const slots = [];
+    let offset = 0;
+    while (slots.length < slotCount) {
+      if (offset === 0) {
+        slots.push(centerIndex);
+      } else {
+        slots.push(centerIndex - offset);
+        if (slots.length < slotCount) slots.push(centerIndex + offset);
       }
+      offset += 1;
     }
 
-    const usableSlots = assignedSlots.slice(0, nodeIds.length);
+    slots.sort((a, b) => a - b);
+    slots.splice(slotCount);
+
     nodeIds.forEach((nodeId, index) => {
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      const targetX = usableSlots[index] ?? usableSlots[usableSlots.length - 1];
-      nodePositions.set(nodeId, { ...pos, x: targetX });
+      const slotIndex = slots[index % slots.length];
+      const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
+      nodePositions.set(nodeId, { ...pos, x: columnCenters[clampedIndex] });
     });
   });
 
