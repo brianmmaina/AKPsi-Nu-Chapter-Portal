@@ -95,9 +95,9 @@ export const calculateTreeLayout = ({
     ? { ...FAMILY_LAYOUT_RULES.base, ...familyRules }
     : familyRules;
   const {
-    columnWidth = CARD_WIDTH + 60,
+    columnWidth = CARD_WIDTH + 80,
     rowHeight = CARD_MIN_HEIGHT + 32,
-    minColumnGap = 32,
+    minColumnGap = 38,
     minRowGap = 20,
     columnSnap = 8,
     maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || Infinity,
