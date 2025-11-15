@@ -199,6 +199,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [profileMode, setProfileMode] = useState('view');
   const [viewportBeforeModal, setViewportBeforeModal] = useState(null);
   const [isPreparingExport, setIsPreparingExport] = useState(false);
   const [toast, setToast] = useState(null);
@@ -406,6 +407,30 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     },
     [nodes, reactFlowInstance, safeLineageHighlight],
   );
+
+  const openProfileModal = useCallback(
+    (brother, options = {}) => {
+      if (!brother) {
+        return;
+      }
+      const { edit = false } = options;
+      try {
+        if (getViewport) {
+          const currentViewport = getViewport();
+          setViewportBeforeModal(currentViewport);
+        }
+      } catch (error) {
+        console.warn('Failed to capture viewport before opening profile:', error);
+      }
+      setSelectedBrother(brother);
+      setSelectedBrotherId(String(brother.id));
+      setActiveMajor(null);
+      setMajorResults([]);
+      setIsModalOpen(true);
+      setProfileMode(edit ? 'edit' : 'view');
+    },
+    [getViewport],
+  );
   
   const defaultViewport = useMemo(() => {
     if (isEmpire) return { x: 0, y: 0, zoom: 0.65 };
@@ -489,7 +514,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         prongDropFactor: 1.02,
         scaleBias: 1.04,
       };
-    }
+      }
 
     if (isPower) {
       return {
@@ -601,109 +626,151 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       }
 
       return (
-        <div
-          style={{
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            aria-label={`Edit ${brother.name || 'brother'}`}
+            onClick={(event) => handleEditBrother(event, brother)}
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              border: 'none',
+              background: palette.statusBadgeBg || 'rgba(0,0,0,0.08)',
+              color: palette.statusColor || '#222',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+            }}
+          >
+            ✎
+          </button>
+            <div 
+              style={{ 
             display: 'flex',
             flexDirection: 'column',
-            gap: CARD_TOKENS.gap,
-            maxWidth: CARD_CONTENT_MAX_WIDTH,
+              gap: CARD_TOKENS.gap,
+              paddingRight: 8,
+              maxWidth: CARD_CONTENT_MAX_WIDTH,
             whiteSpace: 'normal',
             color: palette.bodyColor,
-          }}
-        >
+              }}
+            >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              flexWrap: 'wrap',
+                gap: 6,
+                flexWrap: 'wrap',
+                paddingRight: 20,
             }}
           >
-            <div
-              style={{
-                fontSize: CARD_TOKENS.badgeFont,
-                letterSpacing: '0.8px',
+              <div 
+                style={{ 
+                  fontSize: CARD_TOKENS.badgeFont,
+                  letterSpacing: '0.8px',
                 textTransform: 'uppercase',
-                padding: '4px 12px',
+                  padding: '4px 10px',
                 borderRadius: 999,
                 background: palette.badgeBg,
                 color: palette.badgeColor,
                 fontWeight: 600,
-              }}
-            >
+                }}
+              >
               {pledgeLabel}
-            </div>
-            <div
-              style={{
-                fontSize: CARD_TOKENS.badgeFont,
-                color: palette.statusColor,
-                letterSpacing: '0.35px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                padding: '4px 10px',
-                borderRadius: 999,
-                background: palette.statusBadgeBg ?? 'rgba(0,0,0,0.07)',
-              }}
-            >
-              {statusLabel}
-            </div>
-            {isTransfer && (
+              </div>
               <div
                 style={{
                   fontSize: CARD_TOKENS.badgeFont,
-                  letterSpacing: '0.5px',
-                  textTransform: 'uppercase',
-                  color: palette.transferColor,
+                  color: palette.statusColor,
+                  letterSpacing: '0.32px',
                   fontWeight: 600,
+                  textTransform: 'uppercase',
+                  padding: '4px 10px',
+                  borderRadius: 999,
+                  background: palette.statusBadgeBg ?? 'rgba(0,0,0,0.08)',
                 }}
               >
-                Transfer
+                {statusLabel}
               </div>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div
-              style={{
-                fontFamily: themeToUse.titleFont,
-                fontSize: CARD_TOKENS.nameSize,
-                letterSpacing: palette.nameTracking || '0.4px',
-                lineHeight: 1.28,
-                color: palette.nameColor,
+            {isTransfer && (
+            <div 
+              style={{ 
+                    fontSize: CARD_TOKENS.badgeFont,
+                    letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  color: palette.transferColor,
+                    fontWeight: 600,
               }}
             >
-              {effectiveName}
+                Transfer
             </div>
+            )}
+          </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div 
+                style={{ 
+                fontFamily: themeToUse.titleFont,
+                  fontSize: CARD_TOKENS.nameSize,
+                  letterSpacing: palette.nameTracking || '0.4px',
+                  lineHeight: 1.2,
+                color: palette.nameColor,
+                }}
+              >
+              {effectiveName}
+              </div>
+              {majorLabel && (
+              <div 
+                style={{ 
+                    fontSize: 11,
+                  color: palette.classColor,
+                    letterSpacing: '0.15px',
+                    lineHeight: 1.3,
+              }}
+            >
+                  {majorLabel}
+            </div>
+            )}
             {isPlaceholder && (
-              <div
-                style={{
-                  fontSize: 11,
+              <div 
+                style={{ 
+                    fontSize: 11,
                   color: palette.placeholderColor || palette.statusColor,
                   fontStyle: 'italic',
-                  lineHeight: 1.4,
+                    lineHeight: 1.35,
                 }}
               >
                 {placeholderText}
+                </div>
+              )}
+            </div>
+            {metadata.length > 0 && (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 6,
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                }}
+              >
+                {metadata}
               </div>
             )}
           </div>
-          {metadata.length > 0 && (
-            <div
-              style={{
-                display: 'grid',
-                gap: 8,
-                gridTemplateColumns: metadata.length > 1 ? 'repeat(2, minmax(0,1fr))' : '1fr',
-              }}
-            >
-              {metadata}
-            </div>
-          )}
-        </div>
-      );
+          </div>
+        );
     } catch (error) {
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-  }, [theme, familyKey]);
+  }, [theme, familyKey, handleEditBrother]);
   
   // Safely destructure ReactFlow methods
   const setCenter = reactFlowInstance?.setCenter;
@@ -1025,22 +1092,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       return;
     }
     
-    // Save current viewport before opening modal
-    try {
-      if (getViewport) {
-        const currentViewport = getViewport();
-        setViewportBeforeModal(currentViewport);
-      }
-    } catch (e) {
-      // If viewport not available, that's okay
-      console.warn('Failed to get viewport:', e);
-    }
-    
-    setSelectedBrother(node.data.brother);
-    setSelectedBrotherId(String(node.data.brother.id));
-    setActiveMajor(null);
-    setMajorResults([]);
-    setIsModalOpen(true);
+    openProfileModal(node.data.brother);
     
     // Smoothly center and zoom to the clicked node
     try {
@@ -1057,7 +1109,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     } catch (e) {
       console.warn('Failed to center node:', e);
     }
-  }, [setCenter, getViewport]);
+  }, [setCenter, openProfileModal]);
 
   const onPaneClick = useCallback((event) => {
     if (event.target.classList.contains('react-flow__pane')) {
@@ -1177,6 +1229,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       setViewportBeforeModal(null);
       setActiveMajor(null);
       setMajorResults([]);
+      setProfileMode('view');
     },
     [
       viewportBeforeModal,
@@ -1425,22 +1478,10 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         showToast('Brother not found in this family.');
         return;
       }
-      try {
-        if (getViewport) {
-          const currentViewport = getViewport();
-          setViewportBeforeModal(currentViewport);
-        }
-      } catch (error) {
-        console.warn('Failed to capture viewport before opening profile:', error);
-      }
       focusBrotherNode(brotherId);
-      setActiveMajor(null);
-      setMajorResults([]);
-      setSelectedBrother(target);
-      setSelectedBrotherId(String(target.id));
-      setIsModalOpen(true);
+      openProfileModal(target);
     },
-    [brothers, focusBrotherNode, getViewport, showToast],
+    [brothers, focusBrotherNode, openProfileModal, showToast],
   );
 
   const handleSelectMajor = useCallback(
@@ -1463,6 +1504,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     setActiveMajor(null);
     setMajorResults([]);
   }, []);
+
+  const handleEditBrother = useCallback(
+    (event, brother) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openProfileModal(brother, { edit: true });
+    },
+    [openProfileModal],
+  );
 
   const isProfileOpen = Boolean(selectedBrotherId);
 
@@ -1795,8 +1847,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
       <div
         className="tree-summary-card"
-                    style={{
-                      position: 'absolute',
+        style={{
+          position: 'absolute',
           right: 24,
           bottom: 24,
           background: hexToRgba(theme.background || '#000000', 0.92),
@@ -1807,7 +1859,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
                       textTransform: 'uppercase',
           padding: '10px 14px',
           borderRadius: 12,
-          pointerEvents: 'none',
+                    pointerEvents: 'none',
           boxShadow: '0 10px 24px rgba(0,0,0,0.35)',
           minWidth: 160,
           backdropFilter: 'blur(12px)',
@@ -1857,6 +1909,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           onUpdate={handleNodeUpdate}
           theme={theme}
           onToast={onToast}
+          startInEditMode={profileMode === 'edit'}
+          onModeChange={setProfileMode}
         />
       )}
     </div>

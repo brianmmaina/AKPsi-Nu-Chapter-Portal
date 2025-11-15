@@ -35,42 +35,44 @@ const isHexDark = (color) => {
   return luminance < 140;
 };
 
-/**
- * BrotherDetailModal Component
- * 
- * Modal for viewing and editing brother details.
- * Supports keyboard navigation (Escape to close).
- * 
- * @param {Object} props - Component props
- * @param {Object} props.brother - Brother data object
- * @param {number} props.familyId - Family ID
- * @param {Function} props.onClose - Close handler
- * @param {Function} props.onUpdate - Update callback after save
- * @param {Object} props.theme - Theme configuration
- * @param {Function} props.onAddLittle - Removed - site is read-only
- * @param {Function} props.onToast - Toast notification handler
- * @returns {JSX.Element} Modal component
- */
-const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  // Password no longer needed - using JWT tokens for authentication
-  const [formData, setFormData] = useState({
-    name: brother.name,
+const createInitialFormState = (brother = {}) => ({
+  name: brother.name || '',
     pledge_class: brother.pledge_class || '',
     graduation_year: brother.graduation_year || '',
     major: brother.major || '',
     career_aspirations: brother.career_aspirations || '',
     fun_facts: brother.fun_facts || '',
-    status: brother.status,
+  status: brother.status || 'studying',
     is_transfer: brother.is_transfer === 1,
     profile_image_url: brother.profile_image_url || '',
     linkedin_url: brother.linkedin_url || '',
     instagram_url: brother.instagram_url || '',
     email: brother.email || '',
-  });
+  bio: brother.bio || '',
+});
+
+const BrotherDetailModal = ({
+  brother,
+  onClose,
+  onUpdate,
+  theme,
+  onToast,
+  startInEditMode = false,
+  onModeChange,
+}) => {
+
+  const [isEditing, setIsEditing] = useState(Boolean(startInEditMode));
+  const [formData, setFormData] = useState(createInitialFormState(brother));
   const [saving, setSaving] = useState(false);
 
-  // Keyboard shortcuts: Escape to close (only when not editing)
+  useEffect(() => {
+    setIsEditing(Boolean(startInEditMode));
+  }, [startInEditMode, brother.id]);
+
+  useEffect(() => {
+    setFormData(createInitialFormState(brother));
+  }, [brother]);
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && !isEditing) {
@@ -81,19 +83,26 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose, isEditing]);
 
+  const enterEditMode = () => {
+    setIsEditing(true);
+    onModeChange?.('edit');
+  };
+
+  const exitEditMode = () => {
+    setIsEditing(false);
+    onModeChange?.('view');
+    setFormData(createInitialFormState(brother));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Token is added automatically via interceptor
       await brothersApi.update(brother.id, { 
         ...formData, 
         is_transfer: formData.is_transfer ? 1 : 0, 
-        profile_image_url: formData.profile_image_url,
-        linkedin_url: formData.linkedin_url,
-        instagram_url: formData.instagram_url,
-        email: formData.email,
       });
       setIsEditing(false);
+      onModeChange?.('view');
       onUpdate();
       onToast?.({ message: 'Brother updated successfully!', type: 'success' });
     } catch (error) {
@@ -103,8 +112,6 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       setSaving(false);
     }
   };
-
-  // Add Little functionality removed - site is read-only
 
   const palette = useMemo(() => {
     const base = {
@@ -204,32 +211,17 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
 
   const isDarkTheme = useMemo(() => isHexDark(theme?.background), [theme]);
 
-  if (!brother) return null;
-
-  const infoCardStyle = {
-    background: modalColors.cardBg,
-    border: `1px solid ${modalColors.cardBorder}`,
-    borderRadius: '18px',
-    padding: '18px 22px',
-    boxShadow: '0 18px 36px rgba(0,0,0,0.08)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    color: modalColors.text,
-  };
-
   const socialLinks = [
     brother.linkedin_url && {
       id: 'linkedin',
       label: 'LinkedIn',
       href: brother.linkedin_url,
-      icon: null,
       iconSrc: LINKEDIN_ICON_SRC,
     },
     brother.instagram_url && {
       id: 'instagram',
       label: 'Instagram',
       href: brother.instagram_url,
-      iconSrc: null,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -238,18 +230,11 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
         </svg>
       ),
     },
-    brother.email && {
-      id: 'email',
-      label: 'Email',
-      href: `mailto:${brother.email}`,
-      icon: null,
-      iconSrc: EMAIL_ICON_SRC,
-    },
   ].filter(Boolean);
 
   const socialButtonBase = {
-    width: '52px',
-    height: '52px',
+    width: '54px',
+    height: '54px',
     borderRadius: '16px',
     border: `1px solid ${modalColors.connectBorder}`,
     background: modalColors.connectBg,
@@ -266,8 +251,8 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       src={brother.profile_image_url}
       alt={brother.name}
       style={{
-        width: '220px',
-        height: '220px',
+        width: '240px',
+        height: '240px',
         borderRadius: '50%',
         objectFit: 'cover',
         border: `4px solid ${hexToRgba(theme?.accent || '#ffffff', 0.6)}`,
@@ -277,8 +262,8 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
   ) : (
     <div
       style={{
-        width: '220px',
-        height: '220px',
+        width: '240px',
+        height: '240px',
         borderRadius: '50%',
         background: hexToRgba(theme?.accent || '#c9a857', 0.9),
         display: 'flex',
@@ -294,6 +279,8 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
       {brother.name.charAt(0).toUpperCase()}
     </div>
   );
+
+  const bioText = typeof brother.bio === 'string' && brother.bio.trim().length > 0 ? brother.bio.trim() : '';
 
   const cardHeadingStyle = {
     fontSize: '11px',
@@ -311,11 +298,76 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     margin: 0,
   };
 
-  const handleBackdropClick = (e) => {
-    // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  const infoCardStyle = {
+    background: hexToRgba(theme?.background || '#0f1729', 0.28),
+    border: `1px solid ${modalColors.cardBorder}`,
+    borderRadius: '18px',
+    padding: '16px 20px',
+    boxShadow: '0 18px 36px rgba(0,0,0,0.08)',
+  };
+
+  const emailPillStyle = {
+    padding: '12px 16px',
+    borderRadius: '16px',
+    border: `1px solid ${modalColors.connectBorder}`,
+    color: modalColors.text,
+    fontWeight: 600,
+    textDecoration: 'none',
+  };
+
+  const formLabelStyle = {
+    fontSize: '11px',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: modalColors.label,
+    fontWeight: 600,
+  };
+
+  const inputStyle = {
+    color: '#111',
+    backgroundColor: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.12)',
+    borderRadius: '12px',
+    padding: '10px 12px',
+    fontSize: '14px',
+    width: '100%',
+  };
+
+  const textAreaStyle = {
+    ...inputStyle,
+    minHeight: '90px',
+    resize: 'vertical',
+  };
+
+  const formFieldStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    minWidth: 0,
+  };
+
+  const formGridStyle = {
+    display: 'grid',
+    gap: '16px 20px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  };
+
+  const editButtonStyle = {
+    borderRadius: '999px',
+    border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.4)}`,
+    background: hexToRgba(theme?.accent || '#ffffff', 0.12),
+    color: modalColors.text,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    padding: '10px 18px',
+    cursor: 'pointer',
+  };
+
+  const contactRowStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    alignItems: 'center',
   };
 
   const modal = (
@@ -333,43 +385,42 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
         backgroundColor: modalColors.overlay,
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        pointerEvents: 'auto',
         padding: '24px',
       }}
-      onClick={handleBackdropClick}
-      onMouseDown={(e) => {
-        // Prevent ReactFlow from capturing the mousedown event
-        e.stopPropagation();
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
       }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
       <div
-        className="profile-modal-card glass-panel-elevated rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="profile-modal-card glass-panel-elevated rounded-lg shadow-2xl"
         style={{
           background: modalColors.cardBg,
           borderRadius: '24px',
           border: `1px solid ${modalColors.cardBorder}`,
           boxShadow: '0 30px 60px rgba(0,0,0,0.45)',
           color: modalColors.text,
+          width: 'min(960px, 94vw)',
+          maxHeight: '92vh',
+          overflowY: 'auto',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Header with close button */}
-        <div className="flex justify-end items-center" style={{ padding: 'var(--space-4)', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '24px 32px 0' }}>
           <button
             onClick={onClose}
-            className="btn btn-sm"
             style={{
               background: 'rgba(0, 0, 0, 0.1)',
               border: 'none',
               color: modalColors.close,
-              padding: 'var(--space-2) var(--space-3)',
-              fontSize: 'var(--text-xl)',
-              lineHeight: '1',
-              minWidth: 'auto',
-              borderRadius: 'var(--radius-md)',
+              padding: '6px 10px',
+              fontSize: '20px',
+              lineHeight: 1,
+              borderRadius: '12px',
               cursor: 'pointer',
             }}
             aria-label="Close profile"
@@ -378,36 +429,106 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
           </button>
         </div>
 
-        {/* Profile Content */}
-        <div style={{ padding: 'var(--space-6)', paddingTop: 'var(--space-4)' }}>
-
-        {!isEditing ? (
-          <>
+        <div style={{ padding: '0 32px 36px' }}>
+          {!isEditing ? (
             <div
-              style={{
+                    style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '32px',
-                justifyContent: 'center',
                 alignItems: 'flex-start',
               }}
             >
-              <div
+              <div style={{ flex: '0 0 260px', display: 'flex', justifyContent: 'center' }}>{renderAvatar}</div>
+              <div style={{ flex: '1 1 360px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'flex-start',
+                    gap: '16px',
+                  }}
+                >
+                  <div style={{ flex: '1 1 auto', minWidth: 220 }}>
+              <h1
+                id="modal-title"
                 style={{
-                  flex: '0 0 240px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '18px',
+                  fontSize: '36px',
+                  fontFamily: theme?.titleFont || 'var(--font-display)',
+                        color: modalColors.text,
+                        fontWeight: 700,
+                        margin: 0,
                 }}
               >
-                {renderAvatar}
-                {socialLinks.length > 0 && (
-                  <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '16px' }}>
-                    <div style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: modalColors.label, opacity: 0.9, marginBottom: '10px' }}>
-                      Connect
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+                {brother.name}
+              </h1>
+                    <p style={{ color: modalColors.secondary, opacity: 0.9, marginTop: 6, marginBottom: 0 }}>
+                      {brother.major || brother.pledge_class || 'Nu Chapter Brother'}
+                    </p>
+                    {bioText && (
+                      <p style={{ color: modalColors.secondary, marginTop: 6, marginBottom: 0, lineHeight: 1.5 }}>
+                        {bioText}
+                      </p>
+                    )}
+                  </div>
+                  <button type="button" onClick={enterEditMode} style={editButtonStyle}>
+                    Edit Profile
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {brother.pledge_class && (
+                  <span
+                    style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.4)}`,
+                        background: hexToRgba(theme?.accent || '#c9a857', 0.12),
+                        fontSize: '11px',
+                        letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                        color: modalColors.label,
+                    }}
+                  >
+                    {brother.pledge_class}
+                  </span>
+                )}
+                {brother.graduation_year && (
+                  <span
+                    style={{
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
+                        background: hexToRgba(theme?.accent || '#c9a857', 0.08),
+                        fontSize: '11px',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercaserceSpacing',
+                        color: modalColors.label,
+                    }}
+                  >
+                    Class of {brother.graduation_year}
+                  </span>
+                )}
+                <span
+                  style={{
+                      padding: '6px 14px',
+                      borderRadius: '999px',
+                      border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
+                      background: hexToRgba(theme?.accent || '#c9a857', 0.08),
+                      fontSize: '11px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: modalColors.label,
+                    }}
+                  >
+                    {brother.status === 'studying' ? 'Active Brother' : 'Alumni'}
+                </span>
+                </div>
+
+                {(socialLinks.length > 0 || brother.email) && (
+                  <div>
+                    <div style={cardHeadingStyle}>Contact</div>
+                    <div style={contactRowStyle}>
                       {socialLinks.map((link) => (
                         <a
                           key={link.id}
@@ -425,456 +546,178 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
                           }}
                         >
                           {link.iconSrc ? (
-                            <img
-                              src={link.iconSrc}
-                              alt={`${link.label} icon`}
-                              style={{ width: 20, height: 20, display: 'block' }}
-                            />
+                            <img src={link.iconSrc} alt={`${link.label} icon`} style={{ width: 20, height: 20 }} />
                           ) : (
                             link.icon
                           )}
                         </a>
                       ))}
-                    </div>
+                    {brother.email && (
+                        <a href={`mailto:${brother.email}`} style={emailPillStyle}>
+                          {brother.email}
+                      </a>
+                    )}
                   </div>
-                )}
-                {brother.email && (
-                  <div style={{ ...infoCardStyle, width: '100%', textAlign: 'center', padding: '14px 18px' }}>
-                    <div style={{ fontSize: '11px', letterSpacing: '0.08em', opacity: 0.9, textTransform: 'uppercase', color: modalColors.label }}>
-                      Email
-                    </div>
-                    <div style={{ fontWeight: 600 }}>{brother.email}</div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ flex: '1 1 360px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                <div>
-                  <h1
-                    id="modal-title"
-                    style={{
-                      fontSize: '34px',
-                      fontFamily: theme?.titleFont || 'var(--font-display)',
-                      color: modalColors.text,
-                      fontWeight: 700,
-                      margin: 0,
-                    }}
-                  >
-                    {brother.name}
-                  </h1>
-                  <p style={{ color: modalColors.secondary, opacity: 0.85, marginTop: '4px', marginBottom: 0 }}>
-                    {brother.major || brother.pledge_class || 'Nu Chapter Brother'}
-                  </p>
                 </div>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                  {brother.pledge_class && (
-                    <span
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.4)}`,
-                        background: hexToRgba(theme?.accent || '#c9a857', 0.12),
-                        fontSize: '11px',
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: modalColors.label,
-                      }}
-                    >
-                      {brother.pledge_class}
-                    </span>
-                  )}
-                  {brother.graduation_year && (
-                    <span
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
-                        background: hexToRgba(theme?.accent || '#c9a857', 0.08),
-                        fontSize: '11px',
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: modalColors.label,
-                      }}
-                    >
-                      Class of {brother.graduation_year}
-                    </span>
-                  )}
-                  <span
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '999px',
-                      border: `1px solid ${hexToRgba(theme?.accent || '#c9a857', 0.35)}`,
-                      background: hexToRgba(theme?.accent || '#c9a857', 0.08),
-                      fontSize: '11px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: modalColors.label,
-                    }}
-                  >
-                    {brother.status === 'studying' ? 'Active Brother' : 'Alumni'}
-                  </span>
-                </div>
-
-                {brother.career_aspirations && (
-                  <div style={infoCardStyle}>
-                    <div style={cardHeadingStyle}>Career Aspirations</div>
-                    <p style={cardBodyStyle}>{brother.career_aspirations}</p>
-                  </div>
-                )}
+              )}
 
                 {brother.fun_facts && (
-                  <div style={infoCardStyle}>
+                  <div style={{ ...infoCardStyle, padding: '16px 18px' }}>
                     <div style={cardHeadingStyle}>About</div>
                     <p style={cardBodyStyle}>{brother.fun_facts}</p>
                   </div>
                 )}
               </div>
             </div>
-          </>
-        ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Name
-            </label>
-            {isEditing ? (
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={formGridStyle}>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                }}
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text)', fontWeight: 'var(--weight-semibold)' }}>{brother.name}</p>
-            )}
+                    style={inputStyle}
+                  />
           </div>
-
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Pledge Class
-            </label>
-            {isEditing ? (
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Pledge Class</label>
               <input
                 type="text"
                 value={formData.pledge_class}
                 onChange={(e) => setFormData({ ...formData, pledge_class: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                }}
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.pledge_class || 'N/A'}</p>
-            )}
+                    style={inputStyle}
+                  />
           </div>
-
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Graduation Year (Class of)
-            </label>
-            {isEditing ? (
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Graduation Year</label>
               <input
                 type="number"
                 value={formData.graduation_year}
-                onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value ? parseInt(e.target.value) : '' })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                }}
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.graduation_year ? `Class of ${brother.graduation_year}` : 'N/A'}</p>
-            )}
+                    onChange={(e) =>
+                      setFormData({ ...formData, graduation_year: e.target.value ? parseInt(e.target.value, 10) : '' })
+                    }
+                    style={inputStyle}
+                  />
           </div>
-
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Major
-            </label>
-            {isEditing ? (
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Major</label>
               <input
                 type="text"
                 value={formData.major}
                 onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                }}
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.major || 'N/A'}</p>
-            )}
+                    style={inputStyle}
+                  />
+                </div>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    style={inputStyle}
+                  >
+                    <option value="studying">Currently Studying</option>
+                    <option value="graduated">Graduated</option>
+                  </select>
+                </div>
           </div>
 
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Career Aspirations
-            </label>
-            {isEditing ? (
+              <div style={{ ...formGridStyle, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+                <div style={{ ...formFieldStyle, gridColumn: '1 / -1' }}>
+                  <label style={formLabelStyle}>Bio (optional)</label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    style={textAreaStyle}
+                  />
+                </div>
+                <div style={{ ...formFieldStyle, gridColumn: '1 / -1' }}>
+                  <label style={formLabelStyle}>Career Aspirations (optional)</label>
               <textarea
                 value={formData.career_aspirations}
                 onChange={(e) => setFormData({ ...formData, career_aspirations: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                  minHeight: '80px', 
-                  resize: 'vertical' 
-                }}
-                rows="3"
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.career_aspirations || 'N/A'}</p>
-            )}
+                    style={textAreaStyle}
+                  />
           </div>
-
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Fun Facts
-            </label>
-            {isEditing ? (
+                <div style={{ ...formFieldStyle, gridColumn: '1 / -1' }}>
+                  <label style={formLabelStyle}>About / Fun Facts</label>
               <textarea
                 value={formData.fun_facts}
                 onChange={(e) => setFormData({ ...formData, fun_facts: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                  minHeight: '80px', 
-                  resize: 'vertical' 
-                }}
-                rows="3"
-              />
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>{brother.fun_facts || 'N/A'}</p>
-            )}
+                    style={textAreaStyle}
+                  />
+          </div>
           </div>
 
-          <div>
-            <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-              Status
-            </label>
-            {isEditing ? (
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="input"
-                style={{ 
-                  color: '#1f1f1f',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #d4c9b3',
-                  borderRadius: '0px',
-                  padding: '10px 12px',
-                }}
-              >
-                <option value="studying">Currently Studying</option>
-                <option value="graduated">Graduated</option>
-              </select>
-            ) : (
-              <p style={{ color: theme?.nodeText || 'var(--text-muted)' }}>
-                <span
-                  style={{
-                    padding: 'var(--space-1) var(--space-2)',
-                    borderRadius: 'var(--radius-sm)',
-                    backgroundColor: brother.status === 'studying'
-                      ? (theme?.accent || 'var(--success)')
-                      : hexToRgba(palette.heading, 0.25),
-                    color: 'white',
-                    fontSize: 'var(--text-xs)',
-                    fontWeight: 'var(--weight-medium)',
-                  }}
-                >
-                  {brother.status === 'studying' ? 'Currently Studying' : 'Graduated'}
-                </span>
-              </p>
-            )}
-          </div>
-
-              <div style={{ 
-                padding: 'var(--space-4)', 
-                backgroundColor: theme?.background || '#f8f7f3',
-                border: `2px solid ${theme?.accent || '#c9a857'}`,
-                borderRadius: '0px',
-                marginBottom: 'var(--space-4)',
-              }}>
-                <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', fontSize: 'var(--text-base)', marginBottom: '8px', display: 'block' }}>
-                  Profile Image URL
-                </label>
+              <div style={formGridStyle}>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Profile Image URL</label>
                 <input
                   type="text"
                   value={formData.profile_image_url}
                   onChange={(e) => setFormData({ ...formData, profile_image_url: e.target.value })}
-                  className="input"
-                  placeholder="https://example.com/image.jpg"
-                  style={{ 
-                    color: '#1f1f1f',
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #d4c9b3',
-                    borderRadius: '0px',
-                    padding: '10px 12px',
-                    fontSize: 'var(--text-base)',
-                  }}
-                />
-                <small style={{ color: theme?.nodeText || 'var(--text-muted)', fontSize: 'var(--text-sm)', display: 'block', marginTop: 'var(--space-2)' }}>
-                  Enter a URL to an image for the profile headshot (e.g., from Imgur, Google Drive, or any image hosting service)
-                </small>
+                    style={inputStyle}
+                  />
               </div>
-
-              {/* Links Section */}
-              <div style={{ 
-                padding: 'var(--space-4)', 
-                backgroundColor: theme?.background || '#f8f7f3',
-                border: `2px solid ${theme?.accent || '#c9a857'}`,
-                borderRadius: '0px',
-                marginBottom: 'var(--space-4)',
-              }}>
-                <h3 style={{ 
-                  fontSize: 'var(--text-lg)', 
-                  fontWeight: '600', 
-                  color: theme?.nodeText || 'var(--text)',
-                  marginBottom: 'var(--space-3)',
-                }}>
-                  Links
-                </h3>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                  <div>
-                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                      LinkedIn URL
-                    </label>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>LinkedIn URL</label>
                     <input
                       type="url"
                       value={formData.linkedin_url}
                       onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
-                      className="input"
+                    style={inputStyle}
                       placeholder="https://linkedin.com/in/username"
-                      style={{ 
-                        color: '#1f1f1f',
-                        backgroundColor: '#ffffff',
-                        border: '2px solid #d4c9b3',
-                        borderRadius: '0px',
-                        padding: '10px 12px',
-                      }}
                     />
                   </div>
-
-                  <div>
-                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                      Instagram URL
-                    </label>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Instagram URL</label>
                     <input
                       type="url"
                       value={formData.instagram_url}
                       onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
-                      className="input"
+                    style={inputStyle}
                       placeholder="https://instagram.com/username"
-                      style={{ 
-                        color: '#1f1f1f',
-                        backgroundColor: '#ffffff',
-                        border: '2px solid #d4c9b3',
-                        borderRadius: '0px',
-                        padding: '10px 12px',
-                      }}
                     />
                   </div>
-
-                  <div>
-                    <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                      Email
-                    </label>
+                <div style={formFieldStyle}>
+                  <label style={formLabelStyle}>Email</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="input"
-                      placeholder="example@email.com"
-                      style={{ 
-                        color: '#1f1f1f',
-                        backgroundColor: '#ffffff',
-                        border: '2px solid #d4c9b3',
-                        borderRadius: '0px',
-                        padding: '10px 12px',
-                      }}
-                    />
-                  </div>
+                    style={inputStyle}
+                  />
                 </div>
           </div>
 
-          {isEditing && (
-            <div>
-                  <label className="label" style={{ color: '#1f1f1f', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                Transfer?
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="checkbox"
                   checked={formData.is_transfer}
                   onChange={(e) => setFormData({ ...formData, is_transfer: e.target.checked })}
                 />
-                <span style={{ color: theme?.nodeText || 'var(--text)' }}>Yes</span>
+                <span style={{ color: theme?.nodeText || modalColors.text, fontSize: '14px' }}>Transfer Brother</span>
               </div>
-            </div>
-          )}
-            </div>
-          )}
 
-          {/* Action Buttons - Only show in edit mode */}
-          {isEditing && (
-        <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-3)' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px' }}>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="btn btn-primary flex-1"
+                  className="btn btn-primary"
+                  style={{ flex: '1 1 200px', minWidth: '180px' }}
               >
-                {saving ? 'Saving...' : 'Save'}
+                  {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setFormData({
-                    name: brother.name,
-                    pledge_class: brother.pledge_class || '',
-                    graduation_year: brother.graduation_year || '',
-                    major: brother.major || '',
-                    career_aspirations: brother.career_aspirations || '',
-                    fun_facts: brother.fun_facts || '',
-                    status: brother.status,
-                    is_transfer: brother.is_transfer === 1,
-                    profile_image_url: brother.profile_image_url || '',
-                    linkedin_url: brother.linkedin_url || '',
-                    instagram_url: brother.instagram_url || '',
-                  });
-                }}
-                className="btn btn-secondary flex-1"
+                  type="button"
+                  onClick={exitEditMode}
+                  className="btn btn-secondary"
+                  style={{ flex: '0 0 auto', minWidth: '180px' }}
               >
                 Cancel
               </button>
+              </div>
             </div>
           )}
         </div>
@@ -882,12 +725,7 @@ const BrotherDetailModal = ({ brother, onClose, onUpdate, theme, onToast }) => {
     </div>
   );
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
   return createPortal(modal, document.body);
 };
 
 export default BrotherDetailModal;
-
