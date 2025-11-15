@@ -12,7 +12,7 @@ import { hexToRgba } from './color';
 const CARD_WIDTH = 280;
 const CARD_MIN_HEIGHT = 110;
 const MIN_NODE_GAP_X = 30;
-const MIN_NODE_GAP_Y = 18;
+const MIN_NODE_GAP_Y = 32;
 
 const snapValue = (value, snap = 10) => Math.round(value / snap) * snap;
 
@@ -110,12 +110,18 @@ export const calculateTreeLayout = ({
     Math.floor((maxTreeWidth || slotWidth * 9) / slotWidth),
   );
   const baseColumns = maxColumns % 2 === 0 ? maxColumns + 1 : maxColumns;
+  const leafCount = brothers.filter((brother) => {
+    if (!brother || typeof brother.id === 'undefined') return false;
+    const kids = childrenMap.get(brother.id) || [];
+    return kids.length === 0;
+  }).length || 1;
+  const desiredColumns = Math.min(Math.max(baseColumns, leafCount * 2 + 1), Math.max(baseColumns, 61));
   const columnCenters = [];
-  const half = (baseColumns - 1) / 2;
+  const half = (desiredColumns - 1) / 2;
   for (let i = -half; i <= half; i += 1) {
     columnCenters.push(i * slotWidth);
   }
-  const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap);
+  const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap + MIN_NODE_GAP_Y);
   const pledgeVerticalSpacing = baseVerticalSpacing;
   const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
   const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH + minColumnGap * 0.4);
@@ -368,9 +374,9 @@ export const calculateTreeLayout = ({
     const requestedSlots = [];
 
     nodeIds.forEach((nodeId) => {
-      const parentId = relationshipsMap.get(Number(nodeId));
-      const parentSlot = parentSlotMap.get(String(parentId));
-      const childCount = (childrenMap.get(parentId) || []).length || 1;
+      const parentId = relationshipsMap.get(nodeId);
+      const parentSlot = parentSlotMap.get(parentId);
+      const childCount = parentId !== undefined ? (childrenMap.get(parentId) || []).length || 1 : 1;
       if (parentSlot !== undefined) {
         const span = Math.max(1, Math.ceil(childCount / 2));
         for (let i = -span; i <= span; i += 1) {
@@ -439,7 +445,7 @@ export const calculateTreeLayout = ({
         Math.min(posA.x + CARD_WIDTH, posB.x + CARD_WIDTH) - Math.max(posA.x, posB.x);
       const overlapY =
         Math.min(posA.y + CARD_MIN_HEIGHT, posB.y + CARD_MIN_HEIGHT) - Math.max(posA.y, posB.y);
-      if (overlapX > MIN_NODE_GAP_X && overlapY > -MIN_NODE_GAP_Y) {
+      if (overlapX > MIN_NODE_GAP_X && overlapY > 0) {
         if (posA.y <= posB.y) {
           const deltaY = posA.y + CARD_MIN_HEIGHT + MIN_NODE_GAP_Y - posB.y;
           shiftSubtree(idB, 0, deltaY);
