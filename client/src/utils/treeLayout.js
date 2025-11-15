@@ -95,7 +95,7 @@ export const calculateTreeLayout = ({
     ? { ...FAMILY_LAYOUT_RULES.base, ...familyRules }
     : familyRules;
   const {
-    columnWidth = CARD_WIDTH + 80,
+    columnMultiplier = 2.2,
     rowHeight = CARD_MIN_HEIGHT + 32,
     minColumnGap = 38,
     minRowGap = 20,
@@ -103,7 +103,8 @@ export const calculateTreeLayout = ({
     maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || Infinity,
   } = mergedRules;
 
-  const horizontalSpacing = Math.max(columnWidth, CARD_WIDTH + minColumnGap);
+  const pairWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8);
+  const horizontalSpacing = Math.max(pairWidth, CARD_WIDTH + minColumnGap * 2);
   const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap);
   const pledgeVerticalSpacing = baseVerticalSpacing;
   const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
