@@ -171,6 +171,13 @@ const CARD_TOKENS = {
 };
 const BASE_VERTICAL_SPACING = CARD_MIN_HEIGHT + 40;
 const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
+const READABILITY_ZOOM = {
+  empire: 0.64,
+  power: 0.7,
+  pride: 0.72,
+  greed: 0.74,
+  wolfpack: 0.76,
+};
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
@@ -195,6 +202,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const [toast, setToast] = useState(null);
   const [highlightBrotherId, setHighlightBrotherId] = useState(null);
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const edgeTypes = useMemo(() => ({ curved: CurvedEdge }), []);
   const initialViewportRef = useRef(null);
   const treeBoundsRef = useRef({ width: 0, height: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 });
@@ -462,51 +470,62 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   const layoutSettings = useMemo(() => {
     const base = {
-      horizontalSpacing: 320,
-      baseVerticalSpacing: BASE_VERTICAL_SPACING,
-      pledgeVerticalSpacing: BASE_PLEDGE_SPACING,
-      multiChildCompression: 0.88,
-      siblingPadding: 60,
-      prongDropFactor: 1.08,
+      horizontalSpacing: CARD_WIDTH + 32,
+      baseVerticalSpacing: CARD_MIN_HEIGHT + 30,
+      pledgeVerticalSpacing: CARD_MIN_HEIGHT + 18,
+      multiChildCompression: 0.9,
+      siblingPadding: 52,
+      prongDropFactor: 1.05,
+      scaleBias: 1.1,
     };
 
     if (isEmpire) {
       return {
         ...base,
-        horizontalSpacing: 310,
-        siblingPadding: 58,
+        horizontalSpacing: CARD_WIDTH + 24,
+        siblingPadding: 50,
+        prongDropFactor: 1.02,
+        scaleBias: 1.04,
       };
     }
 
     if (isPower) {
       return {
         ...base,
-        horizontalSpacing: 315,
-        siblingPadding: 58,
+        horizontalSpacing: CARD_WIDTH + 40,
+        siblingPadding: 56,
+        scaleBias: 1.08,
       };
     }
 
     if (isGreed) {
       return {
         ...base,
-        horizontalSpacing: 290,
-        siblingPadding: 60,
+        horizontalSpacing: CARD_WIDTH + 48,
+        siblingPadding: 64,
+        baseVerticalSpacing: CARD_MIN_HEIGHT + 34,
+        pledgeVerticalSpacing: CARD_MIN_HEIGHT + 24,
+        multiChildCompression: 0.86,
+        scaleBias: 1.12,
       };
     }
 
     if (isPride) {
       return {
         ...base,
-        horizontalSpacing: 315,
-        siblingPadding: 58,
+        horizontalSpacing: CARD_WIDTH + 36,
+        siblingPadding: 56,
       };
     }
 
     if (isWolfpack) {
       return {
         ...base,
-        horizontalSpacing: 300,
-        siblingPadding: 64,
+        horizontalSpacing: CARD_WIDTH + 52,
+        siblingPadding: 66,
+        baseVerticalSpacing: CARD_MIN_HEIGHT + 36,
+        pledgeVerticalSpacing: CARD_MIN_HEIGHT + 26,
+        scaleBias: 1.15,
       };
     }
 
@@ -1085,7 +1104,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         viewportHeight / paddedHeight,
       );
       const comfortableMinZoom = isEmpire ? 0.38 : 0.42;
-      const desiredZoom = Math.max(rawScale, comfortableMinZoom);
+      const scaleBias = layoutSettings?.scaleBias || 1.1;
+      const readabilityFloor = READABILITY_ZOOM[familyKey] || 0.7;
+      const desiredZoom = Math.max(rawScale * scaleBias, comfortableMinZoom, readabilityFloor);
       const nextZoom = Math.min(maxZoom, Math.max(minZoom, desiredZoom));
       const centerX = bounds.minX + bounds.width / 2;
       const centerY = bounds.minY + bounds.height / 2;
@@ -1102,12 +1123,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
         reactFlowInstance.fitView?.({ padding: 0.3, duration });
       }
     },
-    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter, isEmpire],
+    [reactFlowInstance, maxZoom, minZoom, leftGutter, rightGutter, isEmpire, layoutSettings, familyKey],
   );
 
   const fitTreeView = useCallback(
     (duration = 500, paddingMultiplier) => {
-      const defaultPadding = isEmpire ? 1.02 : 1.05;
+      const defaultPadding = isEmpire ? 0.98 : 0.94;
       const effectivePadding =
         typeof paddingMultiplier === 'number'
           ? paddingMultiplier
@@ -1238,6 +1259,14 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEmpire, reactFlowInstance, minZoom, maxZoom, fitTreeToViewport]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // Cleanup effect - must be called before any conditional returns
   useEffect(
     () => () => {
@@ -1269,8 +1298,8 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     setIsPreparingExport(true);
 
     try {
-      fitTreeView();
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      fitTreeView(350, 0.9);
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const flowWrapper = flowWrapperRef.current;
       if (!flowWrapper) {
@@ -1306,6 +1335,41 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       setIsPreparingExport(false);
     }
   }, [fitTreeView, showToast, theme?.background, safeFamily?.name]);
+
+  const handleZoom = useCallback(
+    (direction) => {
+      if (!reactFlowInstance?.getViewport || !reactFlowInstance?.zoomTo) {
+        return;
+      }
+      try {
+        const current = reactFlowInstance.getViewport();
+        const factor = direction === 'in' ? 1.15 : 0.85;
+        const nextZoom = Math.max(minZoom, Math.min(maxZoom, current.zoom * factor));
+        reactFlowInstance.zoomTo(nextZoom, 200);
+      } catch (error) {
+        console.warn('Zoom adjustment failed:', error);
+      }
+    },
+    [reactFlowInstance, minZoom, maxZoom],
+  );
+
+  const handleFullscreenToggle = useCallback(() => {
+    const host = flowWrapperRef.current;
+    if (!host) {
+      return;
+    }
+    try {
+      if (!document.fullscreenElement) {
+        if (host.requestFullscreen) {
+          host.requestFullscreen();
+        }
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    } catch (error) {
+      console.warn('Fullscreen toggle failed:', error);
+    }
+  }, []);
 
   const handleResetView = useCallback(() => {
     fitTreeView(450);
@@ -1419,6 +1483,21 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     clearActiveMajor,
     isProfileOpen,
   ]);
+
+  const controlButtonStyle = useMemo(
+    () => ({
+      width: 40,
+      height: 40,
+      borderRadius: '50%',
+      border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.3)}`,
+      background: hexToRgba(theme?.nodeCardBg || theme?.background || '#000000', 0.35),
+      color: theme?.nodeText || '#ffffff',
+      fontSize: 13,
+      fontWeight: 600,
+      letterSpacing: '0.04em',
+    }),
+    [theme],
+  );
 
   // Remove loading state - tree will fade in instead
 
@@ -1617,40 +1696,66 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           className="tree-controls-panel"
           style={{
             position: 'absolute',
-            right: 24,
-            top: 24,
+            left: '50%',
+            bottom: 32,
+            transform: 'translateX(-50%)',
             pointerEvents: 'auto',
-            background: 'transparent',
-            border: 'none',
-            boxShadow: 'none',
-            backdropFilter: 'none',
-            WebkitBackdropFilter: 'none',
-            padding: 0,
+            background: hexToRgba(theme?.controlsPanelBg || theme?.background || '#000000', 0.4),
+            border: theme?.controlsBorder || `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.25)}`,
+            boxShadow: theme?.controlsShadow || '0 18px 36px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            padding: '12px',
+            minWidth: 64,
           }}
         >
-          <button
-            type="button"
-            onClick={handleResetView}
-        style={{
-              width: 48,
-              height: 48,
-              borderRadius: '999px',
-              border: `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.35)}`,
-              background: hexToRgba(theme?.accent || '#ffffff', 0.16),
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: theme?.nodeText || '#1f1f1f',
-              boxShadow: '0 10px 24px rgba(0,0,0,0.25)',
-            }}
-          >
-            Reset
-          </button>
+          <div className="tree-controls">
+            <button
+              type="button"
+              aria-label="Zoom in"
+              onClick={() => handleZoom('in')}
+              style={controlButtonStyle}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              aria-label="Zoom out"
+              onClick={() => handleZoom('out')}
+              style={controlButtonStyle}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              aria-label="Reset view"
+              onClick={handleResetView}
+              style={controlButtonStyle}
+            >
+              ⟲
+            </button>
+            <button
+              type="button"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              onClick={handleFullscreenToggle}
+              style={controlButtonStyle}
+            >
+              {isFullscreen ? '▢' : '⛶'}
+            </button>
+            <button
+              type="button"
+              aria-label="Export tree"
+              onClick={handleExportTree}
+              disabled={isPreparingExport}
+              style={
+                isPreparingExport
+                  ? { ...controlButtonStyle, opacity: 0.5, cursor: 'wait' }
+                  : controlButtonStyle
+              }
+            >
+              ⇩
+            </button>
+          </div>
         </Panel>
       </ReactFlow>
 
