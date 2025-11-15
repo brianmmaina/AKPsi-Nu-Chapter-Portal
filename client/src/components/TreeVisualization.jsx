@@ -174,7 +174,7 @@ const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
 const SAFE_VIEWPORT_WIDTH = 1280;
 const SAFE_VIEWPORT_HEIGHT = 700;
 const READABILITY_ZOOM = {
-  empire: 0.64,
+  empire: 0.58,
   power: 0.7,
   pride: 0.72,
   greed: 0.74,
@@ -1765,9 +1765,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           className="tree-controls-panel"
           style={{
             position: 'absolute',
-            left: '50%',
-            bottom: 32,
-            transform: 'translateX(-50%)',
+            right: 24,
+            top: '50%',
+            transform: 'translateY(-50%)',
             pointerEvents: 'auto',
             background: hexToRgba(theme?.controlsPanelBg || theme?.background || '#000000', 0.4),
             border: theme?.controlsBorder || `1px solid ${hexToRgba(theme?.accent || '#ffffff', 0.25)}`,
