@@ -168,6 +168,8 @@ export const calculateTreeLayout = ({
    * @param {number} y - Y position (generation level)
    */
   const depthLevelMap = new Map();
+  const parentSlotMap = new Map();
+  const childSlotRequests = new Map();
 
   const positionNode = (nodeId, x, y, depthLevel = 0) => {
     nodePositions.set(nodeId, { x: x + leftMargin, y, depthLevel });
@@ -355,35 +357,54 @@ export const calculateTreeLayout = ({
 
   const totalDepth = Math.max(...pyramidLevels.keys());
   pyramidLevels.forEach((nodeIds, level) => {
-    const slotCount = Math.min(columnCenters.length, Math.max(level * 2 + 1, nodeIds.length));
     const centerIndex = (columnCenters.length - 1) / 2;
-
     nodeIds.sort((a, b) => {
       const posA = nodePositions.get(a);
       const posB = nodePositions.get(b);
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
 
-    const slots = [];
+    const requestedSlots = [];
+    nodeIds.forEach((nodeId) => {
+      const parentId = relationshipsMap.get(Number(nodeId));
+      const parentSlot = parentSlotMap.get(String(parentId));
+      if (parentSlot !== undefined) {
+        requestedSlots.push(parentSlot);
+      }
+    });
+
+    const uniqueSlots = Array.from(new Set(requestedSlots)).sort((a, b) => a - b);
+    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
+    const allocatedSlots = [];
+
+    if (uniqueSlots.length > 0) {
+      uniqueSlots.forEach((slot) => {
+        if (allocatedSlots.length < slotsNeeded) {
+          allocatedSlots.push(slot);
+        }
+      });
+    }
+
     let offset = 0;
-    while (slots.length < slotCount) {
+    while (allocatedSlots.length < slotsNeeded) {
       if (offset === 0) {
-        slots.push(centerIndex);
+        allocatedSlots.push(centerIndex);
       } else {
-        slots.push(centerIndex - offset);
-        if (slots.length < slotCount) slots.push(centerIndex + offset);
+        allocatedSlots.push(centerIndex - offset);
+        if (allocatedSlots.length < slotsNeeded) {
+          allocatedSlots.push(centerIndex + offset);
+        }
       }
       offset += 1;
     }
 
-    slots.sort((a, b) => a - b);
-    slots.splice(slotCount);
-
+    allocatedSlots.sort((a, b) => a - b);
     nodeIds.forEach((nodeId, index) => {
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      const slotIndex = slots[index % slots.length];
+      const slotIndex = allocatedSlots[index] ?? centerIndex;
       const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
+      parentSlotMap.set(nodeId, clampedIndex);
       nodePositions.set(nodeId, { ...pos, x: columnCenters[clampedIndex] });
     });
   });
