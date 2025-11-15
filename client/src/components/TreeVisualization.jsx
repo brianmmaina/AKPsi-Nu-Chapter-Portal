@@ -175,10 +175,10 @@ const SAFE_VIEWPORT_WIDTH = 1280;
 const SAFE_VIEWPORT_HEIGHT = 700;
 const READABILITY_ZOOM = {
   empire: 0.58,
-  power: 0.63,
-  pride: 0.64,
-  greed: 0.66,
-  wolfpack: 0.68,
+  power: 0.7,
+  pride: 0.72,
+  greed: 0.74,
+  wolfpack: 0.76,
 };
 
 const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
@@ -213,6 +213,9 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const toastTimeoutRef = useRef(null);
   const highlightTimeoutRef = useRef(null);
   const reactFlowInstance = useReactFlow();
+  const setCenter = reactFlowInstance?.setCenter;
+  const getViewport = reactFlowInstance?.getViewport;
+  const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition;
 
   // Use custom hooks for data loading, search, and lineage highlighting
   // Pass safeFamily (can be null) - hooks must handle this gracefully
@@ -431,6 +434,17 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     },
     [getViewport],
   );
+
+  const handleEditBrother = useCallback(
+    (event, brother) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      openProfileModal(brother, { edit: true });
+    },
+    [openProfileModal],
+  );
   
   const defaultViewport = useMemo(() => {
     if (isEmpire) return { x: 0, y: 0, zoom: 0.65 };
@@ -559,16 +573,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     return base;
   }, [isEmpire, isPower, isGreed, isPride, isWolfpack]);
 
-  const handleEditBrother = useCallback(
-    (event, brother) => {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      openProfileModal(brother, { edit: true });
-    },
-    [openProfileModal],
-  );
 
   // Single node renderer using extracted palette utility
   // Must be defined AFTER theme and familyKey are initialized
@@ -782,10 +786,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     }
   }, [theme, familyKey, handleEditBrother]);
   
-  // Safely destructure ReactFlow methods
-  const setCenter = reactFlowInstance?.setCenter;
-  const getViewport = reactFlowInstance?.getViewport;
-  const flowToScreenPosition = reactFlowInstance?.flowToScreenPosition; // New React Flow API (replaces deprecated project)
   const projectMarkerPosition = useCallback(
     (markerY) => {
       let screenY;
@@ -1514,7 +1514,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     setActiveMajor(null);
     setMajorResults([]);
   }, []);
-
 
   const isProfileOpen = Boolean(selectedBrotherId);
 
