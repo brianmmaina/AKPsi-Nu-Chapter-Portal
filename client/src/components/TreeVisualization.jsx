@@ -579,6 +579,12 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     scaleBias: layoutSettings?.scaleBias || 1,
   });
 
+  const handleTreeBounds = useCallback((bounds) => {
+    if (bounds && typeof bounds === 'object') {
+      treeBoundsRef.current = bounds;
+    }
+  }, [treeBoundsRef]);
+
 
   // Single node renderer using extracted palette utility
   // Must be defined AFTER theme and familyKey are initialized
@@ -801,11 +807,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
     highlightBrotherId,
     lineageHighlightSet,
     renderNodeContent,
-    onTreeBounds: (bounds) => {
-      if (bounds && typeof bounds === 'object') {
-        treeBoundsRef.current = bounds;
-      }
-    },
+    onTreeBounds: handleTreeBounds,
     leftMargin: leftGutter,
   });
 
