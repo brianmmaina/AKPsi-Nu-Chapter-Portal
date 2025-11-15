@@ -10,9 +10,9 @@ import { FAMILY_LAYOUT_RULES } from './constants';
 import { hexToRgba } from './color';
 
 const CARD_WIDTH = 280;
-const CARD_MIN_HEIGHT = 110;
-const MIN_NODE_GAP_X = 30;
-const MIN_NODE_GAP_Y = 32;
+const CARD_MIN_HEIGHT = 100;
+const MIN_NODE_GAP_X = 250;
+const MIN_NODE_GAP_Y = 100;
 
 const snapValue = (value, snap = 10) => Math.round(value / snap) * snap;
 
@@ -95,33 +95,19 @@ export const calculateTreeLayout = ({
     ? { ...FAMILY_LAYOUT_RULES.base, ...familyRules }
     : familyRules;
   const {
-    columnMultiplier = 2.2,
-    rowHeight = CARD_MIN_HEIGHT + 32,
-    minColumnGap = 38,
-    minRowGap = 20,
+    horizontalSpacing: ruleSpacing = CARD_WIDTH * 3,
+    rowHeight = CARD_MIN_HEIGHT + 50,
+    minColumnGap = MIN_NODE_GAP_X,
+    minRowGap = 50,
     columnSnap = 8,
     maxTreeWidth = FAMILY_LAYOUT_RULES?.base?.maxTreeWidth || Infinity,
   } = mergedRules;
 
-  const slotWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8) + minColumnGap;
-  const horizontalSpacing = slotWidth;
-  const leafCount =
-    brothers.filter((brother) => brother && childrenMap.get(brother.id)?.length === 0).length || 1;
-  const widthBudget = Number.isFinite(maxTreeWidth)
-    ? maxTreeWidth
-    : slotWidth * Math.min(Math.max(leafCount * 2 + 5, 15), 41);
-  const maxColumns = Math.max(7, Math.floor(widthBudget / slotWidth));
-  const baseColumns = maxColumns % 2 === 0 ? maxColumns + 1 : maxColumns;
-  const desiredColumns = Math.min(Math.max(baseColumns, leafCount * 2 + 1), 81);
-  const columnCenters = [];
-  const half = (desiredColumns - 1) / 2;
-  for (let i = -half; i <= half; i += 1) {
-    columnCenters.push(i * slotWidth);
-  }
+  const horizontalSpacing = Math.max(ruleSpacing, CARD_WIDTH + minColumnGap);
   const baseVerticalSpacing = Math.max(rowHeight, CARD_MIN_HEIGHT + minRowGap + MIN_NODE_GAP_Y);
   const pledgeVerticalSpacing = baseVerticalSpacing;
   const multiChildCompression = layoutSettings?.multiChildCompression ?? 0.9;
-  const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH + minColumnGap * 0.4);
+  const siblingPadding = Math.max(minColumnGap, horizontalSpacing - CARD_WIDTH + minColumnGap * 1.5);
   const prongDropFactor = layoutSettings?.prongDropFactor ?? 1.05;
 
   /**
@@ -148,7 +134,7 @@ export const calculateTreeLayout = ({
 
     let totalWidth;
     if (children.length === 3) {
-      const pad = siblingPadding || horizontalSpacing * 0.25;
+      const pad = siblingPadding || horizontalSpacing * 1.5;
       const left = childWidths[0] * compression;
       const center = childWidths[1] * compression;
       const right = childWidths[2] * compression;
@@ -170,15 +156,8 @@ export const calculateTreeLayout = ({
    * @param {number} x - X position (center of subtree)
    * @param {number} y - Y position (generation level)
    */
-  const depthLevelMap = new Map();
-  const parentSlotMap = new Map();
-  const childSlotRequests = new Map();
-
-  const positionNode = (nodeId, x, y, depthLevel = 0) => {
-    nodePositions.set(nodeId, { x: x + leftMargin, y, depthLevel });
-    const currentDepthNodes = depthLevelMap.get(depthLevel) || [];
-    currentDepthNodes.push(nodeId);
-    depthLevelMap.set(depthLevel, currentDepthNodes);
+  const positionNode = (nodeId, x, y) => {
+    nodePositions.set(nodeId, { x: x + leftMargin, y });
     
     const children = childrenMap.get(nodeId) || [];
     if (children.length === 0) {
@@ -205,9 +184,9 @@ export const calculateTreeLayout = ({
       const outerY = y + baseVerticalSpacing;
       const centerY = y + baseVerticalSpacing * (prongDropFactor || 1.12);
 
-      positionNode(children[0], leftX, outerY, depthLevel + 1);
-      positionNode(children[2], rightX, outerY, depthLevel + 1);
-      positionNode(children[1], x, centerY, depthLevel + 1);
+      positionNode(children[0], leftX, outerY);
+      positionNode(children[2], rightX, outerY);
+      positionNode(children[1], x, centerY);
       return;
     }
 
@@ -222,7 +201,7 @@ export const calculateTreeLayout = ({
       const pad = index > 0 ? siblingPadding : 0;
       accumulatedWidth += pad;
       const childX = startX + accumulatedWidth + width / 2;
-      positionNode(childId, childX, y + baseVerticalSpacing, depthLevel + 1);
+      positionNode(childId, childX, y + baseVerticalSpacing);
       accumulatedWidth += width;
     });
   };
@@ -349,69 +328,32 @@ export const calculateTreeLayout = ({
     });
   });
 
-  const pyramidLevels = new Map();
+  const levelBuckets = new Map();
   nodePositions.forEach((pos, id) => {
-    const levelKey = pos.depthLevel ?? 0;
-    if (!pyramidLevels.has(levelKey)) {
-      pyramidLevels.set(levelKey, []);
+    const levelKey = Math.round(pos.y / Math.max(baseVerticalSpacing, 2));
+    if (!levelBuckets.has(levelKey)) {
+      levelBuckets.set(levelKey, []);
     }
-    pyramidLevels.get(levelKey).push(id);
+    levelBuckets.get(levelKey).push(id);
   });
 
-  const totalDepth = Math.max(...pyramidLevels.keys());
-  pyramidLevels.forEach((nodeIds, level) => {
-    const centerIndex = Math.floor(columnCenters.length / 2);
+  levelBuckets.forEach((nodeIds) => {
     nodeIds.sort((a, b) => {
       const posA = nodePositions.get(a);
       const posB = nodePositions.get(b);
       return (posA?.x ?? 0) - (posB?.x ?? 0);
     });
 
-    const slotsNeeded = Math.max(nodeIds.length, level * 2 + 1);
-    const requestedSlots = [];
-
+    let lastRight = -Infinity;
     nodeIds.forEach((nodeId) => {
-      const parentId = relationshipsMap.get(Number(nodeId));
-      const parentSlot = parentSlotMap.get(String(parentId));
-      const childCount =
-        parentId !== undefined ? (childrenMap.get(parentId) || []).length || 1 : 1;
-      if (parentSlot !== undefined) {
-        const span = Math.max(1, Math.ceil(childCount / 2));
-        for (let i = -span; i <= span; i += 1) {
-          const slotIndex = parentSlot + i;
-          if (slotIndex >= 0 && slotIndex < columnCenters.length) {
-            requestedSlots.push(slotIndex);
-          }
-        }
-      }
-    });
-
-    const uniqueSlots = Array.from(new Set(requestedSlots)).sort((a, b) => a - b);
-    const allocatedSlots = [];
-    uniqueSlots.forEach((slot) => {
-      if (allocatedSlots.length < slotsNeeded) {
-        allocatedSlots.push(slot);
-      }
-    });
-
-    let offset = 1;
-    while (allocatedSlots.length < slotsNeeded) {
-      const leftSlot = centerIndex - offset;
-      const rightSlot = centerIndex + offset;
-      if (leftSlot >= 0) allocatedSlots.push(leftSlot);
-      if (allocatedSlots.length >= slotsNeeded) break;
-      if (rightSlot < columnCenters.length) allocatedSlots.push(rightSlot);
-      offset += 1;
-    }
-
-    allocatedSlots.sort((a, b) => a - b);
-    nodeIds.forEach((nodeId, index) => {
-      const slotIndex = allocatedSlots[index % allocatedSlots.length];
-      const clampedIndex = Math.max(0, Math.min(columnCenters.length - 1, slotIndex));
       const pos = nodePositions.get(nodeId);
       if (!pos) return;
-      parentSlotMap.set(String(nodeId), clampedIndex);
-      nodePositions.set(nodeId, { ...pos, x: columnCenters[clampedIndex] });
+      if (pos.x < lastRight + MIN_NODE_GAP_X) {
+        const shift = lastRight + MIN_NODE_GAP_X - pos.x;
+        shiftSubtree(nodeId, shift, 0);
+      }
+      const updated = nodePositions.get(nodeId);
+      lastRight = (updated?.x ?? pos.x) + CARD_WIDTH + MIN_NODE_GAP_X;
     });
   });
 
