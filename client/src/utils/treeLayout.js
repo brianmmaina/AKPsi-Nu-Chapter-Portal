@@ -104,6 +104,7 @@ export const calculateTreeLayout = ({
   } = mergedRules;
 
   const slotWidth = Math.max(columnMultiplier * CARD_WIDTH, CARD_WIDTH * 1.8) + minColumnGap;
+  const horizontalSpacing = slotWidth;
   const maxColumns = Math.max(
     7,
     Math.floor((maxTreeWidth || slotWidth * 9) / (slotWidth + minColumnGap)),

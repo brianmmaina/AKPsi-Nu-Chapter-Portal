@@ -359,8 +359,9 @@ const BrotherDetailModal = ({
     color: modalColors.text,
     fontWeight: 600,
     letterSpacing: '0.08em',
-    padding: '10px 18px',
+    padding: '12px 18px',
     cursor: 'pointer',
+    marginTop: '6px',
   };
 
   const contactRowStyle = {

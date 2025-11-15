@@ -600,7 +600,6 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       );
 
       const metadata = [];
-      if (majorLabel) metadata.push(renderMeta('Major', majorLabel));
       if (brother.graduation_year) {
         metadata.push(renderMeta('Graduation', `Class of ${brother.graduation_year}`));
       }
