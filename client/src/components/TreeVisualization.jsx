@@ -175,7 +175,7 @@ const CARD_TOKENS = {
 const BASE_VERTICAL_SPACING = CARD_MIN_HEIGHT + 40;
 const BASE_PLEDGE_SPACING = CARD_MIN_HEIGHT + 25;
 
-const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
+const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombinedHeader, onOpenPoints }) => {
   // All hooks MUST be called in the same order every render (Rules of Hooks)
   // Cannot have conditional returns before hooks
   
@@ -184,6 +184,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   const safeFamily = family && typeof family === 'object' ? family : null;
   const safeOnToast = onToast && typeof onToast === 'function' ? onToast : null;
   const safeOnChangeFamily = onChangeFamily && typeof onChangeFamily === 'function' ? onChangeFamily : null;
+  const safeOnOpenPoints = onOpenPoints && typeof onOpenPoints === 'function' ? onOpenPoints : null;
   const familyThemeRaw = safeFamily && safeFamily.theme ? String(safeFamily.theme).toLowerCase().trim() : null;
   const validThemeKeys = ['empire', 'power', 'greed', 'pride', 'wolfpack'];
   const safeFamilyTheme = familyThemeRaw && validThemeKeys.includes(familyThemeRaw) ? familyThemeRaw : 'wolfpack';
@@ -545,6 +546,20 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
 
   // Single node renderer using extracted palette utility
   // Must be defined AFTER theme and familyKey are initialized
+  const handleOpenPointsFromNode = useCallback(
+    (event, brother) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!safeOnOpenPoints || !brother || brother.id === undefined || brother.id === null) {
+        return;
+      }
+      safeOnOpenPoints(String(brother.id));
+    },
+    [safeOnOpenPoints],
+  );
+
   const renderNodeContent = useCallback((brother) => {
     // Safety check: handle null/undefined brother
     if (!brother) {
@@ -635,6 +650,34 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           >
             ✎
           </button>
+          {safeOnOpenPoints && brother.id !== undefined && brother.id !== null && (
+            <button
+              type="button"
+              aria-label={`View points for ${brother.name || 'brother'}`}
+              onClick={(event) => handleOpenPointsFromNode(event, brother)}
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 36,
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                border: 'none',
+                background: 'rgba(14,165,233,0.15)',
+                color: '#0369a1',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(3,105,161,0.2)',
+              }}
+            >
+              ★
+            </button>
+          )}
             <div 
               style={{ 
             display: 'flex',
@@ -752,7 +795,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
       console.warn('Error rendering node content:', error);
       return <div style={{ color: '#333' }}>{brother.name || 'Unassigned'}</div>;
     }
-  }, [theme, familyKey, handleEditBrother]);
+  }, [theme, familyKey, handleEditBrother, handleOpenPointsFromNode, safeOnOpenPoints]);
 
   const { nodes: layoutNodes, edges: layoutEdges, stats: treeStats } = useTreeLayout({
     brothers,
@@ -1643,6 +1686,7 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
           onToast={onToast}
           startInEditMode={profileMode === 'edit'}
           onModeChange={setProfileMode}
+          onViewPoints={safeOnOpenPoints}
         />
       )}
     </div>
@@ -1651,10 +1695,16 @@ const TreeVisualizationInner = ({ family, onToast, onChangeFamily, renderCombine
   );
 };
 
-const TreeVisualization = ({ family, onToast, onChangeFamily, renderCombinedHeader }) => {
+const TreeVisualization = ({ family, onToast, onChangeFamily, renderCombinedHeader, onOpenPoints }) => {
   return (
     <ReactFlowProvider>
-      <TreeVisualizationInner family={family} onToast={onToast} onChangeFamily={onChangeFamily} renderCombinedHeader={renderCombinedHeader} />
+      <TreeVisualizationInner
+        family={family}
+        onToast={onToast}
+        onChangeFamily={onChangeFamily}
+        renderCombinedHeader={renderCombinedHeader}
+        onOpenPoints={onOpenPoints}
+      />
     </ReactFlowProvider>
   );
 };

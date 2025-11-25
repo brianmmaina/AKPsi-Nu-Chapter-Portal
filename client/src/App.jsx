@@ -5,6 +5,8 @@ import FamilyTreeView from './components/FamilyTreeView';
 import Toast from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import SkipToContent from './components/SkipToContent';
+import PointsDashboard from './components/points/PointsDashboard';
+import { usePoints } from './context/PointsContext';
 import { auth, families } from './api';
 
 // Session expiration time: 24 hours in milliseconds
@@ -42,6 +44,8 @@ function App() {
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [activeView, setActiveView] = useState('TREE');
+  const { openMemberPoints } = usePoints();
 
   const loadFamilies = useCallback(async () => {
     try {
@@ -165,11 +169,13 @@ function App() {
   const handleFamilySelect = (family) => {
     setSelectedFamily(family);
     setShowFamilySelection(false);
+    setActiveView('TREE');
     sessionStorage.setItem('selectedFamily', family.id);
   };
 
   const handleChangeFamily = () => {
     setShowFamilySelection(true);
+    setActiveView('TREE');
   };
 
 
@@ -237,12 +243,37 @@ function App() {
           />
         )}
         <main id="main-content">
-          <FamilyTreeView 
-            families={familiesList} 
-            selectedFamily={selectedFamily} 
-            onChangeFamily={handleChangeFamily}
-            onToast={setToast}
-          />
+          <div className="app-view-toggle" role="tablist" aria-label="Main view">
+            <button
+              type="button"
+              className={`app-view-toggle__btn ${activeView === 'TREE' ? 'app-view-toggle__btn--active' : ''}`}
+              onClick={() => setActiveView('TREE')}
+              role="tab"
+              aria-selected={activeView === 'TREE'}
+            >
+              Family Tree
+            </button>
+            <button
+              type="button"
+              className={`app-view-toggle__btn ${activeView === 'POINTS' ? 'app-view-toggle__btn--active' : ''}`}
+              onClick={() => setActiveView('POINTS')}
+              role="tab"
+              aria-selected={activeView === 'POINTS'}
+            >
+              Points
+            </button>
+          </div>
+          {activeView === 'TREE' ? (
+            <FamilyTreeView 
+              families={familiesList} 
+              selectedFamily={selectedFamily} 
+              onChangeFamily={handleChangeFamily}
+              onToast={setToast}
+              onOpenPoints={openMemberPoints}
+            />
+          ) : (
+            <PointsDashboard />
+          )}
         </main>
       </ErrorBoundary>
     );

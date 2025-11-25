@@ -222,7 +222,7 @@ const CrestIcon = ({ themeKey, color, fallback }) => {
 
  */
 
-const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onChangeFamily, onToast }) => {
+const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onChangeFamily, onToast, onOpenPoints }) => {
 
   const [selectedFamily, setSelectedFamily] = useState(initialSelectedFamily || families[0] || null);
 
@@ -285,6 +285,7 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
         family={selectedFamily} 
         onToast={onToast} 
         onChangeFamily={onChangeFamily}
+        onOpenPoints={onOpenPoints}
         renderCombinedHeader={(headerProps) => {
 
           const presentation =

@@ -59,6 +59,7 @@ const BrotherDetailModal = ({
   onToast,
   startInEditMode = false,
   onModeChange,
+  onViewPoints,
 }) => {
 
   const [isEditing, setIsEditing] = useState(Boolean(startInEditMode));
@@ -371,6 +372,24 @@ const BrotherDetailModal = ({
     alignItems: 'center',
   };
 
+  const viewPointsButtonStyle = {
+    borderRadius: '999px',
+    border: 'none',
+    background: '#facc15',
+    color: '#0f172a',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    padding: '12px 18px',
+    cursor: 'pointer',
+    marginTop: '6px',
+  };
+
+  const handleViewPoints = () => {
+    if (typeof onViewPoints === 'function' && brother?.id !== undefined && brother?.id !== null) {
+      onViewPoints(String(brother.id));
+    }
+  };
+
   const modal = (
     <div
       className="profile-modal-overlay"
@@ -472,9 +491,16 @@ const BrotherDetailModal = ({
                       </p>
                     )}
                   </div>
-                  <button type="button" onClick={enterEditMode} style={editButtonStyle}>
-                    Edit Profile
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button type="button" onClick={enterEditMode} style={editButtonStyle}>
+                      Edit Profile
+                    </button>
+                    {typeof onViewPoints === 'function' && brother?.id !== undefined && brother?.id !== null && (
+                      <button type="button" onClick={handleViewPoints} style={viewPointsButtonStyle}>
+                        View Points
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
