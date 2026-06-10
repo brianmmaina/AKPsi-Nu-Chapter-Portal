@@ -21,39 +21,39 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
 
     const palette = {
       empire: {
-        titleColor: '#6d5122',
-        background: 'linear-gradient(135deg, rgba(255, 249, 236, 0.94) 0%, rgba(247, 233, 199, 0.92) 100%)',
-        border: '1.5px solid rgba(201,168,87,0.55)',
-        shadow: '0 16px 32px rgba(98, 72, 28, 0.12)',
-        text: '#4a3b25',
+        titleColor: '#6d4d1f',
+        background: 'linear-gradient(145deg, #fff8e8, #ead9a8)',
+        border: '1px solid rgba(186,145,58,0.58)',
+        shadow: '0 22px 48px rgba(43,33,24,0.18), 0 4px 12px rgba(43,33,24,0.10), inset 0 1px 0 rgba(255,255,255,0.55)',
+        text: '#7a5c2a',
       },
       greed: {
-        titleColor: '#f1ffe0',
-        background: 'linear-gradient(135deg, rgba(16, 76, 46, 0.97) 0%, rgba(9, 53, 33, 0.95) 100%)',
-        border: '1.5px solid rgba(244,217,97,0.45)',
-        shadow: '0 18px 34px rgba(12, 46, 29, 0.28)',
-        text: 'rgba(235, 245, 235, 0.9)',
+        titleColor: '#f3e8bd',
+        background: 'linear-gradient(145deg, #145332, #082f1d)',
+        border: '1px solid rgba(216,190,94,0.55)',
+        shadow: '0 22px 48px rgba(43,33,24,0.22), 0 4px 12px rgba(43,33,24,0.12), inset 0 1px 0 rgba(255,255,255,0.10)',
+        text: 'rgba(243,232,189,0.85)',
       },
       power: {
-        titleColor: '#f7e7c0',
-        background: 'linear-gradient(140deg, rgba(13, 38, 63, 0.97) 0%, rgba(7, 20, 33, 0.96) 100%)',
-        border: '1.5px solid rgba(235,210,144,0.45)',
-        shadow: '0 18px 34px rgba(9, 24, 40, 0.32)',
-        text: 'rgba(247, 235, 206, 0.92)',
+        titleColor: '#efe2bd',
+        background: 'linear-gradient(145deg, #10253d, #061523)',
+        border: '1px solid rgba(197,167,91,0.52)',
+        shadow: '0 22px 48px rgba(43,33,24,0.22), 0 4px 12px rgba(43,33,24,0.12), inset 0 1px 0 rgba(255,255,255,0.08)',
+        text: 'rgba(239,226,189,0.85)',
       },
       pride: {
-        titleColor: '#f1d0a0',
-        background: 'linear-gradient(135deg, rgba(48, 34, 22, 0.96) 0%, rgba(36, 22, 12, 0.95) 100%)',
-        border: '1.5px solid rgba(212,175,126,0.45)',
-        shadow: '0 18px 32px rgba(36, 20, 10, 0.3)',
-        text: 'rgba(245, 232, 212, 0.9)',
+        titleColor: '#f1dfb8',
+        background: 'linear-gradient(145deg, #3a2618, #1f130c)',
+        border: '1px solid rgba(193,151,82,0.55)',
+        shadow: '0 22px 48px rgba(43,33,24,0.24), 0 4px 12px rgba(43,33,24,0.14), inset 0 1px 0 rgba(255,255,255,0.08)',
+        text: 'rgba(241,223,184,0.85)',
       },
       wolfpack: {
-        titleColor: '#e5edff',
-        background: 'linear-gradient(140deg, rgba(54, 76, 115, 0.97) 0%, rgba(40, 56, 86, 0.96) 100%)',
-        border: '1.5px solid rgba(109,139,177,0.45)',
-        shadow: '0 18px 32px rgba(40, 56, 86, 0.3)',
-        text: 'rgba(235, 241, 255, 0.92)',
+        titleColor: '#eef4ff',
+        background: 'linear-gradient(145deg, #334d73, #172b49)',
+        border: '1px solid rgba(213,226,247,0.36)',
+        shadow: '0 22px 48px rgba(43,33,24,0.20), 0 4px 12px rgba(43,33,24,0.12), inset 0 1px 0 rgba(255,255,255,0.08)',
+        text: 'rgba(238,244,255,0.85)',
       },
     };
 
@@ -87,27 +87,28 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
         background: cardStyle.background,
         border: cardStyle.border,
         borderRadius: '18px',
-        padding: 'var(--space-4) var(--space-5)',
-        minWidth: '200px',
+        padding: '1.25rem 1.5rem',
+        width: '230px',
+        minHeight: '104px',
         boxShadow: cardStyle.shadow,
-        transition: 'all var(--motion-fast) var(--ease-standard), opacity var(--motion-med) var(--ease-standard), transform var(--motion-med) var(--ease-standard)',
+        transition: 'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, opacity var(--motion-med) var(--ease-standard)',
         opacity,
         transform: isLoaded ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
         transitionDelay: isLoaded ? `${animationDelay}ms` : '0ms',
       }}
       onMouseEnter={(e) => {
         if (isLoaded) {
-          e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+          e.currentTarget.style.transform = 'translateY(-6px)';
         }
-        e.currentTarget.style.boxShadow = '0 20px 36px rgba(31, 24, 18, 0.18)';
+        e.currentTarget.style.boxShadow = '0 30px 64px rgba(43,33,24,0.24), 0 8px 18px rgba(43,33,24,0.14), inset 0 1px 0 rgba(255,255,255,0.38)';
         e.currentTarget.style.borderColor = `${accent}CC`;
       }}
       onMouseLeave={(e) => {
         if (isLoaded) {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.transform = 'translateY(0)';
         }
         e.currentTarget.style.boxShadow = cardStyle.shadow;
-        e.currentTarget.style.borderColor = `${accent}80`;
+        e.currentTarget.style.borderColor = '';
       }}
       aria-label={`Select ${family.name} family`}
     >
