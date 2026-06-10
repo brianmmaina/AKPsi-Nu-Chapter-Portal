@@ -251,28 +251,26 @@ export const calculateTreeLayout = ({
     });
   }
 
-  // Empire-specific: center parents above their children
-  if (isEmpire) {
-    brothers.forEach((brother) => {
-      if (!brother || typeof brother.id === 'undefined') return;
-      const children = childrenMap.get(brother.id) || [];
-      if (children.length === 0) {
-        return;
-      }
-      const childXs = children
-        .map((childId) => nodePositions.get(childId))
-        .filter(Boolean)
-        .map((pos) => pos.x);
-      if (childXs.length === 0) {
-        return;
-      }
-      const avgX = childXs.reduce((sum, x) => sum + x, 0) / childXs.length;
-      const currentPos = nodePositions.get(brother.id);
-      if (currentPos) {
-        nodePositions.set(brother.id, { ...currentPos, x: avgX });
-      }
-    });
-  }
+  // Center parents above their children for all families
+  brothers.forEach((brother) => {
+    if (!brother || typeof brother.id === 'undefined') return;
+    const children = childrenMap.get(brother.id) || [];
+    if (children.length === 0) {
+      return;
+    }
+    const childXs = children
+      .map((childId) => nodePositions.get(childId))
+      .filter(Boolean)
+      .map((pos) => pos.x);
+    if (childXs.length === 0) {
+      return;
+    }
+    const avgX = childXs.reduce((sum, x) => sum + x, 0) / childXs.length;
+    const currentPos = nodePositions.get(brother.id);
+    if (currentPos) {
+      nodePositions.set(brother.id, { ...currentPos, x: avgX });
+    }
+  });
 
   // Adjust positions based on pledge classes
   const adjustedPositions = new Map();
