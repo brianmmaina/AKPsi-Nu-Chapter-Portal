@@ -64,21 +64,21 @@ const logger = {
 // SECURITY MIDDLEWARE
 // ============================================================================
 
-// CORS configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  FRONTEND_URL,
-].filter(Boolean);
+// CORS configuration - SIMPLIFIED: Allow all origins for now
+// This makes it work immediately without complex config
+app.options('*', cors({
+  origin: true, // Allow any origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: true, // Allow any origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // HTTPS enforcement in production (after CORS so preflight works)
 if (NODE_ENV === 'production') {
@@ -892,7 +892,7 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on 0.0.0.0:${PORT}`);
+app.listen(PORT, () => {
+  logger.info(`Server running on http://localhost:${PORT}`);
   logger.info(`Environment: ${NODE_ENV}`);
 });
