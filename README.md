@@ -4,14 +4,6 @@ A full-stack chapter management platform built for **Alpha Kappa Psi Nu Chapter*
 
 ---
 
-## Screenshots
-
-> *Family Tree — interactive pan/zoom canvas with collapsible subtrees and member profile modals*
-
-![Family Tree](client/public/images/family-selection-background.jpg)
-
----
-
 ## Features
 
 ### Interactive Family Tree Visualization
