@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import Login from './components/Login';
+import HomeHub from './components/HomeHub';
 import FamilySelection from './components/FamilySelection';
 import FamilyTreeView from './components/FamilyTreeView';
 import Toast from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import SkipToContent from './components/SkipToContent';
 import PointsDashboard from './components/points/PointsDashboard';
+import InformationHub from './components/InformationHub';
+import ProfessionalNetwork from './components/ProfessionalNetwork';
 import { usePoints } from './context/PointsContext';
 import { auth, families } from './api';
 
@@ -38,13 +41,13 @@ const isSessionValid = () => {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showFamilySelection, setShowFamilySelection] = useState(false);
   const [password, setPassword] = useState('');
   const [familiesList, setFamiliesList] = useState([]);
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
-  const [activeView, setActiveView] = useState('TREE');
+  const [currentView, setCurrentView] = useState('HOME');
+  const [navHistory, setNavHistory] = useState(['HOME']);
   const { openMemberPoints } = usePoints();
 
   const loadFamilies = useCallback(async () => {
@@ -61,24 +64,39 @@ function App() {
     }
   }, []);
 
+  const navigateTo = useCallback((view) => {
+    setCurrentView(view);
+    setNavHistory((prev) => [...prev, view]);
+  }, []);
+
+  const navigateBack = useCallback(() => {
+    setNavHistory((prev) => {
+      if (prev.length <= 1) return prev;
+      const newHistory = [...prev];
+      newHistory.pop();
+      const previousView = newHistory[newHistory.length - 1];
+      setCurrentView(previousView);
+      if (previousView === 'HOME') {
+        setSelectedFamily(null);
+        sessionStorage.removeItem('selectedFamily');
+      }
+      return newHistory;
+    });
+  }, []);
+
+  const navigateToHome = useCallback(() => {
+    setCurrentView('HOME');
+    setNavHistory(['HOME']);
+    setSelectedFamily(null);
+    sessionStorage.removeItem('selectedFamily');
+  }, []);
+
   useEffect(() => {
     // Check if already authenticated (with session expiration check)
     if (isSessionValid()) {
-    const storedFamilyId = sessionStorage.getItem('selectedFamily');
       setIsAuthenticated(true);
       loadFamilies()
-        .then((familiesData) => {
-          if (storedFamilyId && familiesData.length > 0) {
-            const family = familiesData.find(f => f.id === parseInt(storedFamilyId));
-            if (family) {
-              setSelectedFamily(family);
-              setShowFamilySelection(false);
-            } else {
-              setShowFamilySelection(true);
-            }
-          } else {
-            setShowFamilySelection(true);
-          }
+        .then(() => {
           setLoading(false);
         })
         .catch(() => {
@@ -121,7 +139,7 @@ function App() {
         sessionStorage.setItem('authToken', token);
         sessionStorage.setItem('loginTime', now.toString());
         
-        // Load families before showing selection
+        // Load families
         try {
           const familiesData = await loadFamilies();
           setFamiliesList(familiesData);
@@ -132,7 +150,9 @@ function App() {
           });
         }
         
-        setShowFamilySelection(true);
+        // Route to home after login
+        setCurrentView('HOME');
+        setNavHistory(['HOME']);
         setPassword(''); // Clear password field
       } else {
         setToast({ message: 'Invalid response from server', type: 'error' });
@@ -168,14 +188,20 @@ function App() {
 
   const handleFamilySelect = (family) => {
     setSelectedFamily(family);
-    setShowFamilySelection(false);
-    setActiveView('TREE');
     sessionStorage.setItem('selectedFamily', family.id);
+    navigateTo('TREE');
   };
 
-  const handleChangeFamily = () => {
-    setShowFamilySelection(true);
-    setActiveView('TREE');
+  const handleHomeNavigation = (viewId) => {
+    if (viewId === 'FAMILY_TREES') {
+      navigateTo('FAMILY_SELECTION');
+    } else if (viewId === 'POINTS') {
+      navigateTo('POINTS');
+    } else if (viewId === 'INFO') {
+      navigateTo('INFO');
+    } else if (viewId === 'NETWORK') {
+      navigateTo('NETWORK');
+    }
   };
 
 
@@ -213,71 +239,8 @@ function App() {
   );
   }
 
-  if (showFamilySelection) {
-    return (
-      <ErrorBoundary>
-        <SkipToContent />
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
-        <main id="main-content">
-          <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
-        </main>
-      </ErrorBoundary>
-    );
-  }
-
-  if (selectedFamily) {
-    return (
-      <ErrorBoundary>
-        <SkipToContent />
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
-        <main id="main-content">
-          <div className="app-view-toggle" role="tablist" aria-label="Main view">
-            <button
-              type="button"
-              className={`app-view-toggle__btn ${activeView === 'TREE' ? 'app-view-toggle__btn--active' : ''}`}
-              onClick={() => setActiveView('TREE')}
-              role="tab"
-              aria-selected={activeView === 'TREE'}
-            >
-              Family Tree
-            </button>
-            <button
-              type="button"
-              className={`app-view-toggle__btn ${activeView === 'POINTS' ? 'app-view-toggle__btn--active' : ''}`}
-              onClick={() => setActiveView('POINTS')}
-              role="tab"
-              aria-selected={activeView === 'POINTS'}
-            >
-              Points
-            </button>
-          </div>
-          {activeView === 'TREE' ? (
-            <FamilyTreeView 
-              families={familiesList} 
-              selectedFamily={selectedFamily} 
-              onChangeFamily={handleChangeFamily}
-              onToast={setToast}
-              onOpenPoints={openMemberPoints}
-            />
-          ) : (
-            <PointsDashboard />
-          )}
-        </main>
-      </ErrorBoundary>
-    );
-  }
+  const canGoBack = navHistory.length > 1;
+  const isArchiveMode = currentView === 'HOME' || currentView === 'POINTS' || currentView === 'INFO' || currentView === 'FAMILY_SELECTION' || currentView === 'NETWORK';
 
   return (
     <ErrorBoundary>
@@ -289,8 +252,52 @@ function App() {
           onClose={() => setToast(null)}
         />
       )}
-      <main id="main-content">
-        <FamilySelection families={familiesList} onSelectFamily={handleFamilySelect} />
+      <main id="main-content" className="page-transition">
+        {currentView === 'HOME' && (
+          <HomeHub onNavigate={handleHomeNavigation} />
+        )}
+        {currentView === 'FAMILY_SELECTION' && (
+          <FamilySelection 
+            families={familiesList} 
+            onSelectFamily={handleFamilySelect}
+            onBack={navigateBack}
+            onBackToHome={navigateToHome}
+            canGoBack={canGoBack}
+          />
+        )}
+        {currentView === 'TREE' && selectedFamily && (
+          <FamilyTreeView
+            families={familiesList}
+            selectedFamily={selectedFamily}
+            onChangeFamily={() => navigateTo('FAMILY_SELECTION')}
+            onToast={setToast}
+            onOpenPoints={openMemberPoints}
+            onBack={navigateBack}
+            onBackToHome={navigateToHome}
+            canGoBack={canGoBack}
+          />
+        )}
+        {currentView === 'POINTS' && (
+          <PointsDashboard 
+            onBack={navigateBack}
+            onBackToHome={navigateToHome}
+            canGoBack={canGoBack}
+          />
+        )}
+        {currentView === 'INFO' && (
+          <InformationHub
+            onBack={navigateBack}
+            onBackToHome={navigateToHome}
+            canGoBack={canGoBack}
+          />
+        )}
+        {currentView === 'NETWORK' && (
+          <ProfessionalNetwork
+            onBack={navigateBack}
+            onBackToHome={navigateToHome}
+            canGoBack={canGoBack}
+          />
+        )}
       </main>
     </ErrorBoundary>
   );
