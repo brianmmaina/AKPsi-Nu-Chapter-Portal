@@ -287,7 +287,7 @@ if (dbUrl.includes('supabase') &&
   // Format: postgresql://postgres:PASSWORD@db.PROJECTREF.supabase.co:5432/postgres
   const directMatch = dbUrl.match(/@db\.([^.]+)\.supabase\.co:5432/);
   if (directMatch) {
-    const projectRef = directMatch[1].toUpperCase();
+    const projectRef = directMatch[1].toLowerCase();
     // Convert to Session Pooler format:
     // postgresql://postgres.PROJECTREF:PASSWORD@aws-1-us-east-1.pooler.supabase.com:5432/postgres
     dbUrl = dbUrl
@@ -719,6 +719,44 @@ app.post('/api/brothers', checkPassword, async (req, res) => {
     logger.error('Error creating brother:', error.message);
     const sanitized = sanitizeError(error, req);
     res.status(error.message && error.message.includes('Big brother') ? 400 : 500).json(sanitized);
+  }
+});
+
+// Sync Google profile photo on portal sign-in (only fills empty profile_image_url)
+app.post('/api/brothers/sync-photo', async (req, res) => {
+  try {
+    const { email, photoUrl } = req.body || {};
+
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'email is required' });
+    }
+    if (!photoUrl || typeof photoUrl !== 'string') {
+      return res.status(400).json({ error: 'photoUrl is required' });
+    }
+
+    // Only accept Google CDN URLs — never arbitrary URLs from callers
+    const isGooglePhoto = photoUrl.startsWith('https://lh3.googleusercontent.com') ||
+                          photoUrl.startsWith('https://googleusercontent.com');
+    if (!isGooglePhoto) {
+      return res.status(400).json({ error: 'photoUrl must be a Google profile photo URL' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only update rows where profile_image_url is NULL or empty — manual uploads always win
+    const result = await pool.query(
+      `UPDATE brothers
+       SET profile_image_url = $1
+       WHERE LOWER(TRIM(email)) = $2
+         AND (profile_image_url IS NULL OR profile_image_url = '')
+       RETURNING id`,
+      [photoUrl, normalizedEmail]
+    );
+
+    res.json({ updated: result.rowCount });
+  } catch (error) {
+    const sanitized = sanitizeError(error, req);
+    res.status(500).json(sanitized);
   }
 });
 
