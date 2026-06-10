@@ -1,0 +1,4885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nu Chapter Professional Network</title>
+<link rel="stylesheet" href="style.css">
+<meta name="robots" content="noindex, nofollow">
+<script>
+(function () {
+  try {
+    const cached = localStorage.getItem("nuChapterHomepageSettings");
+    window.__NU_HOME_SETTINGS__ = cached ? JSON.parse(cached) : null;
+
+    if (window.__NU_HOME_SETTINGS__?.heroImageUrl) {
+      const preload = document.createElement("link");
+      preload.rel = "preload";
+      preload.as = "image";
+      preload.href = window.__NU_HOME_SETTINGS__.heroImageUrl;
+      document.head.appendChild(preload);
+    }
+  } catch (error) {
+    window.__NU_HOME_SETTINGS__ = null;
+  }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>emailjs.init("YOUR_PUBLIC_KEY");</script>
+</head>
+<body class="portal-booting portal-locked">
+
+<div id="loginOverlay" class="overlay">
+  <div class="login-card">
+    <div class="logo">Ν</div>
+    <h1>Nu Chapter Access</h1>
+    <p>This directory contains internal alumni and member networking information. Access is restricted to approved chapter accounts.</p>
+    <button id="googleSignInBtn" class="gold" style="width:100%;margin-top:12px;padding:15px;">Continue with Google</button>
+    <div id="loginError" class="error">Access denied. This Google account is not approved.</div>
+  </div>
+</div>
+
+<div id="roleOverlay" class="overlay" style="display:none;">
+  <div class="role-card">
+    <p style="color:var(--gold);letter-spacing:4px;font-size:12px;text-transform:uppercase;margin:0 0 8px;">Nu Chapter Portal</p>
+    <h1>Are you an active brother or alumni?</h1>
+    <p>Active brothers get access to the alumni database. Alumni get access to the active brothers directory.</p>
+    <div class="role-grid">
+      <button class="role-option" onclick="chooseRole('brother')">
+        <div class="role-badge">Br</div>
+        <h2>Active Brother</h2>
+        <p>Go to the alumni database.</p>
+      </button>
+      <button class="role-option" onclick="chooseRole('alumni')">
+        <div class="role-badge">Al</div>
+        <h2>Alumni</h2>
+        <p>Go to the active brothers directory.</p>
+      </button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <small>Alpha Kappa Psi</small>
+    <h1>Nu Chapter Professional Network</h1>
+  </div>
+  <nav id="mainNav">
+    <button onclick="showHome()">Home</button>
+  <button onclick="showAlumni()">Alumni Directory</button>
+  <button onclick="showBrothers()">Active Brothers</button>
+  <button onclick="showMentorship()">Mentorship Program</button>
+
+  <div class="nav-dropdown">
+    <button type="button" onclick="toggleDEIMenu()">DEI</button>
+    <div id="deiDropdown" class="dropdown-menu">
+      <button type="button" onclick="showDEI('overview')">Overview</button>
+      <button type="button" onclick="showDEI('resources')">Resources</button>
+      <button type="button" onclick="showDEI('events')">Events</button>
+      <button type="button" id="deiFeedbackNavBtn" onclick="showDEI('feedback')">Feedback</button>
+    </div>
+  </div>
+
+  
+
+  <button id="adminPanelBtn" class="navbtn" type="button" style="display:none;">
+    VPAR Admin
+  </button>
+
+  <button id="familyPostBtn" class="navbtn" type="button" style="display:none;" onclick="openFamilyPostPanel()">
+    Post Update
+  </button>
+
+  <button id="deiPostBtn" class="navbtn" type="button" style="display:none;" onclick="openDEIPostPanel()">
+    DEI Post
+  </button>
+
+  <button id="myMentorshipBtn" type="button" style="display:none;" onclick="showMyMentorship()">My Mentorship</button>
+  <button id="portalGuideBtn" type="button" style="display:none;" onclick="showPortalGuide()">Guide</button>
+  <button id="signOutBtn" type="button" onclick="confirmSignOut()">Sign Out</button>
+
+ <button
+  id="savedMentorDemoBtn"
+  class="gold"
+  type="button"
+  style="display:none;"
+  onclick="showPersonalDashboard()">
+ 
+</button>
+</nav>
+<button id="mobileMenuBtn" type="button" onclick="toggleMobileMenu()" style="display:none;">☰</button>
+</header>
+
+<section id="personalDashboard" class="mentor-dashboard-overlay" style="display:none;">
+  <div class="dashboard-card">
+    <div class="dashboard-top">
+      <div>
+        <div class="dashboard-eyebrow">Personal Mentorship Dashboard</div>
+        <h2>Your saved mentor relationship</h2>
+        <p>Track mentorship relationships, recruiting progress, networking notes, and long-term professional outcomes through the Nu Chapter mentorship system.</p>
+      </div>
+     <div class="dashboard-actions-top">
+  <button
+    class="gold"
+    type="button"
+    onclick="document.getElementById('personalDashboard').style.display='none'">
+    Close
+  </button>
+</div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div id="assignedMentorBox" class="mentor-profile">
+  <div>
+    <h3>Assigned Mentor/Mentee</h3>
+    <div class="mentor-meta">
+      This is where your assigned mentor or mentee will be displayed. Please check with VPAR if there are any issues.
+    </div>
+  </div>
+</div>
+
+      <div class="mentor-progress">
+  <h3>Mentorship Progress</h3>
+  <div id="progressList" class="mentor-meta">
+    Progress checkpoints will appear here once your mentor or mentee relationship officially begins.
+  </div>
+</div>
+
+      <div class="mentor-notes">
+  <h3>Mentorship Notes</h3>
+  <span class="live-tag">ACTIVE MENTORSHIP TRACKING</span>
+
+  <ul id="notesList">
+</ul>
+
+  <div class="note-input-wrap">
+    <input id="noteInput" class="note-input" type="text">
+    <button id="addNoteBtn" class="add-note-btn" type="button">
+      Add
+    </button>
+  </div>
+</div>
+  </div>
+</section>
+
+<section id="homeScreen" class="screen active">
+  <div class="home-hero">
+    <div class="home-copy">
+      <div class="dashboard-eyebrow">Alpha Kappa Psi · Nu Chapter</div>
+
+      <h2 id="homeHeroTitle">Nu Chapter Professional Network</h2>
+
+      <p id="homeHeroSubtitle">
+        A private chapter platform for alumni discovery, warm outreach, mentorship coordination,
+        leadership updates, and long-term professional relationship building.
+      </p>
+
+      <div class="home-actions">
+        <button class="gold" onclick="showAlumni()">Explore Alumni Directory</button>
+        <button onclick="showMentorship()">View Mentorship Program</button>
+      </div>
+    </div>
+
+    <div class="home-dashboard">
+      <div class="home-card countdown-card">
+        <span>Next Chapter Milestone</span>
+        <h3 id="countdownTitle">Next Chapter Milestone</h3>
+        <p id="countdownDescription">Event details will appear here once VPAR updates the homepage.</p>
+        <div id="countdownTimer" data-countdown-date="">
+          Loading countdown...
+        </div>
+      </div>
+
+      <div class="home-card">
+        <span>Network Scale</span>
+        <h3><strong id="homeAlumniCount">0</strong> Alumni Profiles</h3>
+        <p>Searchable by company, role, field, location, class year, and contact details.</p>
+      </div>
+
+      <div class="home-card mentorship-status-card">
+        <span>Mentorship Status</span>
+        <h3><strong id="homeMentorRequestCount">0</strong> Open Requests</h3>
+        <p id="homeMentorshipStatus">Tracking mentor and mentee interest through the portal.</p>
+      </div>
+
+      <div class="home-card latest-update-card">
+        <span>Latest Update</span>
+        <h3 id="homeLatestUpdateTitle">Chapter feed ready</h3>
+        <p id="homeLatestUpdateMeta">Family Heads and VPAR can publish updates here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-updates section">
+    <div class="section-title">
+      <div>
+        <h2>Chapter Updates</h2>
+        <p>Announcements, alumni spotlights, recruiting resources, and professional development notes can live here.</p>
+      </div>
+    </div>
+
+    <div id="articleGrid" class="article-grid"></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const settings = window.__NU_HOME_SETTINGS__;
+  if (!settings) return;
+
+  const title = document.getElementById("countdownTitle");
+  const description = document.getElementById("countdownDescription");
+  const timer = document.getElementById("countdownTimer");
+  const homeHero = document.querySelector(".home-hero");
+
+  if (title) title.textContent = settings.eventTitle || "Next Chapter Milestone";
+  if (description) description.textContent = settings.eventDescription || "Event details will appear here once VPAR updates the homepage.";
+  if (timer) timer.dataset.countdownDate = settings.eventDate || "";
+
+  if (homeHero && settings.heroImageUrl) {
+    homeHero.style.setProperty("--home-hero-image", `url("${settings.heroImageUrl}")`);
+    homeHero.classList.add("has-hero-image");
+    homeHero.setAttribute("aria-label", settings.heroImageAlt || "Nu Chapter homepage image");
+  }
+})();
+</script>
+
+<section id="alumniScreen" class="screen">
+  <div class="alumni-command">
+    <div class="dashboard-eyebrow">Nu Chapter Alumni Network</div>
+
+    <h2>Nu Chapter Alumni Directory</h2>
+
+    <p>
+      Search alumni by company, role, field, location, class year, and contact details.
+      Built for warm outreach, mentorship, and stronger professional connections across the chapter network.
+    </p>
+    <div class="data-credibility">Maintained by VPAR · Internal chapter use only · Profile updates reviewed before publishing</div>
+
+    <button
+      class="gold alumni-command-action"
+      onclick="document.getElementById('alumniDirectory').scrollIntoView({behavior:'smooth'})">
+      Explore Directory
+    </button>
+
+    <div class="stats alumni-stats">
+      <div class="stat"><strong id="alumniCount">0</strong><span>Alumni Profiles</span></div>
+      <div class="stat"><strong id="companyCount">0</strong><span>Companies</span></div>
+      <div class="stat"><strong id="fieldCount">0</strong><span>Major Fields</span></div>
+    </div>
+  </div>
+
+  
+
+  <div class="toolbar">
+    <input id="alumniSearch" placeholder="Search name, company, role, major field, location..." oninput="alumniCurrentPage=1;renderAlumni()">
+    <select id="companyFilter" onchange="renderAlumni()"></select>
+    <select id="fieldFilter" onchange="renderAlumni()"></select>
+    <select id="locationFilter" onchange="renderAlumni()"></select>
+    <button class="gold" onclick="resetAlumni()">Reset</button>
+  </div>
+
+  <div id="alumniDirectory" class="section">
+    <div class="section-title">
+      <div>
+        <h2>Alumni Directory</h2>
+        <p>Search profiles, email directly, and open LinkedIn for warm outreach.</p>
+      </div>
+      <div class="directory-status">
+        <div id="alumniResults" class="count">0 results</div>
+        <div id="alumniLastUpdated" class="last-updated">Last updated: loading...</div>
+      </div>
+    </div>
+    <div id="alumniCards" class="grid"></div>
+  </div>
+</section>
+
+<section id="brotherScreen" class="screen">
+  <div class="section">
+    <div class="section-title">
+      <div>
+        <h2>Active Brothers Directory</h2>
+        <p>For alumni to find current Nu Chapter members by class year, major group, pledge class, and name.</p>
+      </div>
+      <div class="directory-status">
+        <div id="brotherResults" class="count">0 results</div>
+        <div id="brotherLastUpdated" class="last-updated">Last updated: loading...</div>
+      </div>
+    </div>
+
+    <div class="toolbar simple" style="grid-template-columns:1.2fr .65fr .9fr .75fr auto;">
+      <input id="brotherSearch" placeholder="Search name, pledge class, year, or major..." oninput="brotherCurrentPage=1;renderBrothers()">
+      <select id="brotherYearFilter" onchange="renderBrothers()"></select>
+      <select id="brotherMajorFilter" onchange="renderBrothers()"></select>
+      <select id="pledgeFilter" onchange="renderBrothers()"></select>
+      <button class="gold" onclick="resetBrothers()">Reset</button>
+    </div>
+
+    <div id="brotherCards" class="grid"></div>
+  </div>
+</section>
+
+<section id="portalGuideScreen" class="screen">
+  <div class="section">
+    <div class="section-title">
+      <div>
+        <div class="dashboard-eyebrow">Nu Chapter Portal</div>
+        <h2>Portal Guide</h2>
+        <p>Everything you need to know about using the Nu Chapter Professional Network.</p>
+      </div>
+    </div>
+
+    <div class="guide-layout">
+      <div class="guide-group">
+        <div class="guide-group-label">Getting Started</div>
+        <details class="guide-item">
+          <summary>What is this portal?</summary>
+          <p>The Nu Chapter Professional Network is a private platform for AKPsi Nu Chapter alumni and active brothers to connect, network, and support each other professionally. It is maintained by VPAR and accessible only to approved chapter members.</p>
+        </details>
+        <details class="guide-item">
+          <summary>How do I find alumni?</summary>
+          <p>Go to the Alumni Directory and search by name, company, role, field, or location. Click Contact to send a warm outreach email directly through Gmail, or click LinkedIn to view their profile.</p>
+        </details>
+        <details class="guide-item">
+          <summary>How do I update my profile?</summary>
+          <p>Go to the Alumni Directory, find your card, and click Edit My Profile. Submit your changes and VPAR will review and approve them before they go live. You can update your company, role, location, LinkedIn, pledge class, grad year, and profile photo.</p>
+        </details>
+        <details class="guide-item">
+          <summary>How do I log out?</summary>
+          <p>Click the Sign Out button in the top right of the nav. You will need to log back in with your approved Google account next time you visit.</p>
+        </details>
+      </div>
+
+      <div class="guide-group">
+        <div class="guide-group-label">Mentorship</div>
+        <details class="guide-item">
+          <summary>How does mentorship work?</summary>
+          <p>Go to Mentorship Program to browse available alumni mentors and brothers seeking mentorship. Submit a request and VPAR will review and confirm pairings. Once paired, both sides get access to a shared workspace with notes and check-in tracking.</p>
+        </details>
+        <details class="guide-item">
+          <summary>What is My Mentorship?</summary>
+          <p>If you have been matched with a mentor or mentee, a My Mentorship button will appear in the nav. This is your private workspace to track check-ins, add shared notes, and monitor progress throughout the semester.</p>
+        </details>
+      </div>
+
+      <div class="guide-group">
+        <div class="guide-group-label">Community</div>
+        <details class="guide-item">
+          <summary>What is the DEI Hub?</summary>
+          <p>The DEI Hub is a space for inclusion resources, Eye2Eye programming, chapter events, and brother feedback. The Feedback tab is only accessible to active brothers and contains anonymous forms managed by VPAR and the DEI committee.</p>
+        </details>
+        <details class="guide-item">
+          <summary>Who do I contact for help?</summary>
+          <p>Reach out to VPAR directly for any portal issues, access problems, or profile questions. For mentorship questions, contact VPAR through the portal or at your chapter meetings.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="myMentorshipScreen" class="screen">
+  <div class="section">
+    <div class="section-title">
+      <div>
+        <div class="dashboard-eyebrow">My Mentorship</div>
+        <h2>Mentorship Workspace</h2>
+        <p>A private space for you and your mentor or mentee to track progress, share notes, and stay connected.</p>
+      </div>
+    </div>
+
+    <div id="myMentorshipContent">
+      <div class="mentor-alert">Loading your mentorship data...</div>
+    </div>
+  </div>
+</section>
+
+<section id="mentorshipScreen" class="screen">
+  <div class="section">
+    <div class="section-title">
+      <div>
+        <h2>Peer Mentorship Program</h2>
+        <p>A structured program matching active brothers with alumni mentors based on industry, target companies, and career goals. VPAR reviews and confirms all pairings.</p>
+      </div>
+      <button class="gold" onclick="openProgramSummary('mentor')">Program Overview</button>
+    </div>
+
+    <div class="mentor-steps">
+  <div class="mentor-step">
+    <div class="step-num">01</div>
+    <h3>Submit Interests</h3>
+    <p>Brothers share their intended industry, target companies, and biggest career questions. Alumni opt in based on the type of guidance they can offer.</p>
+  </div>
+  <div class="mentor-step">
+    <div class="step-num">02</div>
+    <h3>VPAR Review</h3>
+    <p>VPAR reviews both sides and confirms matches based on industry alignment, target companies, availability, and the type of support a brother is looking for.</p>
+  </div>
+  <div class="mentor-step">
+    <div class="step-num">03</div>
+    <h3>Shared Workspace</h3>
+    <p>Once paired, both sides get access to a shared workspace through the portal to track check-ins, add notes, and monitor mentorship progress.</p>
+  </div>
+</div>
+
+    <div class="mentor-trust-strip">
+      <div>
+        <span>Role-gated matching</span>
+        <strong>Brothers request mentors. Alumni request mentees.</strong>
+      </div>
+      <div>
+        <span>VPAR review</span>
+        <strong>Requests are tracked before matches are confirmed.</strong>
+      </div>
+      <div>
+        <span>Program status</span>
+        <strong id="mentorshipTrustStatus">Ready for new requests.</strong>
+      </div>
+    </div>
+
+    <div class="section-title" id="mentorList" style="margin-top:34px;">
+      <div>
+        <h2>Available Alumni Mentors</h2>
+        <p>Alumni who have opted into the Nu Chapter mentorship program.</p>
+      </div>
+      <div id="mentorResults" class="count">0 mentors</div>
+    </div>
+    <div id="mentorCards" class="peer-list"></div>
+
+    <div class="section-title" style="margin-top:44px;">
+      <div>
+        <h2>Brothers Seeking Mentorship</h2>
+        <p>Active brothers currently seeking alumni mentorship through the portal.</p>
+      </div>
+      <div id="menteeResults" class="count">0 brothers listed</div>
+    </div>
+    <div id="menteeCards" class="peer-list"></div>
+  </div>
+</section>
+
+<section id="deiScreen" class="screen">
+  <div class="section">
+    <div class="section-title">
+      <div>
+        <h2>DEI Hub</h2>
+        <p id="deiSubtitle">A dedicated space for Nu Chapter inclusion resources, Eye2Eye programming, and community support.</p>
+      </div>
+      <div id="deiCategoryLabel" class="count">Overview</div>
+    </div>
+
+    <div id="deiOverview" class="dei-panel">
+      <div id="deiPostsOverview" class="dei-post-grid"></div>
+    </div>
+
+    <div id="deiResources" class="dei-panel" style="display:none;">
+      <div id="deiPostsResources" class="dei-post-grid"></div>
+    </div>
+
+    <div id="deiEvents" class="dei-panel" style="display:none;">
+      <div id="deiPostsEvents" class="dei-post-grid"></div>
+    </div>
+
+    <div id="deiFeedback" class="dei-panel" style="display:none;">
+      <div id="deiPostsFeedback" class="dei-post-grid"></div>
+    </div>
+  </div>
+</section>
+
+<div id="ackOverlay" class="ack-overlay">
+  <div class="ack-card">
+    <h2>Peer Mentorship Program</h2>
+    <p>This quick acknowledgement explains how the mentorship matching process works before you enter the program.</p>
+    <ul>
+      <li>Brothers share their intended industry, target companies, and biggest career questions.</li>
+      <li>Alumni opt in based on the type of guidance they are comfortable offering.</li>
+      <li>VPAR reviews both sides and confirms matches based on fit, goals, and availability.</li>
+      <li>The goal is to make mentorship easier to start, more useful, and more organized through the Portal.</li>
+    </ul>
+    <div class="ack-actions">
+      <button onclick="closeProgramSummary()">Close</button>
+      <button class="gold" onclick="acknowledgeProgram()">Acknowledge & Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="mentorshipConfirmOverlay" class="ack-overlay" style="display:none;" onclick="closeMentorshipConfirm()">
+  <div class="ack-card mentorship-confirm-card" onclick="event.stopPropagation()">
+    <div class="dashboard-eyebrow">Confirm Mentorship Request</div>
+    <h2 id="mentorshipConfirmTitle">Are you sure?</h2>
+    <p id="mentorshipConfirmBody">This will send your request to VPAR for review.</p>
+    <div class="ack-actions">
+      <button type="button" onclick="closeMentorshipConfirm()">Cancel</button>
+      <button class="gold" type="button" onclick="confirmMentorshipSelection()">Yes, Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+let alumni = [];
+let brothers = [];
+
+function normalizeAlumniData(rows) {
+  return rows.map(a => ({
+    ...a,
+    field: majorField(a.field || a.area || a.originalField || "")
+  }));
+}
+
+function normalizeBrotherData(rows) {
+  return rows.map(b => ({
+    ...b,
+    name: cleanText(b.name),
+    major: cleanText(b.major),
+    school: cleanText(b.school),
+    pledgeClass: cleanText(b.pledgeClass)
+  }));
+}
+
+window.loadFirebaseData = async function () {
+  try {
+    let alumniRows = [];
+let brotherRows = [];
+
+    if (window.loadAlumniProfiles && window.loadBrotherProfiles) {
+      const firestoreAlumni = await window.loadAlumniProfiles();
+      const firestoreBrothers = await window.loadBrotherProfiles();
+
+      // Firebase is the source of truth.
+      // JSON only acts as backup if Firebase has nothing.
+      if (firestoreAlumni.length) {
+        alumniRows = firestoreAlumni;
+      }
+
+      if (firestoreBrothers.length) {
+        brotherRows = firestoreBrothers;
+      }
+    }
+
+    alumni = normalizeAlumniData(alumniRows);
+    brothers = normalizeBrotherData(brotherRows);
+
+    peerMentors = buildPeerMentors();
+    peerMentees = buildPeerMentees();
+
+
+    if (typeof fillFilters === "function") fillFilters();
+    if (typeof renderFeatured === "function") renderFeatured();
+    if (typeof renderPeerMentors === "function") renderPeerMentors();
+    if (typeof renderPeerMentees === "function") renderPeerMentees();
+    if (typeof renderAlumni === "function") renderAlumni();
+    if (typeof renderBrothers === "function") renderBrothers();
+
+  } catch (error) {
+    console.error("Data load failed:", error);
+  }
+};
+let saved = [];
+let peerMentors = [];
+let peerMentees = [];
+let pendingOwnPhotoRequestEmails = new Set();
+let pendingPeerSection = "mentor";
+let programAcknowledged = false;
+let pendingMentorshipSelection = null;
+let editingHomepageArticleId = null;
+let editingHomepageArticleImageData = "";
+let editingHomepageArticleFiles = [];
+let editingHomepageArticleImages = [];
+let editingFamilyArticleId = null;
+let editingFamilyArticleFiles = [];
+let editingFamilyArticleImages = [];
+let editingDEIPostId = null;
+let editingDEIPostFiles = [];
+let editingDEIPostImages = [];
+let deiPostsCache = [];
+let editingProfileImageFile = null;
+let editingProfileImageUrl = "";
+let editingProfileImagePath = "";
+let editingHomepageHeroImageFile = null;
+let editingHomepageHeroImageUrl = "";
+let editingHomepageHeroImagePath = "";
+let removeHomepageHeroImageOnSave = false;
+let homepageArticleCache = [];
+const HOMEPAGE_SETTINGS_CACHE_KEY = "nuChapterHomepageSettings";
+
+function formatUpdatedAt(value) {
+  if (!value) return "Not listed";
+
+  if (typeof value.toDate === "function") {
+    return value.toDate().toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  }
+
+  return String(value);
+}
+
+function parseAlternateEmails(value) {
+  return String(value || "")
+    .split(/[,;\n]/)
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function formatAlternateEmails(value) {
+  if (Array.isArray(value)) return value.join(", ");
+  return String(value || "");
+}
+
+function profileLoginEmails(profile) {
+  return [
+    profile?.email,
+    ...parseAlternateEmails(formatAlternateEmails(profile?.alternateEmails || profile?.alternateEmail || ""))
+  ]
+    .map(email => String(email || "").toLowerCase().trim())
+    .filter(Boolean);
+}
+
+function emailMatchesProfile(profile, email) {
+  const normalizedEmail = String(email || "").toLowerCase().trim();
+  return Boolean(normalizedEmail && profileLoginEmails(profile).includes(normalizedEmail));
+}
+
+function estimateDataUrlBytes(dataUrl) {
+  return Math.ceil(String(dataUrl || "").length * 0.5);
+}
+
+function setHomepageArticleImagePreview(imageData, imageAlt = "") {
+  const preview = document.getElementById("homepageArticleImagePreview");
+  const removeBtn = document.getElementById("homepageArticleRemoveImageBtn");
+
+  if (!preview) return;
+
+  if (!imageData) {
+    preview.innerHTML = "No image selected.";
+    if (removeBtn) removeBtn.style.display = "none";
+    return;
+  }
+
+  preview.innerHTML = `
+    <img class="admin-article-image-preview" src="${esc(imageData)}" alt="${esc(imageAlt || "Article image preview")}">
+  `;
+
+  if (removeBtn) removeBtn.style.display = "inline-flex";
+}
+
+function setHomepageHeroImagePreview(imageUrl, imageAlt = "") {
+  const preview = document.getElementById("homepageHeroImagePreview");
+  const removeBtn = document.getElementById("homepageHeroRemoveImageBtn");
+
+  if (!preview) return;
+
+  if (!imageUrl) {
+    preview.innerHTML = "No homepage image selected.";
+    if (removeBtn) removeBtn.style.display = "none";
+    return;
+  }
+
+  preview.innerHTML = `
+    <img class="admin-hero-image-preview" src="${esc(imageUrl)}" alt="${esc(imageAlt || "Homepage image preview")}">
+  `;
+
+  if (removeBtn) removeBtn.style.display = "inline-flex";
+}
+
+function imageSourceForArticle(article) {
+  return article.coverImageUrl || article.imageUrls?.[0] || article.images?.[0]?.url || article.imageData || "";
+}
+
+function imageListForArticle(article) {
+  const images = Array.isArray(article.images) ? article.images : [];
+  const fromUrls = Array.isArray(article.imageUrls)
+    ? article.imageUrls.map(url => ({ url }))
+    : [];
+  const merged = images.length ? images : fromUrls;
+
+  if (!merged.length && article.imageData) {
+    return [{ url: article.imageData }];
+  }
+
+  return merged.filter(image => image.url);
+}
+
+function renderArticleGallery(article) {
+  const images = imageListForArticle(article);
+  if (!images.length) return "";
+
+  const previewImages = images.slice(0, 4);
+  const extraCount = Math.max(0, images.length - previewImages.length);
+
+  return `
+    <div class="article-gallery">
+      ${previewImages.map((image, index) => `
+        <button class="article-gallery-item" type="button" onclick="event.stopPropagation(); openArticleModal('${esc(article.id || "")}', ${index})">
+          <img src="${esc(image.url)}" alt="${esc(article.imageAlt || article.title || "Chapter update image")}">
+          ${index === previewImages.length - 1 && extraCount ? `<span>+${extraCount}</span>` : ""}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function profileImageMarkup(profile) {
+  const imageUrl = profile.profileImageUrl || profile.profilePhotoUrl || profile.photoUrl || profile.imageUrl || "";
+  if (!imageUrl) return `<div class="face"></div>`;
+  const profileName = profile.name || "Profile photo";
+
+  return `
+    <button
+      class="face profile-photo-face profile-photo-zoom-trigger"
+      type="button"
+      onclick='openProfilePhotoModal(${JSON.stringify(imageUrl)}, ${JSON.stringify(profileName)})'
+      aria-label="Open ${esc(profileName)} profile photo">
+      <img src="${esc(imageUrl)}" alt="${esc(profileName)}" loading="lazy">
+    </button>
+  `;
+}
+
+function isOwnBrotherProfile(profile) {
+  return [
+    window.currentPortalUser?.email,
+    window.currentLinkedProfileEmail
+  ].some((email) => emailMatchesProfile(profile, email));
+}
+
+function hasPendingOwnPhotoRequest(profile) {
+  return profileLoginEmails(profile).some(email => pendingOwnPhotoRequestEmails.has(email));
+}
+
+function ownBrotherPhotoRequestMarkup(profile) {
+  if (!isOwnBrotherProfile(profile)) return "";
+
+  if (hasPendingOwnPhotoRequest(profile)) {
+    return `
+      <div class="own-photo-request pending">
+        <strong>Photo request pending</strong>
+        <div class="own-photo-request-note">VPAR is reviewing your submitted profile photo.</div>
+      </div>
+    `;
+  }
+
+  const profileId = profile.firebaseId || (window.makeDirectoryKey ? window.makeDirectoryKey(profile) : slug(profile.name));
+
+  return `
+    <div class="own-photo-request">
+      <label class="own-photo-request-label">
+        Request Profile Photo
+        <input
+          type="file"
+          accept="image/*"
+          onchange='submitOwnBrotherPhotoRequest(this, ${JSON.stringify(profileId)}, ${JSON.stringify(profile.name || "")}, ${JSON.stringify(profile.email || "")})'>
+      </label>
+      <div class="own-photo-request-note">VPAR approval required before it appears publicly.</div>
+    </div>
+  `;
+}
+
+window.submitOwnBrotherPhotoRequest = async function(input, profileId, profileName, profileEmail) {
+  const file = input?.files?.[0];
+  if (!file) return;
+
+  if (!window.submitProfilePhotoRequest) {
+    alert("Profile photo requests are still loading. Please try again.");
+    if (input) input.value = "";
+    return;
+  }
+
+  const requestId = await window.submitProfilePhotoRequest({
+    profileType: "brother",
+    profileId,
+    profileName,
+    profileEmail,
+    file
+  });
+
+  if (input) input.value = "";
+
+  if (requestId) {
+    pendingOwnPhotoRequestEmails.add(String(profileEmail || "").toLowerCase().trim());
+    renderBrothers();
+    toast("Profile photo sent to VPAR for approval.");
+  }
+};
+
+async function refreshOwnPhotoRequestState() {
+  const currentEmails = new Set([
+    window.currentPortalUser?.email,
+    window.currentLinkedProfileEmail
+  ]
+    .map((email) => String(email || "").toLowerCase().trim())
+    .filter(Boolean));
+
+  pendingOwnPhotoRequestEmails = new Set();
+
+  if (!currentEmails.size || !window.loadProfilePhotoRequests) {
+    renderBrothers();
+    return;
+  }
+
+  const requests = await window.loadProfilePhotoRequests();
+
+  requests
+    .filter(request => String(request.status || "pending").toLowerCase() === "pending")
+    .filter(request => {
+      const requesterEmail = String(request.requesterEmail || "").toLowerCase().trim();
+      const profileEmail = String(request.profileEmail || "").toLowerCase().trim();
+      return currentEmails.has(requesterEmail) || currentEmails.has(profileEmail);
+    })
+    .forEach(request => {
+      const profileEmail = String(request.profileEmail || request.requesterEmail || "").toLowerCase().trim();
+      if (profileEmail) pendingOwnPhotoRequestEmails.add(profileEmail);
+    });
+
+  renderBrothers();
+}
+
+function setProfileImagePreview(url = "") {
+  const preview = document.getElementById("profileImagePreview");
+  const removeBtn = document.getElementById("removeProfileImageBtn");
+
+  if (!preview) return;
+
+  if (!url) {
+    preview.innerHTML = "No profile photo selected.";
+    if (removeBtn) removeBtn.style.display = "none";
+    return;
+  }
+
+  preview.innerHTML = `<img src="${esc(url)}" alt="Profile photo preview">`;
+  if (removeBtn) removeBtn.style.display = "inline-flex";
+}
+
+window.handleProfileImage = function(input) {
+  const file = Array.from(input?.files || []).find(item => item.type.startsWith("image/"));
+  if (!file) return;
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert("Profile image must be under 20MB. The portal will compress it before saving.");
+    input.value = "";
+    return;
+  }
+
+  editingProfileImageFile = file;
+  setProfileImagePreview(URL.createObjectURL(file));
+};
+
+window.removeProfileImage = function() {
+  editingProfileImageFile = null;
+  editingProfileImageUrl = "";
+  editingProfileImagePath = "";
+
+  const fileInput = document.getElementById("formProfileImage");
+  if (fileInput) fileInput.value = "";
+
+  setProfileImagePreview("");
+};
+
+function renderImagePreview(previewId, removeBtnId, existingImages = [], files = []) {
+  const preview = document.getElementById(previewId);
+  const removeBtn = document.getElementById(removeBtnId);
+
+  if (!preview) return;
+
+  const existing = existingImages.filter(image => image.url);
+  const selected = Array.from(files || []).map(file => ({
+    url: URL.createObjectURL(file),
+    name: file.name
+  }));
+  const images = existing.concat(selected);
+
+  if (!images.length) {
+    preview.innerHTML = "No images selected.";
+    if (removeBtn) removeBtn.style.display = "none";
+    return;
+  }
+
+  preview.innerHTML = `
+    <div class="admin-gallery-preview">
+      ${images.map(image => `
+        <img src="${esc(image.url)}" alt="${esc(image.name || "Selected image")}">
+      `).join("")}
+    </div>
+    <div class="article-upload-note">${images.length} image${images.length === 1 ? "" : "s"} ready for this post.</div>
+  `;
+
+  if (removeBtn) removeBtn.style.display = "inline-flex";
+}
+
+function compressArticleImage(file, quality = 0.76, maxWidth = 1400) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith("image/")) {
+      reject(new Error("Please choose an image file."));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onload = () => {
+        const scale = Math.min(1, maxWidth / image.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+
+      image.onerror = () => reject(new Error("Could not read that image."));
+      image.src = reader.result;
+    };
+
+    reader.onerror = () => reject(new Error("Could not load that image."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function newestUpdatedAt(rows) {
+  const values = rows
+    .map(row => row.updatedAt || row.importedAt || row.createdAt)
+    .filter(Boolean);
+
+  if (!values.length) return "Not listed";
+
+  return formatUpdatedAt(values[0]);
+}
+
+function majorField(raw) {
+  const s = String(raw || "").toLowerCase();
+  if(s.includes("finance") || s.includes("banking") || s.includes("wealth") || s.includes("capital") || s.includes("portfolio") || s.includes("trading")) return "Finance";
+  if(s.includes("data") || s.includes("analytics") || s.includes("machine learning") || s.includes("ai")) return "Data Science";
+  if(s.includes("consulting") || s.includes("strategy") || s.includes("business")) return "Consulting / Strategy";
+  if(s.includes("product")) return "Product Management";
+  if(s.includes("software") || s.includes("swe") || s.includes("engineering") || s.includes("tech")) return "Tech / Software";
+  if(s.includes("marketing") || s.includes("media") || s.includes("advertising")) return "Marketing / Media";
+  if(s.includes("accounting") || s.includes("audit") || s.includes("tax")) return "Accounting";
+  if(s.includes("law") || s.includes("legal")) return "Law";
+  if(s.includes("hr") || s.includes("recruit")) return "HR / Recruiting";
+  if(s.includes("health") || s.includes("medical")) return "Healthcare";
+  if(s.includes("hospitality") || s.includes("retail") || s.includes("sales")) return "Hospitality / Retail";
+  if(s.includes("entrepreneur") || s.includes("founder")) return "Entrepreneurship";
+  if(s.includes("research") || s.includes("education") || s.includes("student")) return "Research / Education";
+  if(s.includes("operations") || s.includes("logistics")) return "Operations";
+  return "Other";
+}
+
+const pledgeClassLabels = {
+  AT: "Alpha Theta",
+  AI: "Alpha Iota",
+  AK: "Alpha Kappa",
+  AL: "Alpha Lambda",
+  AM: "Alpha Mu",
+  AN: "Alpha Nu",
+  TRANSFER: "Transfer"
+};
+
+function pledgeClassDisplay(value) {
+  const raw = cleanText(value);
+  const key = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  return pledgeClassLabels[key] || raw || "N/A";
+}
+
+
+function cleanText(x) {
+  const box = document.createElement("textarea");
+  box.innerHTML = String(x || "");
+  return box.value.replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+}
+
+function esc(x) {
+  return String(x || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+
+  t.textContent = msg;
+  t.style.display = "block";
+  t.style.opacity = "1";
+  clearTimeout(window.__toastTimer__);
+  window.__toastTimer__ = setTimeout(() => {
+    t.style.opacity = "0";
+    setTimeout(() => {
+      t.style.display = "none";
+      t.style.opacity = "1";
+    }, 300);
+  }, 2800);
+}
+
+function gmailComposeUrl(email, subject, body) {
+  const params = new URLSearchParams({
+    view: "cm",
+    fs: "1",
+    to: email || "",
+    su: subject || "AKPsi Nu Chapter Outreach",
+    body: body || ""
+  });
+  return "https://mail.google.com/mail/?" + params.toString();
+}
+
+function copyEmail(email) {
+  if(!email) {
+    toast("Email not listed");
+    return;
+  }
+
+  if (!navigator.clipboard) {
+    toast("Clipboard unavailable");
+    return;
+  }
+
+  navigator.clipboard
+    .writeText(email)
+    .then(() => toast("Email copied"))
+    .catch(() => toast("Could not copy email"));
+}
+
+
+
+function chooseRole(role) {
+  const roleOverlay = document.getElementById("roleOverlay");
+  if (roleOverlay) roleOverlay.style.display = "none";
+
+  if(role === "brother") showAlumni();
+  else showBrothers();
+}
+
+function hideScreens() {
+  ["homeScreen", "alumniScreen", "brotherScreen", "mentorshipScreen", "deiScreen", "myMentorshipScreen", "portalGuideScreen"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active");
+  });
+}
+
+
+
+function toggleMobileMenu() {
+  const nav = document.getElementById("mainNav");
+  if (!nav) return;
+  nav.classList.toggle("open");
+}
+
+
+let pendingPromoteIndex = null;
+
+function openPromoteConfirm(index) {
+  pendingPromoteIndex = index;
+  const b = brothers[index];
+  const title = document.getElementById("promoteConfirmTitle");
+  const body = document.getElementById("promoteConfirmBody");
+  if (title) title.textContent = `Promote ${b.name} to Alumni?`;
+  if (body) body.textContent = `This will move ${b.name} from the brothers directory to the alumni directory and update their portal role.`;
+  const overlay = document.getElementById("promoteConfirmOverlay");
+  if (overlay) overlay.style.display = "flex";
+}
+
+function closePromoteConfirm() {
+  pendingPromoteIndex = null;
+  const overlay = document.getElementById("promoteConfirmOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+async function confirmPromote() {
+  closePromoteConfirm();
+  if (pendingPromoteIndex === null) return;
+  await window.promoteBrotherToAlumni(pendingPromoteIndex);
+}
+
+function showHome() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+
+  const screen = document.getElementById("homeScreen");
+  if (!screen) return;
+
+  screen.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+
+function showAlumni() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+
+  const screen = document.getElementById("alumniScreen");
+  if (!screen) return;
+
+  screen.classList.add("active");
+  renderAlumni();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+
+function showBrothers() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+
+  const screen = document.getElementById("brotherScreen");
+  if (!screen) return;
+
+  screen.classList.add("active");
+  renderBrothers();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+
+function toggleDEIMenu() {
+  const menu = document.getElementById("deiDropdown");
+  if (!menu) return;
+  menu.classList.toggle("open");
+}
+
+
+function showDEI(category = "overview") {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+
+  const screen = document.getElementById("deiScreen");
+  const menu = document.getElementById("deiDropdown");
+  const label = document.getElementById("deiCategoryLabel");
+  const subtitle = document.getElementById("deiSubtitle");
+  if (!screen) return;
+
+  ["deiOverview", "deiResources", "deiEvents", "deiFeedback"].forEach(id => {
+    const panel = document.getElementById(id);
+    if (panel) panel.style.display = "none";
+  });
+
+  const categoryMap = {
+    overview: ["deiOverview", "Overview", "A dedicated space for Nu Chapter inclusion resources, cultural programming, and community support."],
+    resources: ["deiResources", "Resources", "Guides, references, and chapter practices that support inclusive membership and professional development."],
+    events: ["deiEvents", "Events", "Chapter events, Eye2Eye programming, speaker opportunities, and community partnerships."],
+    feedback: ["deiFeedback", "Feedback", "Anonymous feedback forms and support resources for active brothers only."]
+  };
+
+  const selected = categoryMap[category] || categoryMap.overview;
+  const panel = document.getElementById(selected[0]);
+
+  if (panel) panel.style.display = "block";
+  if (label) label.textContent = selected[1];
+  if (subtitle) subtitle.textContent = selected[2];
+  if (menu) menu.classList.remove("open");
+
+  if (category === "feedback") {
+  const role = String(window.currentUserRole || "").toLowerCase();
+  const isAdmin = Boolean(window.currentUserIsAdmin);
+  if (role !== "brother" && !isAdmin) {
+    toast("Feedback is only accessible to active brothers.");
+    showHome();
+    return;
+  }
+}
+
+screen.classList.add("active");
+loadDEIPostsIntoPage();
+window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function deiPostContainerId(category) {
+  const names = {
+    overview: "deiPostsOverview",
+    resources: "deiPostsResources",
+    events: "deiPostsEvents",
+    feedback: "deiPostsFeedback"
+  };
+
+  return names[category] || names.overview;
+}
+
+function renderDEIPostCard(post, editable = false) {
+  const images = imageListForArticle(post);
+  const previewImages = images.slice(0, 4);
+  const extraCount = Math.max(0, images.length - previewImages.length);
+
+  return `
+    <article class="dei-post-card">
+      ${imageSourceForArticle(post) ? `<img class="dei-post-cover" src="${esc(imageSourceForArticle(post))}" alt="${esc(post.imageAlt || post.title || "DEI post image")}">` : ""}
+      <div class="dashboard-eyebrow">${esc(post.category || "DEI")}</div>
+      <h3>${esc(post.title || "Untitled DEI Update")}</h3>
+      <div class="article-date">Updated ${esc(formatUpdatedAt(post.updatedAt || post.createdAt))}</div>
+      <p>${esc(post.body || "")}</p>
+      ${Array.isArray(post.links) && post.links.length ? `
+  <div class="dei-post-links">
+    ${post.links.map(link => link.url ? `
+      <a class="dei-post-link" href="${esc(link.url.startsWith("http") ? link.url : "https://" + link.url)}" target="_blank" rel="noopener noreferrer">
+        ${esc(link.label || "Open Link")}
+      </a>
+    ` : "").join("")}
+  </div>
+` : ""}
+      ${previewImages.length ? `
+        <div class="article-gallery dei-post-gallery">
+          ${previewImages.map((image, index) => `
+            <div class="article-gallery-item">
+              <img src="${esc(image.url)}" alt="${esc(post.imageAlt || post.title || "DEI post image")}">
+              ${index === previewImages.length - 1 && extraCount ? `<span>+${extraCount}</span>` : ""}
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${editable ? `
+        <div class="admin-card-actions">
+          <button type="button" onclick="editDEIPostFromPanel('${esc(post.id)}')">Edit</button>
+          <button type="button" onclick="deleteDEIPostFromPanel('${esc(post.id)}')">Delete</button>
+        </div>
+      ` : ""}
+    </article>
+  `;
+}
+
+async function loadDEIPostsIntoPage() {
+  if (!window.currentPortalUser || !window.loadDEIPosts) return;
+
+  const posts = await window.loadDEIPosts();
+  const published = posts.filter(post => post.status !== "draft");
+  deiPostsCache = posts;
+
+  ["overview", "resources", "events", "feedback"].forEach(category => {
+    const container = document.getElementById(deiPostContainerId(category));
+    if (!container) return;
+
+    const categoryPosts = published.filter(post => post.category === category);
+    container.innerHTML = categoryPosts.length
+      ? categoryPosts.map(post => renderDEIPostCard(post)).join("")
+      : "";
+  });
+}
+
+function allowedDEICategoriesForCurrentUser() {
+  if (window.currentUserIsAdmin) return ["overview", "resources", "events", "feedback"];
+  return window.currentUserDEIAccess?.categories || [];
+}
+
+function syncDEIPostCategoryOptions() {
+  const select = document.getElementById("deiPostCategory");
+  if (!select) return;
+
+  const categoryLabels = {
+    overview: "Overview",
+    resources: "Resources",
+    events: "Events",
+    feedback: "Feedback"
+  };
+  const allowed = allowedDEICategoriesForCurrentUser();
+
+  select.innerHTML = allowed.length
+    ? allowed.map(category => `<option value="${esc(category)}">${esc(categoryLabels[category] || category)}</option>`).join("")
+    : `<option value="">No DEI tabs available</option>`;
+}
+
+async function loadDEIPostPanelList() {
+  const list = document.getElementById("deiPostPanelList");
+  if (!list || !window.loadDEIPosts) return;
+
+  const posts = await window.loadDEIPosts();
+  deiPostsCache = posts;
+  const currentEmail = String(window.currentPortalUser?.email || "").toLowerCase();
+  const allowed = allowedDEICategoriesForCurrentUser();
+  const visiblePosts = window.currentUserIsAdmin
+    ? posts
+    : posts.filter(post => post.authorEmail === currentEmail && allowed.includes(post.category));
+
+  list.innerHTML = visiblePosts.length
+    ? visiblePosts.map(post => renderDEIPostCard(post, true)).join("")
+    : `<div class="mentor-alert">No DEI posts yet.</div>`;
+}
+
+window.openDEIPostPanel = async function() {
+  const allowed = allowedDEICategoriesForCurrentUser();
+
+  if (!allowed.length && !window.currentUserIsAdmin) {
+    alert("VPAR has not granted you DEI posting access yet.");
+    return;
+  }
+
+  editingDEIPostId = null;
+  editingDEIPostFiles = [];
+  editingDEIPostImages = [];
+  syncDEIPostCategoryOptions();
+
+  const titleInput = document.getElementById("deiPostTitle");
+  const bodyInput = document.getElementById("deiPostBody");
+  const statusInput = document.getElementById("deiPostStatus");
+  const imageAltInput = document.getElementById("deiPostImageAlt");
+  const saveButton = document.getElementById("deiPostSaveBtn");
+
+  if (titleInput) titleInput.value = "";
+  if (bodyInput) bodyInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+  if (statusInput) statusInput.value = "published";
+  if (saveButton) saveButton.textContent = "Post to DEI Hub";
+  const link1Label = document.getElementById("deiPostLink1Label");
+const link1Url = document.getElementById("deiPostLink1Url");
+const link2Label = document.getElementById("deiPostLink2Label");
+const link2Url = document.getElementById("deiPostLink2Url");
+if (link1Label) link1Label.value = "";
+if (link1Url) link1Url.value = "";
+if (link2Label) link2Label.value = "";
+if (link2Url) link2Url.value = "";
+  renderImagePreview("deiPostImagePreview", "deiPostRemoveImageBtn");
+
+  const panel = document.getElementById("deiPostPanel");
+  if (panel) panel.style.display = "flex";
+
+  await loadDEIPostPanelList();
+};
+
+window.saveDEIPostFromPanel = async function() {
+  if (!window.saveDEIPost) return;
+
+  const categoryInput = document.getElementById("deiPostCategory");
+  const titleInput = document.getElementById("deiPostTitle");
+  const bodyInput = document.getElementById("deiPostBody");
+  const statusInput = document.getElementById("deiPostStatus");
+  const imageAltInput = document.getElementById("deiPostImageAlt");
+
+  const category = categoryInput?.value || "";
+  const title = titleInput?.value.trim() || "";
+  const body = bodyInput?.value.trim() || "";
+
+  const link1Label = document.getElementById("deiPostLink1Label")?.value.trim() || "";
+const link1Url = document.getElementById("deiPostLink1Url")?.value.trim() || "";
+const link2Label = document.getElementById("deiPostLink2Label")?.value.trim() || "";
+const link2Url = document.getElementById("deiPostLink2Url")?.value.trim() || "";
+const links = [
+  link1Url ? { label: link1Label || "Link 1", url: link1Url } : null,
+  link2Url ? { label: link2Label || "Link 2", url: link2Url } : null
+].filter(Boolean);
+
+  if (!category || !title || !body) {
+    alert("DEI tab, title, and body are required.");
+    return;
+  }
+
+  const saved = await window.saveDEIPost({
+    id: editingDEIPostId,
+    category,
+    title,
+    body,
+    images: editingDEIPostImages,
+    imageFiles: editingDEIPostFiles,
+    imageAlt: imageAltInput?.value.trim() || "",
+    status: statusInput?.value || "published",
+    links
+  });
+
+  if (!saved) return;
+
+  editingDEIPostId = null;
+  editingDEIPostFiles = [];
+  editingDEIPostImages = [];
+  if (titleInput) titleInput.value = "";
+  if (bodyInput) bodyInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+  removeDEIPostImages();
+
+  const saveButton = document.getElementById("deiPostSaveBtn");
+  if (saveButton) saveButton.textContent = "Post to DEI Hub";
+
+  await loadDEIPostsIntoPage();
+  await loadDEIPostPanelList();
+  toast("DEI post saved.");
+};
+
+window.editDEIPostFromPanel = function(postId) {
+  const post = deiPostsCache.find(item => item.id === postId);
+  if (!post) return;
+
+  editingDEIPostId = post.id;
+  syncDEIPostCategoryOptions();
+
+  const categoryInput = document.getElementById("deiPostCategory");
+  const titleInput = document.getElementById("deiPostTitle");
+  const bodyInput = document.getElementById("deiPostBody");
+  const statusInput = document.getElementById("deiPostStatus");
+  const imageAltInput = document.getElementById("deiPostImageAlt");
+  const saveButton = document.getElementById("deiPostSaveBtn");
+
+  if (categoryInput) categoryInput.value = post.category || "overview";
+  if (titleInput) titleInput.value = post.title || "";
+  if (bodyInput) bodyInput.value = post.body || "";
+  if (imageAltInput) imageAltInput.value = post.imageAlt || "";
+  if (statusInput) statusInput.value = post.status || "published";
+  if (saveButton) saveButton.textContent = "Save DEI Post";
+  const link1LabelEl = document.getElementById("deiPostLink1Label");
+const link1UrlEl = document.getElementById("deiPostLink1Url");
+const link2LabelEl = document.getElementById("deiPostLink2Label");
+const link2UrlEl = document.getElementById("deiPostLink2Url");
+const existingLinks = Array.isArray(post.links) ? post.links : [];
+if (link1LabelEl) link1LabelEl.value = existingLinks[0]?.label || "";
+if (link1UrlEl) link1UrlEl.value = existingLinks[0]?.url || "";
+if (link2LabelEl) link2LabelEl.value = existingLinks[1]?.label || "";
+if (link2UrlEl) link2UrlEl.value = existingLinks[1]?.url || "";
+  editingDEIPostImages = imageListForArticle(post);
+  editingDEIPostFiles = [];
+  renderImagePreview("deiPostImagePreview", "deiPostRemoveImageBtn", editingDEIPostImages);
+};
+
+window.deleteDEIPostFromPanel = async function(postId) {
+  if (!window.deleteDEIPost) return;
+  if (!confirm("Delete this DEI post?")) return;
+
+  const deleted = await window.deleteDEIPost(postId);
+  if (!deleted) return;
+
+  await loadDEIPostsIntoPage();
+  await loadDEIPostPanelList();
+  toast("DEI post deleted.");
+};
+
+async function checkAndShowMyMentorshipBtn() {
+  const btn = document.getElementById("myMentorshipBtn");
+  if (!btn) return;
+
+  if (!window.currentPortalUser) {
+    btn.style.display = "none";
+    return;
+  }
+
+  const pairings = await window.loadMyMentorshipPairings();
+  btn.style.display = pairings.length ? "inline-flex" : "none";
+
+  if (pairings.length) {
+    checkNewMatchPopup(pairings[0]);
+  }
+}
+
+function checkNewMatchPopup(pairing) {
+  if (!pairing) return;
+
+  const seenKey = `seenMatch_${pairing.id}`;
+  const alreadySeen = localStorage.getItem(seenKey);
+  if (alreadySeen) return;
+
+  const popup = document.getElementById("newMatchPopup");
+  const title = document.getElementById("newMatchPopupTitle");
+  const body = document.getElementById("newMatchPopupBody");
+
+  const isAlumni = String(pairing.alumniEmail || "").toLowerCase() === String(window.currentLinkedProfileEmail || "").toLowerCase();
+  const partnerName = isAlumni
+    ? (pairing.brothers || []).map(b => b.name).join(" & ") || "your mentee"
+    : pairing.alumniName || "your mentor";
+
+  if (title) title.textContent = `You've been matched with ${partnerName}!`;
+  if (body) body.textContent = `VPAR has confirmed your mentorship pairing. Head to your workspace to get started.`;
+  if (popup) popup.style.display = "flex";
+
+  localStorage.setItem(seenKey, "true");
+}
+
+window.closeNewMatchPopup = function() {
+  const popup = document.getElementById("newMatchPopup");
+  if (popup) popup.style.display = "none";
+};
+
+
+function showPortalGuide() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+  const screen = document.getElementById("portalGuideScreen");
+  if (screen) screen.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+
+function showMyMentorship() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+  const screen = document.getElementById("myMentorshipScreen");
+  if (screen) screen.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (window.loadMyMentorshipWorkspace) window.loadMyMentorshipWorkspace();
+}
+
+
+function showMentorship() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  if(!programAcknowledged) {
+    pendingPeerSection = "openMentorship";
+    openProgramSummary("openMentorship");
+    return;
+  }
+  openMentorshipScreen();
+}
+
+
+function openMentorshipScreen() {
+  document.getElementById("mainNav")?.classList.remove("open");
+  hideScreens();
+
+  const screen = document.getElementById("mentorshipScreen");
+  if (!screen) return;
+
+  screen.classList.add("active");
+  renderPeerMentors();
+  renderPeerMentees();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function showShortlist() {
+  showAlumni();
+
+  setTimeout(() => {
+    const el = document.getElementById("savedBox");
+    if(el) el.scrollIntoView({behavior:"smooth"});
+  }, 120);
+}
+
+async function init() {
+  if (window.loadFirebaseData) {
+    await window.loadFirebaseData();
+  }
+
+  peerMentors = buildPeerMentors();
+  peerMentees = buildPeerMentees();
+
+  fillFilters();
+
+  renderPeerMentors();
+  renderPeerMentees();
+  renderAlumni();
+  renderBrothers();
+
+  applyRoleAwareHomeCopy();
+}
+
+window.init = init;
+
+
+function fillSelect(id, values, allLabel) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.innerHTML = [allLabel]
+    .concat([...new Set(values.filter(Boolean))].sort())
+    .map(v => `<option value="${esc(v)}">${esc(v)}</option>`)
+    .join("");
+}
+
+function fillFilters() {
+  fillSelect("companyFilter", alumni.map(a => a.company), "All Companies");
+  fillSelect("fieldFilter", alumni.map(a => a.field), "All Major Fields");
+  fillSelect("locationFilter", alumni.map(a => a.location), "All Locations");
+  fillSelect("brotherYearFilter", brothers.map(b => b.year), "All Years");
+  fillSelect("brotherMajorFilter", brothers.map(b => brotherMajorGroup(b.major)), "All Major Groups");
+  fillSelect("pledgeFilter", brothers.map(b => pledgeClassDisplay(b.pledgeClass)), "All Pledge Classes");
+
+  const alumniCount = document.getElementById("alumniCount");
+const companyCount = document.getElementById("companyCount");
+const fieldCount = document.getElementById("fieldCount");
+const homeAlumniCount = document.getElementById("homeAlumniCount");
+const alumniLastUpdated = document.getElementById("alumniLastUpdated");
+const brotherLastUpdated = document.getElementById("brotherLastUpdated");
+
+if (alumniCount) alumniCount.textContent = alumni.length;
+if (companyCount) companyCount.textContent = new Set(alumni.map(a => a.company)).size;
+if (fieldCount) fieldCount.textContent = new Set(alumni.map(a => a.field)).size;
+if (homeAlumniCount) homeAlumniCount.textContent = alumni.length;
+if (alumniLastUpdated) alumniLastUpdated.textContent = `Last updated: ${newestUpdatedAt(alumni)}`;
+if (brotherLastUpdated) brotherLastUpdated.textContent = `Last updated: ${newestUpdatedAt(brothers)}`;
+}
+
+function renderFeatured() {
+  const holder = document.getElementById("featuredList");
+  if (!holder) return;
+
+  const names = ["Neha Shetty","Aditi Bharti","Julie Le"];
+  const selected = names.map(n => alumni.find(a => String(a.name).includes(n))).filter(Boolean);
+
+  holder.innerHTML = selected.map(a => `
+    <div class="featured">
+      <strong>${esc(a.name)}</strong><br>
+      <span>${esc(a.company)} · ${esc(a.role)}</span>
+    </div>
+  `).join("");
+}
+
+
+function openProgramSummary(section) {
+  pendingPeerSection = section || "mentor";
+  const overlay = document.getElementById("ackOverlay");
+  if(overlay) overlay.style.display = "flex";
+}
+function closeProgramSummary() {
+  const overlay = document.getElementById("ackOverlay");
+  if(overlay) overlay.style.display = "none";
+}
+function acknowledgeProgram() {
+  programAcknowledged = true;
+  closeProgramSummary();
+  if(pendingPeerSection === "openMentorship") {
+    openMentorshipScreen();
+    toast("Program acknowledged. Welcome to Mentorship Program.");
+    return;
+  }
+  toast("Program acknowledged. You can now choose a match.");
+  const target = pendingPeerSection === "mentee" ? "menteeCards" : "mentorList";
+  const el = document.getElementById(target);
+  if(el) el.scrollIntoView({behavior:"smooth"});
+}
+function requirePeerAck(type, name) {
+  if (window.canRequestMentorshipType && !window.canRequestMentorshipType(type)) {
+    const message = type === "mentor"
+      ? "Only active brothers can choose alumni mentors."
+      : "Only alumni can choose active brother mentees.";
+    toast(message);
+    alert(message);
+    return false;
+  }
+
+  if(!programAcknowledged) {
+    pendingPeerSection = type === "mentee" ? "mentee" : "mentor";
+    openProgramSummary(pendingPeerSection);
+    return false;
+  }
+
+  openMentorshipConfirm(type, name);
+  return true;
+}
+
+function openMentorshipConfirm(type, name) {
+  pendingMentorshipSelection = { type, name };
+
+  const overlay = document.getElementById("mentorshipConfirmOverlay");
+  const title = document.getElementById("mentorshipConfirmTitle");
+  const body = document.getElementById("mentorshipConfirmBody");
+  const requestLabel = type === "mentor" ? "mentor" : "mentee";
+
+  if (title) title.textContent = `Request ${name}?`;
+  if (body) {
+    body.textContent = `Are you sure you want to choose ${name} as your ${requestLabel}? This sends the request to VPAR for review before any pairing is confirmed.`;
+  }
+
+  if (overlay) overlay.style.display = "flex";
+}
+
+function closeMentorshipConfirm() {
+  pendingMentorshipSelection = null;
+  const overlay = document.getElementById("mentorshipConfirmOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+async function confirmMentorshipSelection() {
+  const selection = pendingMentorshipSelection;
+  if (!selection) return;
+
+  closeMentorshipConfirm();
+
+  if (window.saveMentorRequest) {
+    await window.saveMentorRequest(selection.type, selection.name);
+  }
+
+  toast(`${selection.name} sent to VPAR for mentorship review.`);
+}
+
+function peerActionMarkup(type, name, label) {
+  const canRequest = !window.canRequestMentorshipType || window.canRequestMentorshipType(type);
+  const role = window.currentUserIsAdmin
+    ? `admin${window.currentUserRole ? ` / ${window.currentUserRole}` : ""}`
+    : (window.currentUserRole || "role pending");
+
+  if (canRequest) {
+    return `<button class="select-btn" onclick='requirePeerAck("${type}", ${JSON.stringify(name)})'>${label}</button>`;
+  }
+
+  return `
+    <button class="select-btn disabled-select-btn" type="button" disabled>
+      ${type === "mentor" ? "Brothers Only" : "Alumni Only"}
+    </button>
+    <div class="peer-gate-note">Current role: ${esc(role)}</div>
+  `;
+}
+
+
+
+function buildPeerMentors() {
+  return alumni
+    .filter(a => a.mentorOptIn)
+    .map(a => ({
+    ...a,
+    capacity: a.mentorCapacity || "Capacity TBD",
+    touchpoints: a.mentorTouchpoints || "Touchpoints TBD",
+    focus: a.mentorFocus || a.field || majorField(a.originalField || ""),
+    mentorFit: a.mentorStrengths || "Mentor strengths TBD",
+    bestFor: a.mentorBestFor || "Best fit TBD"
+  }));
+}
+
+function buildPeerMentees() {
+  return brothers
+    .filter(b => b.menteeOptIn)
+    .map(b => ({
+    ...b,
+    intendedIndustry: b.menteeIndustry || brotherMajorGroup(b.major),
+    topCompanies: b.menteeCompanies || "Target companies TBD",
+    careerQuestion: b.menteeQuestion || "Career question TBD",
+    supportWanted: b.menteeSupport || "Support wanted TBD",
+    statusLabel: b.menteeStatusLabel || "Active brother interest",
+    availability: b.menteeAvailability || "Availability TBD"
+  }));
+}
+
+function renderPeerMentors() {
+  const holder = document.getElementById("mentorCards");
+  if(!holder) return;
+  document.getElementById("mentorResults").textContent = peerMentors.length + " mentors";
+  if (!peerMentors.length) {
+    const role = String(window.currentUserRole || "").toLowerCase();
+    holder.innerHTML = `
+      <div class="mentor-alert empty-mentorship-state">
+        <h3 style="margin:0 0 8px;">No mentors listed yet</h3>
+        <p style="margin:0;color:var(--muted);">${role === "alumni" ? "If you'd like to mentor an active brother, reach out to VPAR to get added to the program." : "VPAR is currently building the mentor roster. Check back soon."}</p>
+      </div>
+    `;
+    return;
+  }
+
+  holder.innerHTML = peerMentors.map(a => `
+    <article class="peer-card">
+      <strong>${esc(a.name)}</strong>
+      <div class="peer-meta">${esc(a.role)}<br>${esc(a.company)}<br>${esc(a.location)}</div>
+      <div class="peer-tags">
+        <span>${esc(a.focus)}</span>
+        <span>${esc(a.capacity)}</span>
+        <span>${esc(a.touchpoints)}</span>
+      </div>
+      <div class="peer-details">
+        <b>Mentor strengths:</b> ${esc(a.mentorFit)}<br>
+        <b>Best fit:</b> ${esc(a.bestFor)}
+      </div>
+      ${peerActionMarkup("mentor", a.name, "Choose Mentor")}
+      <div class="actions" style="margin-top:12px;">
+        ${a.email ? `<a class="linkbtn gold" target="_blank" rel="noopener noreferrer" href="${gmailComposeUrl(a.email, 'AKPsi Nu Chapter Peer Mentorship Match', 'Hi ' + a.name.split(' ')[0] + ',\n\n')}">Contact</a>` : `<button onclick="toast('Email not listed')">No Email</button>`}
+        ${a.linkedin ? `<a class="linkbtn" target="_blank" href="${esc(a.linkedin.startsWith("http") ? a.linkedin : "https://" + a.linkedin)}">LinkedIn</a>` : `<button onclick="toast('LinkedIn not listed')">No LinkedIn</button>`}
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderPeerMentees() {
+  const holder = document.getElementById("menteeCards");
+  if(!holder) return;
+  document.getElementById("menteeResults").textContent = peerMentees.length + " brothers listed";
+  if (!peerMentees.length) {
+    const role = String(window.currentUserRole || "").toLowerCase();
+    holder.innerHTML = `
+      <div class="mentor-alert empty-mentorship-state">
+        <h3 style="margin:0 0 8px;">No brothers listed yet</h3>
+        <p style="margin:0;color:var(--muted);">${role === "brother" ? "If you'd like a mentor, reach out to VPAR to get added to the program." : "No active brothers are currently seeking mentorship through the portal."}</p>
+      </div>
+    `;
+    return;
+  }
+
+  holder.innerHTML = peerMentees.map(b => `
+    <article class="peer-card">
+      <strong>${esc(b.name)}</strong>
+      <div class="peer-meta">${esc(b.school)} · Class of ${esc(b.year)}<br>${esc(b.major)}</div>
+      <div class="peer-tags">
+        <span>${esc(b.intendedIndustry)}</span>
+        <span>${esc(b.statusLabel)}</span>
+        <span>${esc(pledgeClassDisplay(b.pledgeClass))}</span>
+      </div>
+      <div class="peer-details">
+        <b>Intended industry:</b> ${esc(b.intendedIndustry)}<br>
+        <b>Top companies:</b> ${esc(b.topCompanies)}<br>
+        <b>Career question:</b> ${esc(b.careerQuestion)}<br>
+        <b>Support wanted:</b> ${esc(b.supportWanted)}<br>
+        <b>Availability:</b> ${esc(b.availability)}
+      </div>
+      ${peerActionMarkup("mentee", b.name, "Choose Mentee")}
+      <div class="actions" style="margin-top:12px;grid-template-columns:1fr;">
+        ${b.email ? `<a class="linkbtn gold" target="_blank" rel="noopener noreferrer" href="${gmailComposeUrl(b.email, 'AKPsi Nu Chapter Peer Mentorship', 'Hi ' + b.name.split(' ')[0] + ',\n\n')}">Contact</a>` : `<button onclick="toast('Email not listed')">No Email</button>`}
+      </div>
+    </article>
+  `).join("");
+}
+
+function slug(x) {
+  return String(x || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+let brotherPageSize = 50;
+let brotherCurrentPage = 1;
+let alumniPageSize = 50;
+let alumniCurrentPage = 1;
+function renderAlumni() {
+  const searchEl = document.getElementById("alumniSearch");
+  const companyEl = document.getElementById("companyFilter");
+  const fieldEl = document.getElementById("fieldFilter");
+  const locationEl = document.getElementById("locationFilter");
+  const resultsEl = document.getElementById("alumniResults");
+  const cardsEl = document.getElementById("alumniCards");
+
+  if (!searchEl || !companyEl || !fieldEl || !locationEl || !resultsEl || !cardsEl) return;
+
+  const search = searchEl.value.trim().toLowerCase();
+  const company = companyEl.value;
+  const field = fieldEl.value;
+  const location = locationEl.value;
+
+  const filtered = alumni
+  .map((a, originalIndex) => ({ a, originalIndex }))
+  .filter(({ a }) => {
+    const text = `${a.name} ${a.company} ${a.role} ${a.field} ${a.location} ${a.email} ${profileLoginEmails(a).join(" ")} ${a.gradYear || ""}`.toLowerCase();
+    return text.includes(search)
+      && (company === "All Companies" || a.company === company)
+      && (field === "All Major Fields" || a.field === field)
+      && (location === "All Locations" || a.location === location);
+  });
+
+  const totalResults = filtered.length;
+const paginated = filtered.slice(0, alumniCurrentPage * alumniPageSize);
+resultsEl.textContent = `${paginated.length} of ${totalResults} result${totalResults === 1 ? "" : "s"}`;
+cardsEl.innerHTML = paginated.map(({ a, originalIndex }) => `
+    <article class="card" id="alumni-${slug(a.name)}">
+      ${profileImageMarkup(a)}
+      <h3>${esc(a.name)}</h3>
+      <div class="role">${esc(a.role)}</div>
+      <div class="company">${esc(a.company)}</div>
+      <div class="meta">${a.field ? `${esc(a.field)}<br>` : ""}${a.location ? `${esc(a.location)}<br>` : ""}${a.gradYear ? `Grad Year: ${esc(a.gradYear)}<br>` : ""}${a.pledgeClass && a.pledgeClass !== "N/A" ? `Pledge Class: ${esc(pledgeClassDisplay(a.pledgeClass))}<br>` : ""}<span class="profile-updated">Last updated: ${esc(a.lastUpdatedNote || formatUpdatedAt(a.updatedAt || a.importedAt || a.createdAt))}</span></div>
+            <div class="pills">
+        <span class="pill goldpill">${esc(a.field)}</span>
+        <span class="pill">${a.email ? "Email Ready" : "Email Needed"}</span>
+      </div>
+      <div class="actions">
+        ${a.email ? `<a class="linkbtn gold" target="_blank" rel="noopener noreferrer" href="${gmailComposeUrl(a.email, 'AKPsi Nu Chapter Outreach', 'Hi ' + a.name.split(' ')[0] + ',\n\n')}">Contact</a>` : `<button onclick="toast('Email not listed')">No Email</button>`}
+        ${a.linkedin ? `<a class="linkbtn" target="_blank" href="${esc(a.linkedin.startsWith("http") ? a.linkedin : "https://" + a.linkedin)}">LinkedIn</a>` : `<button onclick="toast('LinkedIn not listed')">No LinkedIn</button>`}
+        ${window.isOwnAlumniProfile && window.isOwnAlumniProfile(a) ? `<button class="linkbtn" style="grid-column:1/-1;margin-top:4px;" onclick='openAlumniEditModal(${JSON.stringify(a.firebaseId || "")}, ${JSON.stringify(a)})'>Edit My Profile</button>` : ""}
+      </div>
+    </article>
+  `).join("");
+
+  if (window.applyInitials) window.applyInitials();
+
+  const existingBtn = document.getElementById("alumniLoadMoreBtn");
+  if (existingBtn) existingBtn.remove();
+
+  if (paginated.length < totalResults) {
+    const loadMoreBtn = document.createElement("button");
+    loadMoreBtn.id = "alumniLoadMoreBtn";
+    loadMoreBtn.className = "gold";
+    loadMoreBtn.style.cssText = "width:100%;margin-top:22px;padding:14px;border-radius:14px;font-size:15px;";
+    loadMoreBtn.textContent = `Load More (${totalResults - paginated.length} remaining)`;
+    loadMoreBtn.onclick = () => {
+      alumniCurrentPage++;
+      renderAlumni();
+    };
+    cardsEl.parentElement.appendChild(loadMoreBtn);
+  }
+}
+
+function resetAlumni() {
+  alumniCurrentPage = 1;
+  const searchEl = document.getElementById("alumniSearch");
+  const companyEl = document.getElementById("companyFilter");
+  const fieldEl = document.getElementById("fieldFilter");
+  const locationEl = document.getElementById("locationFilter");
+
+  if (searchEl) searchEl.value = "";
+  if (companyEl) companyEl.value = "All Companies";
+  if (fieldEl) fieldEl.value = "All Major Fields";
+  if (locationEl) locationEl.value = "All Locations";
+
+  renderAlumni();
+}
+
+function jumpToAlumni(name) {
+  const searchEl = document.getElementById("alumniSearch");
+  const companyEl = document.getElementById("companyFilter");
+  const fieldEl = document.getElementById("fieldFilter");
+  const locationEl = document.getElementById("locationFilter");
+
+  if (searchEl) searchEl.value = "";
+  if (companyEl) companyEl.value = "All Companies";
+  if (fieldEl) fieldEl.value = "All Major Fields";
+  if (locationEl) locationEl.value = "All Locations";
+
+  showAlumni();
+
+  setTimeout(() => {
+    const el = document.getElementById("alumni-" + slug(name));
+    if(el) {
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      el.style.outline = "3px solid var(--gold)";
+      setTimeout(() => el.style.outline = "", 1800);
+    }
+  }, 120);
+}
+
+function renderSavedList() {
+  const holder = document.getElementById("savedList");
+  if(!holder) return;
+  holder.innerHTML = saved.length
+  ? saved.map(n => `<button class="linkbtn" style="margin:4px 6px 4px 0;" onclick='jumpToAlumni(${JSON.stringify(n)})'>${esc(n)}</button>`).join("")
+  : "No alumni saved yet.";
+}
+
+function saveAlumni(index) {
+  const a = alumni[index];
+  if(a && !saved.includes(a.name)) saved.push(a.name);
+  renderSavedList();
+  toast("Saved. Click the name in Shortlist to jump back to the profile.");
+}
+
+window.deleteAlumni = async function(index) {
+  if (window.requireLiveAdminAccess && !(await window.requireLiveAdminAccess("delete alumni profiles"))) return;
+
+  const a = alumni[index];
+
+  if (!confirm(`Delete ${a.name}?`)) return;
+
+  if (window.deleteAlumniProfile) {
+    const deleted = await window.deleteAlumniProfile(a.firebaseId || a.name, a);
+    if (!deleted) return;
+  }
+
+  alumni.splice(index, 1);
+
+  await loadAdminDashboard();
+  renderAlumni();
+  fillFilters();
+
+  toast(`${a.name} deleted.`);
+};
+window.deleteBrother = async function(index) {
+  if (window.requireLiveAdminAccess && !(await window.requireLiveAdminAccess("delete active brother profiles"))) return;
+
+  const b = brothers[index];
+
+  if (!confirm(`Delete ${b.name}?`)) return;
+
+  if (window.deleteBrotherProfile) {
+    const deleted = await window.deleteBrotherProfile(b.firebaseId || b.name, b);
+    if (!deleted) return;
+  }
+
+  brothers.splice(index, 1);
+
+  await loadAdminDashboard();
+  renderBrothers();
+  fillFilters();
+
+  toast(`${b.name} deleted.`);
+};
+function copyAlumni(name) {
+  const first = String(name).split(" ")[0] || "there";
+  const msg = `Good afternoon ${first},\n\nMy name is Nazir Ferha, and I am a member of Alpha Kappa Psi’s Nu Chapter. I came across your name through our alumni network and would really appreciate the chance to connect for 15–20 minutes to learn more about your experience and any advice you have.\n\nThank you so much,\nNazir Ferha`;
+  if (!navigator.clipboard) {
+  toast("Clipboard unavailable");
+  return;
+}
+
+navigator.clipboard
+  .writeText(msg)
+  .then(() => toast("Outreach copied"))
+  .catch(() => toast("Could not copy outreach"));
+}
+
+
+function brotherMajorGroup(major) {
+  const s = String(major || "").toLowerCase();
+
+  if(s.includes("finance") || s.includes("real estate") || s.includes("accounting")) return "Finance / Accounting";
+  if(s.includes("data") || s.includes("analytics") || s.includes("information systems") || s.includes("is") || s.includes("computer science") || s.includes("cs")) return "Data / Tech";
+  if(s.includes("marketing") || s.includes("advertising") || s.includes("public relations") || s.includes("communications") || s.includes("film") || s.includes("journalism")) return "Marketing / Communications";
+  if(s.includes("strategy") || s.includes("business administration") || s.includes("business adminstration") || s.includes("operations")) return "Strategy / Business";
+  if(s.includes("economics") || s.includes("mathematics") || s.includes("math")) return "Economics / Math";
+  if(s.includes("engineering") || s.includes("biomedical") || s.includes("mechanical") || s.includes("electrical")) return "Engineering";
+  if(s.includes("law") || s.includes("political science")) return "Law / Policy";
+  if(s.includes("psychology") || s.includes("neuroscience") || s.includes("biology") || s.includes("biochemistry") || s.includes("chemistry")) return "Science / Health";
+  if(s.includes("hospitality")) return "Hospitality";
+  return "Other";
+}
+
+function renderBrothers() {
+  const searchEl = document.getElementById("brotherSearch");
+  const yearEl = document.getElementById("brotherYearFilter");
+  const majorGroupEl = document.getElementById("brotherMajorFilter");
+  const pledgeEl = document.getElementById("pledgeFilter");
+  const resultsEl = document.getElementById("brotherResults");
+  const cardsEl = document.getElementById("brotherCards");
+
+  if (!searchEl || !yearEl || !majorGroupEl || !pledgeEl || !resultsEl || !cardsEl) return;
+
+  const search = searchEl.value.trim().toLowerCase();
+  const year = yearEl.value;
+  const majorGroup = majorGroupEl.value;
+  const pledge = pledgeEl.value;
+
+  const filtered = brothers.filter(b => {
+    const group = brotherMajorGroup(b.major);
+    const pledgeClass = pledgeClassDisplay(b.pledgeClass);
+    const text = `${b.name} ${b.year} ${b.major} ${b.school} ${b.pledgeClass} ${pledgeClass} ${group} ${b.linkedin || ""} ${profileLoginEmails(b).join(" ")}`.toLowerCase();
+    return text.includes(search)
+      && (year === "All Years" || b.year === year)
+      && (majorGroup === "All Major Groups" || group === majorGroup)
+      && (pledge === "All Pledge Classes" || pledgeClass === pledge);
+  });
+
+  const totalBrotherResults = filtered.length;
+const paginatedBrothers = filtered.slice(0, brotherCurrentPage * brotherPageSize);
+resultsEl.textContent = `${paginatedBrothers.length} of ${totalBrotherResults} result${totalBrotherResults === 1 ? "" : "s"}`;
+cardsEl.innerHTML = paginatedBrothers.map(b => `
+
+    <article class="card" style="min-height:235px;">
+      ${profileImageMarkup(b)}
+      <div class="pills" style="margin-top:0;">
+        <span class="pill goldpill">${esc(pledgeClassDisplay(b.pledgeClass))}</span>
+        <span class="pill">Class of ${esc(b.year)}</span>
+        <span class="pill">${esc(brotherMajorGroup(b.major))}</span>
+      </div>
+      <h3>${esc(b.name)}</h3>
+      <div class="role">${esc(b.major)}</div>
+      <div class="company">${esc(b.school)}</div>
+      <div class="meta">Pledge Class: ${esc(pledgeClassDisplay(b.pledgeClass))}<br>Status: ${esc(b.status)}</div>
+      ${ownBrotherPhotoRequestMarkup(b)}
+      <div class="actions">
+        ${b.email ? `<a class="linkbtn gold" target="_blank" rel="noopener noreferrer" href="${gmailComposeUrl(b.email, 'AKPsi Nu Chapter Professional Network', 'Hi ' + b.name.split(' ')[0] + ',\n\n')}">Contact</a>` : `<button onclick="toast('Email not listed')">No Email</button>`}
+        ${b.linkedin ? `<a class="linkbtn" target="_blank" rel="noopener noreferrer" href="${esc(b.linkedin.startsWith("http") ? b.linkedin : "https://" + b.linkedin)}">LinkedIn</a>` : ""}
+      </div>
+    </article>
+    `).join("");
+
+  if (window.applyInitials) window.applyInitials();
+
+  const existingBrotherBtn = document.getElementById("brotherLoadMoreBtn");
+  if (existingBrotherBtn) existingBrotherBtn.remove();
+
+  if (paginatedBrothers.length < totalBrotherResults) {
+    const loadMoreBtn = document.createElement("button");
+    loadMoreBtn.id = "brotherLoadMoreBtn";
+    loadMoreBtn.className = "gold";
+    loadMoreBtn.style.cssText = "width:100%;margin-top:22px;padding:14px;border-radius:14px;font-size:15px;";
+    loadMoreBtn.textContent = `Load More (${totalBrotherResults - paginatedBrothers.length} remaining)`;
+    loadMoreBtn.onclick = () => {
+      brotherCurrentPage++;
+      renderBrothers();
+    };
+    cardsEl.parentElement.appendChild(loadMoreBtn);
+  }
+}
+
+
+function resetBrothers() {
+  brotherCurrentPage = 1;
+  const searchEl = document.getElementById("brotherSearch");
+  const yearEl = document.getElementById("brotherYearFilter");
+  const majorGroupEl = document.getElementById("brotherMajorFilter");
+  const pledgeEl = document.getElementById("pledgeFilter");
+
+  if (searchEl) searchEl.value = "";
+  if (yearEl) yearEl.value = "All Years";
+  if (majorGroupEl) majorGroupEl.value = "All Major Groups";
+  if (pledgeEl) pledgeEl.value = "All Pledge Classes";
+
+  renderBrothers();
+}
+
+function readCachedHomepageSettings() {
+  if (window.__NU_HOME_SETTINGS__) {
+    return window.__NU_HOME_SETTINGS__;
+  }
+
+  try {
+    const raw = localStorage.getItem(HOMEPAGE_SETTINGS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn("Could not read cached homepage settings:", error);
+    return null;
+  }
+}
+
+function cacheHomepageSettings(settings) {
+  if (!settings) return;
+
+  try {
+    const cachePayload = {
+      eventTitle: settings.eventTitle || "",
+      eventDate: settings.eventDate || "",
+      eventDescription: settings.eventDescription || "",
+      heroImageUrl: settings.heroImageUrl || "",
+      heroImageAlt: settings.heroImageAlt || ""
+    };
+
+    localStorage.setItem(HOMEPAGE_SETTINGS_CACHE_KEY, JSON.stringify(cachePayload));
+    window.__NU_HOME_SETTINGS__ = cachePayload;
+  } catch (error) {
+    console.warn("Could not cache homepage settings:", error);
+  }
+}
+
+function preloadHomepageHeroImage(imageUrl) {
+  if (!imageUrl) return;
+
+  const image = new Image();
+  image.decoding = "async";
+  image.src = imageUrl;
+}
+
+function applyHomepageSettingsToPage(settings) {
+  if (!settings) return;
+
+  const title = document.getElementById("countdownTitle");
+  const timer = document.getElementById("countdownTimer");
+  const description = document.getElementById("countdownDescription");
+  const homeHero = document.querySelector(".home-hero");
+
+  if (title) {
+    title.textContent = settings.eventTitle || "Next Chapter Milestone";
+  }
+
+  if (description) {
+    description.textContent = settings.eventDescription || "Event details will appear here once VPAR updates the homepage.";
+  }
+
+  if (timer) {
+    timer.dataset.countdownDate = settings.eventDate || "";
+    updateCountdown();
+  }
+
+  if (homeHero) {
+    if (settings.heroImageUrl) {
+      preloadHomepageHeroImage(settings.heroImageUrl);
+      homeHero.style.setProperty("--home-hero-image", `url("${settings.heroImageUrl}")`);
+      homeHero.classList.add("has-hero-image");
+      homeHero.setAttribute("aria-label", settings.heroImageAlt || "Nu Chapter homepage image");
+    } else {
+      homeHero.style.removeProperty("--home-hero-image");
+      homeHero.classList.remove("has-hero-image");
+      homeHero.removeAttribute("aria-label");
+    }
+  }
+}
+
+function applyCachedHomepageSettings() {
+  applyHomepageSettingsToPage(readCachedHomepageSettings());
+}
+
+function updateCountdown() {
+  const timer = document.getElementById("countdownTimer");
+  if (!timer) return;
+
+  const targetValue = timer.dataset.countdownDate;
+  const target = new Date(targetValue).getTime();
+
+  if (!targetValue || Number.isNaN(target)) {
+    timer.textContent = "—";
+    timer.style.fontSize = "22px";
+    timer.style.color = "rgba(255,255,255,.38)";
+    return;
+  }
+
+  const now = Date.now();
+  const diff = target - now;
+
+  if (diff <= 0) {
+    timer.textContent = "Today";
+    timer.style.fontSize = "clamp(28px,3vw,42px)";
+    timer.style.color = "var(--gold2)";
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+  timer.textContent = `${days}d ${hours}h ${minutes}m`;
+  timer.style.fontSize = "";
+  timer.style.color = "";
+}
+
+setInterval(updateCountdown, 60000);
+applyCachedHomepageSettings();
+updateCountdown();
+
+function applyRoleAwareHomeCopy() {
+  const title = document.getElementById("homeHeroTitle");
+  const subtitle = document.getElementById("homeHeroSubtitle");
+  const role = String(window.currentUserRole || "").toLowerCase();
+  const isAdmin = Boolean(window.currentUserIsAdmin);
+
+  if (!title || !subtitle) return;
+
+  if (isAdmin) {
+    title.textContent = "Nu Chapter Portal";
+    subtitle.textContent = "Manage alumni, brothers, mentorship pairings, homepage content, and portal access from one place.";
+    return;
+  }
+
+  const firstName = String(window.currentLinkedProfileName || window.currentPortalUser?.displayName || "").split(" ")[0] || "";
+
+  if (role === "alumni") {
+    title.textContent = firstName ? `Welcome back, ${firstName}.` : "Welcome back, Alumni.";
+    subtitle.textContent = "Stay connected to Nu Chapter — discover active brothers, track mentorship, and keep your professional relationships warm.";
+    return;
+  }
+
+  if (role === "brother") {
+    title.textContent = firstName ? `Welcome, ${firstName}.` : "Nu Chapter Professional Network";
+    subtitle.textContent = `Search ${alumni.length} alumni, build warm outreach, track mentorship, and stay current on chapter opportunities.`;
+    return;
+  }
+
+
+  title.textContent = "Nu Chapter Professional Network";
+  subtitle.textContent = "A private chapter platform for alumni discovery, warm outreach, mentorship coordination, and long-term professional relationship building.";
+}
+
+async function loadHomepageSettingsIntoPage() {
+  applyCachedHomepageSettings();
+
+  if (!window.currentPortalUser || !window.loadHomepageSettings) return;
+
+  const settings = await window.loadHomepageSettings();
+  if (!settings) return;
+
+  cacheHomepageSettings(settings);
+  applyHomepageSettingsToPage(settings);
+}
+
+async function loadHomepageArticlesIntoPage() {
+  if (!window.currentPortalUser || !window.loadHomepageArticles) return;
+
+  const articles = await window.loadHomepageArticles();
+  const grid = document.getElementById("articleGrid");
+  const latestTitle = document.getElementById("homeLatestUpdateTitle");
+  const latestMeta = document.getElementById("homeLatestUpdateMeta");
+
+  if (!grid || !articles.length) {
+    if (latestTitle) latestTitle.textContent = "No updates yet";
+    if (latestMeta) latestMeta.textContent = "VPAR and Family Heads can post updates from the nav.";
+    return;
+  }
+
+  const publishedArticles = articles.filter(article => article.status !== "draft");
+  if (!publishedArticles.length) return;
+
+  homepageArticleCache = publishedArticles;
+  const latestArticle = publishedArticles[0];
+  const latestCard = document.querySelector(".latest-update-card");
+
+  if (latestTitle) latestTitle.textContent = latestArticle?.title || "Chapter feed ready";
+  if (latestMeta) {
+    latestMeta.textContent = `${latestArticle?.category || "Chapter Update"} • ${formatUpdatedAt(latestArticle?.updatedAt || latestArticle?.createdAt)}`;
+  }
+
+  if (latestCard && latestArticle) {
+    const latestImage = imageSourceForArticle(latestArticle);
+    latestCard.classList.add("clickable-home-card");
+    latestCard.onclick = () => openArticleModal(latestArticle.id);
+
+    if (latestImage) {
+      latestCard.classList.add("has-update-image");
+      latestCard.style.setProperty("--latest-update-image", `url("${latestImage}")`);
+    } else {
+      latestCard.classList.remove("has-update-image");
+      latestCard.style.removeProperty("--latest-update-image");
+    }
+  }
+
+  grid.innerHTML = publishedArticles.slice(0, 6).map(article => `
+    <article class="article-card clickable-article" onclick="openArticleModal('${esc(article.id)}')">
+      ${imageSourceForArticle(article) ? `<img class="article-image" src="${esc(imageSourceForArticle(article))}" alt="${esc(article.imageAlt || article.title || "Chapter update image")}">` : ""}
+      <div class="dashboard-eyebrow">${esc(article.category || "Chapter Update")}</div>
+      <h3>${esc(article.title || "Untitled Update")}</h3>
+      <div class="article-date">Posted ${esc(formatUpdatedAt(article.updatedAt || article.createdAt))}</div>
+      <p>${esc(article.body || "")}</p>
+      ${renderArticleGallery(article)}
+      <button class="article-read-more" type="button" onclick="event.stopPropagation(); openArticleModal('${esc(article.id)}')">Open Update</button>
+    </article>
+  `).join("");
+}
+
+async function loadHomepageMentorshipStatusIntoPage() {
+  const countEl = document.getElementById("homeMentorRequestCount");
+  const statusEl = document.getElementById("homeMentorshipStatus");
+  const trustStatusEl = document.getElementById("mentorshipTrustStatus");
+  if (!countEl || !statusEl) return;
+  if (!window.currentPortalUser) return;
+
+  const mentorRequests = window.loadAdminMentorRequests ? await window.loadAdminMentorRequests() : [];
+  const menteeRequests = window.loadAdminMenteeRequests ? await window.loadAdminMenteeRequests() : [];
+  const total = mentorRequests.length + menteeRequests.length;
+
+  countEl.textContent = total;
+  statusEl.textContent = total
+    ? `${mentorRequests.length} mentor request${mentorRequests.length === 1 ? "" : "s"} and ${menteeRequests.length} mentee request${menteeRequests.length === 1 ? "" : "s"} are currently tracked.`
+    : "No active mentorship requests yet. The program is ready for matching.";
+
+  if (trustStatusEl) {
+    trustStatusEl.textContent = total
+      ? `${total} open request${total === 1 ? "" : "s"} pending VPAR review.`
+      : "Ready for new requests.";
+  }
+}
+
+window.openArticleModal = function(articleId, imageIndex = 0) {
+  const article = homepageArticleCache.find(item => item.id === articleId);
+  const overlay = document.getElementById("articleModal");
+  const body = document.getElementById("articleModalBody");
+  if (!article || !overlay || !body) return;
+
+  const images = imageListForArticle(article);
+  const selectedImage = images[imageIndex]?.url || imageSourceForArticle(article);
+  const selectedLabel = images.length > 1 ? `Photo ${imageIndex + 1} of ${images.length}` : "";
+
+  body.innerHTML = `
+    ${selectedImage ? `
+      <div class="article-modal-cover-wrap">
+        <img class="article-modal-cover" src="${esc(selectedImage)}" alt="${esc(article.imageAlt || article.title || "Chapter update image")}">
+        ${selectedLabel ? `<span>${esc(selectedLabel)}</span>` : ""}
+      </div>
+    ` : ""}
+    <div class="dashboard-eyebrow">${esc(article.category || "Chapter Update")}</div>
+    <h2>${esc(article.title || "Untitled Update")}</h2>
+    <div class="article-date">Posted ${esc(formatUpdatedAt(article.updatedAt || article.createdAt))}</div>
+    <p>${esc(article.body || "")}</p>
+    ${images.length > 1 ? `
+      <div class="article-modal-gallery">
+        ${images.map((image, index) => `
+          <button class="${index === imageIndex ? "active" : ""}" type="button" onclick="openArticleModal('${esc(article.id)}', ${index})">
+            <img src="${esc(image.url)}" alt="${esc(article.imageAlt || article.title || "Chapter update image")}">
+          </button>
+        `).join("")}
+      </div>
+    ` : ""}
+  `;
+
+  overlay.style.display = "flex";
+};
+
+window.closeArticleModal = function() {
+  const overlay = document.getElementById("articleModal");
+  if (overlay) overlay.style.display = "none";
+};
+
+window.openProfilePhotoModal = function(imageUrl, profileName = "Profile photo") {
+  const overlay = document.getElementById("profilePhotoModal");
+  const image = document.getElementById("profilePhotoModalImage");
+  const title = document.getElementById("profilePhotoModalTitle");
+
+  if (!overlay || !image || !imageUrl) return;
+
+  image.src = imageUrl;
+  image.alt = profileName;
+  if (title) title.textContent = profileName;
+  overlay.style.display = "flex";
+};
+
+window.closeProfilePhotoModal = function() {
+  const overlay = document.getElementById("profilePhotoModal");
+  const image = document.getElementById("profilePhotoModalImage");
+
+  if (overlay) overlay.style.display = "none";
+  if (image) {
+    image.removeAttribute("src");
+    image.removeAttribute("alt");
+  }
+};
+
+async function loadHomepageSettingsIntoAdmin() {
+  if (!window.loadHomepageSettings) return;
+
+  const settings = await window.loadHomepageSettings();
+  if (!settings) return;
+
+  const titleInput = document.getElementById("homepageEventTitle");
+  const dateInput = document.getElementById("homepageEventDate");
+  const descriptionInput = document.getElementById("homepageEventDescription");
+  const heroAltInput = document.getElementById("homepageHeroImageAlt");
+
+  if (titleInput) titleInput.value = settings.eventTitle || "";
+  if (dateInput) dateInput.value = settings.eventDate || "";
+  if (descriptionInput) descriptionInput.value = settings.eventDescription || "";
+  if (heroAltInput) heroAltInput.value = settings.heroImageAlt || "";
+
+  editingHomepageHeroImageFile = null;
+  editingHomepageHeroImageUrl = settings.heroImageUrl || "";
+  editingHomepageHeroImagePath = settings.heroImagePath || "";
+  removeHomepageHeroImageOnSave = false;
+  setHomepageHeroImagePreview(editingHomepageHeroImageUrl, settings.heroImageAlt || "");
+}
+
+async function loadHomepageArticlesIntoAdmin() {
+  const list = document.getElementById("adminHomepageArticlesList");
+  if (!list) return;
+
+  if (!window.loadHomepageArticles) {
+    list.innerHTML = `<div class="mentor-alert">Homepage article tools are unavailable. Refresh and try again.</div>`;
+    return;
+  }
+
+  const articles = await window.loadHomepageArticles();
+
+  list.innerHTML = articles.length
+    ? articles.map(article => `
+      <div class="mentor-alert" style="margin-top:12px;">
+        ${imageSourceForArticle(article) ? `<img class="admin-article-list-image" src="${esc(imageSourceForArticle(article))}" alt="${esc(article.imageAlt || article.title || "Article image")}">` : ""}
+        <strong>${esc(article.title || "Untitled Update")}</strong><br>
+        <span>${esc(article.category || "Chapter Update")} • ${esc(article.status || "published")} • ${imageListForArticle(article).length} photo${imageListForArticle(article).length === 1 ? "" : "s"} • Updated ${esc(formatUpdatedAt(article.updatedAt || article.createdAt))}</span>
+        <p>${esc(article.body || "")}</p>
+        <button type="button" onclick="editAdminHomepageArticle('${esc(article.id)}')">Edit</button>
+        <button type="button" onclick="deleteAdminHomepageArticle('${esc(article.id)}')">Delete</button>
+      </div>
+    `).join("")
+    : `<div class="mentor-alert">No homepage articles yet.</div>`;
+}
+
+window.saveAdminHomepageSettings = async function () {
+  if (!window.saveHomepageSettings) {
+    alert("Homepage settings are still loading. Refresh and try again.");
+    return;
+  }
+
+  const titleInput = document.getElementById("homepageEventTitle");
+  const dateInput = document.getElementById("homepageEventDate");
+  const descriptionInput = document.getElementById("homepageEventDescription");
+  const heroAltInput = document.getElementById("homepageHeroImageAlt");
+
+  const saved = await window.saveHomepageSettings({
+    eventTitle: titleInput ? titleInput.value.trim() : "",
+    eventDate: dateInput ? dateInput.value : "",
+    eventDescription: descriptionInput ? descriptionInput.value.trim() : "",
+    heroImageAlt: heroAltInput ? heroAltInput.value.trim() : "",
+    heroImageFile: editingHomepageHeroImageFile,
+    existingHeroImagePath: editingHomepageHeroImagePath,
+    removeHeroImage: removeHomepageHeroImageOnSave
+  });
+
+  if (!saved) return;
+
+  editingHomepageHeroImageFile = null;
+  removeHomepageHeroImageOnSave = false;
+  await loadHomepageSettingsIntoPage();
+  await loadHomepageSettingsIntoAdmin();
+  toast("Homepage settings saved.");
+};
+
+window.saveAdminHomepageArticle = async function () {
+  if (!window.saveHomepageArticle) {
+    alert("Homepage article tools are still loading. Refresh and try again.");
+    return;
+  }
+
+  const categoryInput = document.getElementById("homepageArticleCategory");
+  const titleInput = document.getElementById("homepageArticleTitle");
+  const bodyInput = document.getElementById("homepageArticleBody");
+  const statusInput = document.getElementById("homepageArticleStatus");
+  const imageAltInput = document.getElementById("homepageArticleImageAlt");
+
+  const title = titleInput ? titleInput.value.trim() : "";
+  const body = bodyInput ? bodyInput.value.trim() : "";
+
+  if (!title || !body) {
+    alert("Article title and body are required.");
+    return;
+  }
+
+  const savedArticleId = await window.saveHomepageArticle({
+    id: editingHomepageArticleId,
+    category: categoryInput ? categoryInput.value.trim() : "",
+    title,
+    body,
+    images: editingHomepageArticleImages,
+    imageFiles: editingHomepageArticleFiles,
+    imageData: editingHomepageArticleImageData,
+    imageAlt: imageAltInput ? imageAltInput.value.trim() : "",
+    status: statusInput ? statusInput.value : "published"
+  });
+
+  if (!savedArticleId) return;
+
+  editingHomepageArticleId = null;
+  editingHomepageArticleImageData = "";
+  editingHomepageArticleFiles = [];
+  editingHomepageArticleImages = [];
+  if (categoryInput) categoryInput.value = "";
+  if (titleInput) titleInput.value = "";
+  if (bodyInput) bodyInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+  if (statusInput) statusInput.value = "published";
+  setHomepageArticleImagePreview("");
+  renderImagePreview("homepageArticleImagePreview", "homepageArticleRemoveImageBtn");
+
+  const saveButton = document.getElementById("homepageArticleSaveBtn");
+  if (saveButton) saveButton.textContent = "Post Homepage Article";
+
+  await loadHomepageArticlesIntoPage();
+  await loadHomepageArticlesIntoAdmin();
+  toast("Homepage article saved.");
+};
+
+window.editAdminHomepageArticle = async function (articleId) {
+  if (!window.loadHomepageArticles) return;
+
+  const articles = await window.loadHomepageArticles();
+  const article = articles.find(item => item.id === articleId);
+  if (!article) return;
+
+  editingHomepageArticleId = article.id;
+
+  const categoryInput = document.getElementById("homepageArticleCategory");
+  const titleInput = document.getElementById("homepageArticleTitle");
+  const bodyInput = document.getElementById("homepageArticleBody");
+  const statusInput = document.getElementById("homepageArticleStatus");
+  const imageAltInput = document.getElementById("homepageArticleImageAlt");
+  const saveButton = document.getElementById("homepageArticleSaveBtn");
+
+  if (categoryInput) categoryInput.value = article.category || "";
+  if (titleInput) titleInput.value = article.title || "";
+  if (bodyInput) bodyInput.value = article.body || "";
+  if (imageAltInput) imageAltInput.value = article.imageAlt || "";
+  if (statusInput) statusInput.value = article.status || "published";
+  if (saveButton) saveButton.textContent = "Save Article Changes";
+  editingHomepageArticleImageData = article.imageData || "";
+  editingHomepageArticleImages = imageListForArticle(article);
+  editingHomepageArticleFiles = [];
+  renderImagePreview("homepageArticleImagePreview", "homepageArticleRemoveImageBtn", editingHomepageArticleImages);
+};
+
+window.deleteAdminHomepageArticle = async function (articleId) {
+  if (!window.deleteHomepageArticle) return;
+  if (!confirm("Delete this homepage article?")) return;
+
+  const deleted = await window.deleteHomepageArticle(articleId);
+  if (!deleted) return;
+
+  if (editingHomepageArticleId === articleId) {
+    editingHomepageArticleId = null;
+    editingHomepageArticleImageData = "";
+    const saveButton = document.getElementById("homepageArticleSaveBtn");
+    if (saveButton) saveButton.textContent = "Post Homepage Article";
+    removeHomepageArticleImage();
+  }
+
+  await loadHomepageArticlesIntoPage();
+  await loadHomepageArticlesIntoAdmin();
+  toast("Homepage article deleted.");
+};
+
+window.handleHomepageArticleImages = function (input, scope = "admin") {
+  const files = Array.from(input?.files || []).filter(file => file.type.startsWith("image/"));
+  if (!files.length) return;
+
+  const maxImages = 12;
+  const maxSourceSize = 20 * 1024 * 1024;
+  if (files.length > maxImages) {
+    alert(`Please choose ${maxImages} images or fewer for one post.`);
+    input.value = "";
+    return;
+  }
+
+  if (files.some(file => file.size > maxSourceSize)) {
+    alert("Each source image must be under 20MB. The portal will compress accepted images before saving.");
+    input.value = "";
+    return;
+  }
+
+  if (scope === "family") {
+    editingFamilyArticleFiles = files;
+    renderImagePreview("familyArticleImagePreview", "familyArticleRemoveImageBtn", editingFamilyArticleImages, editingFamilyArticleFiles);
+  } else if (scope === "dei") {
+    editingDEIPostFiles = files;
+    renderImagePreview("deiPostImagePreview", "deiPostRemoveImageBtn", editingDEIPostImages, editingDEIPostFiles);
+  } else {
+    editingHomepageArticleFiles = files;
+    renderImagePreview("homepageArticleImagePreview", "homepageArticleRemoveImageBtn", editingHomepageArticleImages, editingHomepageArticleFiles);
+  }
+
+  toast(`${files.length} image${files.length === 1 ? "" : "s"} ready. Images compress on save.`);
+};
+
+window.handleHomepageArticleImage = function (input) {
+  window.handleHomepageArticleImages(input, "admin");
+};
+
+window.handleHomepageHeroImage = function (input) {
+  const file = Array.from(input?.files || []).find(item => item.type.startsWith("image/"));
+  if (!file) return;
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert("Please choose a homepage image under 20MB. The portal compresses it before saving.");
+    input.value = "";
+    return;
+  }
+
+  editingHomepageHeroImageFile = file;
+  editingHomepageHeroImageUrl = URL.createObjectURL(file);
+  removeHomepageHeroImageOnSave = false;
+  setHomepageHeroImagePreview(editingHomepageHeroImageUrl, file.name || "Homepage image preview");
+  toast("Homepage image ready. Click Save Homepage Settings to publish it.");
+};
+
+window.removeHomepageHeroImage = function () {
+  const fileInput = document.getElementById("homepageHeroImage");
+  const heroAltInput = document.getElementById("homepageHeroImageAlt");
+
+  if (editingHomepageHeroImageUrl?.startsWith("blob:")) {
+    URL.revokeObjectURL(editingHomepageHeroImageUrl);
+  }
+
+  editingHomepageHeroImageFile = null;
+  editingHomepageHeroImageUrl = "";
+  removeHomepageHeroImageOnSave = Boolean(editingHomepageHeroImagePath);
+
+  if (fileInput) fileInput.value = "";
+  if (heroAltInput) heroAltInput.value = "";
+
+  setHomepageHeroImagePreview("");
+};
+
+window.removeHomepageArticleImage = function () {
+  editingHomepageArticleImageData = "";
+  editingHomepageArticleFiles = [];
+  editingHomepageArticleImages = [];
+
+  const fileInput = document.getElementById("homepageArticleImage");
+  const imageAltInput = document.getElementById("homepageArticleImageAlt");
+
+  if (fileInput) fileInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+
+  renderImagePreview("homepageArticleImagePreview", "homepageArticleRemoveImageBtn");
+};
+
+window.removeFamilyArticleImages = function () {
+  editingFamilyArticleFiles = [];
+  editingFamilyArticleImages = [];
+
+  const fileInput = document.getElementById("familyArticleImages");
+  const imageAltInput = document.getElementById("familyArticleImageAlt");
+
+  if (fileInput) fileInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+
+  renderImagePreview("familyArticleImagePreview", "familyArticleRemoveImageBtn");
+};
+
+window.removeDEIPostImages = function () {
+  editingDEIPostFiles = [];
+  editingDEIPostImages = [];
+
+  const fileInput = document.getElementById("deiPostImages");
+  const imageAltInput = document.getElementById("deiPostImageAlt");
+
+  if (fileInput) fileInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+
+  renderImagePreview("deiPostImagePreview", "deiPostRemoveImageBtn");
+};
+
+async function loadFamilyHomepageArticlesIntoPanel() {
+  const list = document.getElementById("familyHomepageArticlesList");
+  if (!list || !window.loadHomepageArticles) return;
+
+  const articles = await window.loadHomepageArticles();
+  const currentEmail = window.currentPortalUser?.email || "";
+  const familyArticles = articles.filter(article => article.authorEmail === currentEmail);
+
+  list.innerHTML = familyArticles.length
+    ? familyArticles.map(article => `
+      <div class="mentor-alert" style="margin-top:12px;">
+        ${imageSourceForArticle(article) ? `<img class="admin-article-list-image" src="${esc(imageSourceForArticle(article))}" alt="${esc(article.imageAlt || article.title || "Article image")}">` : ""}
+        <strong>${esc(article.title || "Untitled Update")}</strong><br>
+        <span>${esc(article.category || "Chapter Update")} • ${esc(article.status || "published")} • ${imageListForArticle(article).length} photo${imageListForArticle(article).length === 1 ? "" : "s"} • Updated ${esc(formatUpdatedAt(article.updatedAt || article.createdAt))}</span>
+        <p>${esc(article.body || "")}</p>
+        <button type="button" onclick="editFamilyHomepageArticle('${esc(article.id)}')">Edit</button>
+        <button type="button" onclick="deleteFamilyHomepageArticle('${esc(article.id)}')">Delete</button>
+      </div>
+    `).join("")
+    : `<div class="mentor-alert">No Family Head posts yet.</div>`;
+}
+
+window.openFamilyPostPanel = async function () {
+  if (!window.currentUserIsFamilyHead && !window.currentUserIsAdmin) {
+    alert("Only Family Heads and VPAR Admin can post homepage updates.");
+    return;
+  }
+
+  const panel = document.getElementById("familyPostPanel");
+  if (panel) panel.style.display = "flex";
+
+  await loadFamilyHomepageArticlesIntoPanel();
+};
+
+window.saveFamilyHomepageArticle = async function () {
+  if (!window.saveHomepageArticle) return;
+
+  if (!window.currentUserIsFamilyHead && !window.currentUserIsAdmin) {
+    alert("Only Family Heads and VPAR Admin can post homepage updates.");
+    return;
+  }
+
+  const categoryInput = document.getElementById("familyArticleCategory");
+  const titleInput = document.getElementById("familyArticleTitle");
+  const bodyInput = document.getElementById("familyArticleBody");
+  const statusInput = document.getElementById("familyArticleStatus");
+  const imageAltInput = document.getElementById("familyArticleImageAlt");
+
+  const title = titleInput ? titleInput.value.trim() : "";
+  const body = bodyInput ? bodyInput.value.trim() : "";
+
+  if (!title || !body) {
+    alert("Post title and body are required.");
+    return;
+  }
+
+  const savedArticleId = await window.saveHomepageArticle({
+    id: editingFamilyArticleId,
+    category: categoryInput ? categoryInput.value.trim() : "Brotherhood Update",
+    title,
+    body,
+    images: editingFamilyArticleImages,
+    imageFiles: editingFamilyArticleFiles,
+    imageAlt: imageAltInput ? imageAltInput.value.trim() : "",
+    status: statusInput ? statusInput.value : "published",
+    createdByFamilyHead: true
+  });
+
+  if (!savedArticleId) return;
+
+  editingFamilyArticleId = null;
+  editingFamilyArticleFiles = [];
+  editingFamilyArticleImages = [];
+
+  if (categoryInput) categoryInput.value = "";
+  if (titleInput) titleInput.value = "";
+  if (bodyInput) bodyInput.value = "";
+  if (imageAltInput) imageAltInput.value = "";
+  if (statusInput) statusInput.value = "published";
+
+  const saveButton = document.getElementById("familyArticleSaveBtn");
+  if (saveButton) saveButton.textContent = "Post Update";
+
+  removeFamilyArticleImages();
+  await loadHomepageArticlesIntoPage();
+  await loadFamilyHomepageArticlesIntoPanel();
+  toast("Family update posted.");
+};
+
+window.editFamilyHomepageArticle = async function (articleId) {
+  if (!window.loadHomepageArticles) return;
+
+  const articles = await window.loadHomepageArticles();
+  const article = articles.find(item => item.id === articleId);
+  if (!article) return;
+
+  if (!window.currentUserIsAdmin && article.authorEmail !== window.currentPortalUser?.email) {
+    alert("You can only edit your own Family Head posts.");
+    return;
+  }
+
+  editingFamilyArticleId = article.id;
+  editingFamilyArticleImages = imageListForArticle(article);
+  editingFamilyArticleFiles = [];
+
+  const categoryInput = document.getElementById("familyArticleCategory");
+  const titleInput = document.getElementById("familyArticleTitle");
+  const bodyInput = document.getElementById("familyArticleBody");
+  const statusInput = document.getElementById("familyArticleStatus");
+  const imageAltInput = document.getElementById("familyArticleImageAlt");
+  const saveButton = document.getElementById("familyArticleSaveBtn");
+
+  if (categoryInput) categoryInput.value = article.category || "";
+  if (titleInput) titleInput.value = article.title || "";
+  if (bodyInput) bodyInput.value = article.body || "";
+  if (imageAltInput) imageAltInput.value = article.imageAlt || "";
+  if (statusInput) statusInput.value = article.status || "published";
+  if (saveButton) saveButton.textContent = "Save Update";
+
+  renderImagePreview("familyArticleImagePreview", "familyArticleRemoveImageBtn", editingFamilyArticleImages);
+};
+
+window.deleteFamilyHomepageArticle = async function (articleId) {
+  if (!window.deleteHomepageArticle) return;
+  if (!confirm("Delete this Family Head post?")) return;
+
+  const deleted = await window.deleteHomepageArticle(articleId);
+  if (!deleted) return;
+
+  if (editingFamilyArticleId === articleId) {
+    editingFamilyArticleId = null;
+    removeFamilyArticleImages();
+  }
+
+  await loadHomepageArticlesIntoPage();
+  await loadFamilyHomepageArticlesIntoPanel();
+  toast("Family update deleted.");
+};
+
+
+window.addEventListener("portalAccessChanged", async () => {
+  applyRoleAwareHomeCopy();
+  if (typeof renderPeerMentors === "function") renderPeerMentors();
+  if (typeof renderPeerMentees === "function") renderPeerMentees();
+  await refreshOwnPhotoRequestState();
+  await checkAndShowMyMentorshipBtn();
+});
+
+// init() is now called after Firebase auth confirms the user is approved
+// See app.js onAuthStateChanged
+
+</script>
+<script>
+function renderDashboardPairingProgress(pairing) {
+  const currentEmail = String(window.currentPortalUser?.email || "").toLowerCase().trim();
+  const isAlumni = String(pairing.alumniEmail || "").toLowerCase().trim() === currentEmail;
+  const brothersList = Array.isArray(pairing.brothers) ? pairing.brothers : [];
+
+  return brothersList.map((brother) => {
+    const brotherEmail = String(brother.email || "").toLowerCase().trim();
+    const isBrother = brotherEmail === currentEmail;
+    const total = Math.max(1, Number(brother.totalCheckIns || 3));
+    const completed = Math.min(total, Math.max(0, Number(brother.completedCheckIns || 0)));
+    const percent = Math.round((completed / total) * 100);
+
+    return `
+      <div class="dashboard-pairing-progress">
+        <div class="mentor-progress-row">
+          <strong>${esc(brother.name || "Brother")}</strong>
+          <span>${completed} / ${total}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${percent}%;"></div>
+        </div>
+        <div class="mentor-meta">${esc(brother.progressNote || "No approved check-ins yet.")}</div>
+        ${(isAlumni || isBrother) ? `
+          <button
+            type="button"
+            class="gold checkin-submit-btn"
+            onclick='submitPairingCheckInFromDashboard(${JSON.stringify(pairing.id)}, ${JSON.stringify(brother.email || "")}, ${JSON.stringify(brother.name || "")})'>
+            Submit Meeting Completed
+          </button>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+async function loadDashboardPairings() {
+  if (!window.loadMyMentorshipPairings) return;
+
+  const assignedMentorBox = document.getElementById("assignedMentorBox");
+  const progressList = document.getElementById("progressList");
+  if (!assignedMentorBox || !progressList) return;
+
+  const pairings = await window.loadMyMentorshipPairings();
+
+  if (!pairings.length) {
+    assignedMentorBox.innerHTML = `
+      <div>
+        <h3>Assigned Mentor/Mentee</h3>
+        <div class="mentor-meta">
+          This is where your assigned mentor or mentee will be displayed. Please check with VPAR if there are any issues.
+        </div>
+      </div>
+    `;
+    progressList.innerHTML = "Progress checkpoints will appear here once your mentor or mentee relationship officially begins.";
+    return;
+  }
+
+  assignedMentorBox.innerHTML = `
+    <div class="pairing-celebration">
+      <span>Mentorship match confirmed</span>
+      <strong>Congrats, you are now paired.</strong>
+      <p>Your official Nu Chapter mentorship relationship is active. Check-ins and progress updates will show here after VPAR approves them.</p>
+    </div>
+  ` + pairings.map((pairing) => {
+    const brotherNames = (pairing.brothers || []).map(brother => brother.name).filter(Boolean).join(" + ");
+
+    return `
+      <div class="dashboard-pairing-summary">
+        <h3>${esc(pairing.alumniName || "Alumni Mentor")}</h3>
+        <div class="mentor-title">${esc(pairing.alumniRole || "Role N/A")} · ${esc(pairing.alumniCompany || "Company N/A")}</div>
+        <div class="mentor-meta">Paired with ${esc(brotherNames || "assigned brother")}</div>
+        <div class="dashboard-pill-row">
+          <span class="dashboard-pill">Mentorship Pairing</span>
+          <span class="dashboard-pill">${esc(pairing.status || "Active")}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  progressList.innerHTML = pairings.map(renderDashboardPairingProgress).join("");
+}
+
+window.submitPairingCheckInFromDashboard = async function(pairingId, brotherEmail, brotherName) {
+  if (!window.submitMentorshipCheckInRequest) return;
+
+  const submitted = await window.submitMentorshipCheckInRequest(pairingId, brotherEmail, brotherName);
+  if (!submitted) return;
+
+  toast("Meeting completion sent to VPAR for approval.");
+  if (window.loadMyMentorshipWorkspace) await window.loadMyMentorshipWorkspace();
+};
+
+async function showPersonalDashboard() {
+  const dashboard = document.getElementById("personalDashboard");
+  if (dashboard) dashboard.style.display = "flex";
+  await loadDashboardPairings();
+}
+</script>
+
+
+<script>
+(function () {
+  function applyInitials() {
+    document.querySelectorAll(".card").forEach(function(card) {
+      var nameEl = card.querySelector("h3");
+      var faceEl = card.querySelector(".face");
+      if (!nameEl || !faceEl || faceEl.dataset.initialized === "true") return;
+
+      var cleanName = nameEl.textContent
+        .replace(/\([^)]*\)/g, "")
+        .replace(/["']/g, "")
+        .trim();
+
+      var parts = cleanName.split(/\s+/).filter(Boolean);
+      var initials = "AK";
+
+      if (parts.length === 1) {
+        initials = parts[0].slice(0, 2);
+      } else if (parts.length > 1) {
+        initials = parts[0][0] + parts[parts.length - 1][0];
+      }
+
+      faceEl.setAttribute("data-initials", initials.toUpperCase());
+      faceEl.dataset.initialized = "true";
+    });
+  }
+window.applyInitials = applyInitials;
+
+  window.addEventListener("load", function() {
+  applyInitials();
+  setTimeout(applyInitials, 250);
+  setTimeout(applyInitials, 750);
+});
+
+  document.addEventListener("click", function(event) {
+    var clickable = event.target.closest("a, button");
+    if (clickable) {
+      return true;
+    }
+  }, true);
+})();
+</script>
+
+<div id="articleModal" class="article-modal-overlay" style="display:none;" onclick="closeArticleModal()">
+  <div class="article-modal-card" onclick="event.stopPropagation()">
+    <div class="article-modal-top">
+      <strong>Chapter Update</strong>
+      <button type="button" onclick="closeArticleModal()">Close</button>
+    </div>
+    <div id="articleModalBody"></div>
+  </div>
+</div>
+
+<div id="profilePhotoModal" class="profile-photo-modal-overlay" style="display:none;" onclick="closeProfilePhotoModal()">
+  <div class="profile-photo-modal-card" onclick="event.stopPropagation()">
+    <div class="article-modal-top">
+      <strong id="profilePhotoModalTitle">Profile Photo</strong>
+      <button type="button" onclick="closeProfilePhotoModal()">Close</button>
+    </div>
+    <img id="profilePhotoModalImage" class="profile-photo-modal-image">
+  </div>
+</div>
+
+<div id="familyPostPanel" class="overlay" style="display:none;">
+  <div class="role-card family-post-card">
+    <div class="dashboard-eyebrow">Family Head Publishing</div>
+    <h1>Post a Chapter Update</h1>
+    <p>Share brotherhood events, family functions, chapter wins, and photo recaps with alumni on the homepage.</p>
+
+    <div class="mentor-alert family-post-form">
+      <input id="familyArticleCategory" placeholder="Category, e.g. Brotherhood Event">
+      <input id="familyArticleTitle" placeholder="Post title">
+      <textarea id="familyArticleBody" placeholder="Write the update..." rows="5"></textarea>
+
+      <div class="article-upload-row">
+        <label class="article-upload-label" for="familyArticleImages">
+          Add Gallery Images
+        </label>
+        <input
+          id="familyArticleImages"
+          class="article-file-input"
+          type="file"
+          multiple
+          accept="image/*"
+          onchange="handleHomepageArticleImages(this, 'family')">
+        <button
+          id="familyArticleRemoveImageBtn"
+          type="button"
+          onclick="removeFamilyArticleImages()"
+          style="display:none;">
+          Remove Images
+        </button>
+      </div>
+
+      <input id="familyArticleImageAlt" placeholder="Image description, e.g. Brothers at family dinner">
+
+      <div id="familyArticleImagePreview" class="article-image-preview">
+        No images selected.
+      </div>
+
+      <select id="familyArticleStatus">
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+
+      <button id="familyArticleSaveBtn" class="gold" type="button" onclick="saveFamilyHomepageArticle()">
+        Post Update
+      </button>
+    </div>
+
+    <h2 style="margin-top:24px;">Your Posts</h2>
+    <div id="familyHomepageArticlesList">
+      Loading your posts...
+    </div>
+
+    <button
+      type="button"
+      style="margin-top:24px;"
+      onclick="document.getElementById('familyPostPanel').style.display='none'">
+      Close
+    </button>
+  </div>
+</div>
+
+<div id="deiPostPanel" class="overlay" style="display:none;">
+  <div class="role-card family-post-card">
+    <div class="dashboard-eyebrow">DEI Publishing</div>
+    <h1>Post to the DEI Hub</h1>
+    <p>Share resources, programming notes, feedback updates, and inclusion work in the tab VPAR approved for you.</p>
+
+    <div class="mentor-alert family-post-form">
+      <select id="deiPostCategory">
+        <option value="overview">Overview</option>
+        <option value="resources">Resources</option>
+        <option value="events">Events</option>
+        <option value="feedback">Feedback</option>
+      </select>
+      <input id="deiPostTitle" placeholder="Post title">
+      <textarea id="deiPostBody" placeholder="Write the DEI update..." rows="5"></textarea>
+      <div class="article-upload-row">
+        <label class="article-upload-label" for="deiPostImages">
+          Add DEI Images
+        </label>
+        <input
+          id="deiPostImages"
+          class="article-file-input"
+          type="file"
+          multiple
+          accept="image/*"
+          onchange="handleHomepageArticleImages(this, 'dei')">
+        <button
+          id="deiPostRemoveImageBtn"
+          type="button"
+          onclick="removeDEIPostImages()"
+          style="display:none;">
+          Remove Images
+        </button>
+      </div>
+      <input id="deiPostImageAlt" placeholder="Image description, e.g. DEI workshop group photo">
+      <div style="display:grid;gap:10px;margin-top:4px;">
+  <div class="dashboard-eyebrow" style="margin-bottom:2px;">Optional Links</div>
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px;">
+    <input id="deiPostLink1Label" placeholder="Link 1 label, e.g. Register Here">
+    <input id="deiPostLink1Url" placeholder="Link 1 URL">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px;">
+    <input id="deiPostLink2Label" placeholder="Link 2 label, e.g. Learn More">
+    <input id="deiPostLink2Url" placeholder="Link 2 URL">
+  </div>
+</div>
+      <div id="deiPostImagePreview" class="article-image-preview">
+        No images selected.
+      </div>
+      <select id="deiPostStatus">
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+      <button id="deiPostSaveBtn" class="gold" type="button" onclick="saveDEIPostFromPanel()">
+        Post to DEI Hub
+      </button>
+    </div>
+
+    <h2 style="margin-top:24px;">Your DEI Posts</h2>
+    <div id="deiPostPanelList">
+      Loading your posts...
+    </div>
+
+    <button
+      type="button"
+      style="margin-top:24px;"
+      onclick="document.getElementById('deiPostPanel').style.display='none'">
+      Close
+    </button>
+  </div>
+</div>
+
+<div id="portalAccessPanel" class="portal-access-panel" style="display:none;" onclick="closePortalAccessPanel()">
+  <div class="portal-access-card" onclick="event.stopPropagation()">
+    <div class="admin-access-head">
+      <strong>Portal Access</strong>
+      <button type="button" onclick="closePortalAccessPanel()">Close</button>
+    </div>
+    <div id="portalAccessPanelBody"></div>
+  </div>
+</div>
+
+<div id="adminPanel" class="overlay" style="display:none;">
+  <div class="role-card admin-dashboard-card">
+    <div class="admin-dashboard-head">
+      <div>
+        <div class="dashboard-eyebrow">Chapter Operations</div>
+        <h1>VPAR Admin Dashboard</h1>
+        <p>Manage directory data, mentorship activity, profile approvals, homepage updates, and portal access.</p>
+      </div>
+      <button
+        type="button"
+        onclick="document.getElementById('adminPanel').style.display='none'">
+        Close
+      </button>
+    </div>
+
+    <div class="dashboard-grid admin-metric-grid">
+      <div class="mentor-alert admin-metric-card">
+        <h3>Total Alumni</h3>
+        <p id="adminAlumniCount">0</p>
+      </div>
+
+      <div class="mentor-alert admin-metric-card">
+        <h3>Total Brothers</h3>
+        <p id="brotherCount">0</p>
+      </div>
+
+      <div class="mentor-alert admin-metric-card">
+        <h3>Mentor Requests</h3>
+        <p id="requestCount">0</p>
+      </div>
+
+      <div class="mentor-alert admin-metric-card">
+        <h3>Mentee Requests</h3>
+        <p id="menteeRequestCount">0</p>
+      </div>
+
+      <div class="mentor-alert admin-metric-card">
+        <h3>Notes</h3>
+        <p id="notesCount">0</p>
+      </div>
+    </div>
+
+    <div class="admin-tab-rail">
+      <button type="button" onclick="showAdminTab('alumni')">Alumni</button>
+    <button type="button" onclick="showAdminTab('brothers')">Brothers</button>
+    <button type="button" onclick="showAdminTab('requests')">Mentor Requests</button>
+    <button type="button" onclick="showAdminTab('mentees')">Mentee Requests</button>
+    <button type="button" onclick="showAdminTab('pairings')">Mentorship Pairings</button>
+    <button type="button" onclick="showAdminTab('photoRequests')">Photo Requests</button>
+    <button type="button" onclick="showAdminTab('notes')">Notes</button>
+    <button type="button" onclick="showAdminTab('access')">Portal Access</button>
+    <button type="button" onclick="showAdminTab('analytics')">Analytics</button>
+    <button type="button" onclick="showAdminTab('homepage')">Homepage</button>
+    <button type="button" onclick="showAdminTab('handoff')">Handoff Notes</button>
+<button type="button" onclick="showAdminTab('profileEdits')">Profile Edits</button>
+    </div>
+
+    <div id="adminAlumniTab" class="admin-tab-panel">
+      <div class="admin-section-head">
+        <div>
+          <h2>Alumni Profiles</h2>
+          <p>Search, update, approve access, or remove alumni records.</p>
+        </div>
+        <button type="button" onclick="openAddAlumniForm()">+ Add Alumni</button>
+      </div>
+
+      <input id="adminAlumniSearch" placeholder="Search alumni by name">
+
+      <div id="adminAlumniList" style="margin-top:16px;">
+        Loading alumni...
+      </div>
+    </div>
+
+    <div id="adminBrothersTab" class="admin-tab-panel" style="display:none;">
+      <div class="admin-section-head">
+        <div>
+          <h2>Active Brothers</h2>
+          <p>Manage active brother profiles, roles, and portal access.</p>
+        </div>
+        <button type="button" onclick="openAddBrotherForm()">+ Add Brother</button>
+      </div>
+
+      <input id="adminBrotherSearch" placeholder="Search brothers by name or class year">
+
+      <div id="adminBrothersList">
+        Loading brothers...
+      </div>
+    </div>
+
+    <div id="adminRequestsTab" class="admin-tab-panel" style="display:none;">
+      <h2>Mentor Requests</h2>
+      <div id="adminRequestsList">Loading mentor requests...</div>
+    </div>
+
+    <div id="adminMenteeRequestsTab" class="admin-tab-panel" style="display:none;">
+      <h2>Mentee Requests</h2>
+      <div id="adminMenteeRequestsList">Loading mentee requests...</div>
+    </div>
+
+    <div id="adminPairingsTab" class="admin-tab-panel" style="display:none;">
+      <div class="admin-section-head">
+        <div>
+          <h2>Mentorship Pairings</h2>
+          <p>Assign one alumni mentor to one or two brothers, then track approved semester check-ins.</p>
+        </div>
+      </div>
+
+      <div class="mentor-alert pairing-builder">
+        <div class="pairing-search-field">
+          <label for="pairingAlumniSearch">Alumni mentor</label>
+          <input id="pairingAlumniSearch" list="pairingAlumniOptionsList" placeholder="Search alumni mentor by name, email, company...">
+          <datalist id="pairingAlumniOptionsList"></datalist>
+        </div>
+        <div class="pairing-search-field">
+          <label for="pairingBrotherOneSearch">Brother one</label>
+          <input id="pairingBrotherOneSearch" list="pairingBrotherOptionsList" placeholder="Search brother by name, email, pledge class...">
+        </div>
+        <div class="pairing-search-field">
+          <label for="pairingBrotherTwoSearch">Brother two, optional</label>
+          <input id="pairingBrotherTwoSearch" list="pairingBrotherOptionsList" placeholder="Optional second brother...">
+          <datalist id="pairingBrotherOptionsList"></datalist>
+        </div>
+        <input id="pairingTotalCheckIns" type="number" min="1" value="3" placeholder="Semester check-ins">
+        <button class="gold" type="button" onclick="createMentorshipPairingFromAdmin()">
+          Create Pairing
+        </button>
+      </div>
+
+      <h3>Pending Check-In Approvals</h3>
+      <div id="adminCheckInRequestsList">Loading check-in requests...</div>
+
+      <h3 style="margin-top:24px;">Active Pairings</h3>
+      <div id="adminPairingsList">Loading pairings...</div>
+    </div>
+
+    <div id="adminPhotoRequestsTab" class="admin-tab-panel" style="display:none;">
+      <h2>Profile Photo Requests</h2>
+      <p class="admin-subcopy">Review brother-submitted profile photos before they appear publicly.</p>
+      <div id="adminPhotoRequestsList">Loading profile photo requests...</div>
+    </div>
+
+    <div id="adminNotesTab" class="admin-tab-panel" style="display:none;">
+      <div class="admin-section-head">
+        <div>
+          <h2>Mentorship Notes</h2>
+          <p>Review mentorship tracking notes submitted through member dashboards.</p>
+        </div>
+      </div>
+
+      <div id="adminNotesList">
+        Loading notes...
+      </div>
+    </div>
+
+    <div id="adminAccessTab" class="admin-tab-panel" style="display:none;">
+      <div class="admin-section-head">
+        <div>
+          <h2>Portal Access</h2>
+          <p>Approve a login role without creating a full directory profile first.</p>
+        </div>
+      </div>
+
+      <div class="mentor-alert manual-access-card">
+        <input id="manualAccessName" placeholder="Name, optional">
+        <input id="manualAccessEmail" type="email" placeholder="Email address">
+        <select id="manualAccessRole">
+          <option value="alumni">Alumni</option>
+          <option value="brother">Active Brother</option>
+        </select>
+        <label class="manual-access-check">
+          <input id="manualAccessFamilyHead" type="checkbox">
+          <span>Also make Family Head</span>
+        </label>
+        <button class="gold" type="button" onclick="saveManualPortalAccess()">
+          Save Portal Access
+        </button>
+      </div>
+
+      <div class="admin-section-head portal-access-list-head">
+        <div>
+          <h3>DEI Posting Access</h3>
+          <p>Grant someone posting access for specific DEI Hub tabs.</p>
+        </div>
+      </div>
+
+      <div class="mentor-alert dei-access-card">
+        <input id="deiAccessName" placeholder="Name, optional">
+        <input id="deiAccessEmail" type="email" placeholder="Email address">
+        <label><input type="checkbox" id="deiAccessOverview"> Overview</label>
+        <label><input type="checkbox" id="deiAccessResources"> Resources</label>
+        <label><input type="checkbox" id="deiAccessEvents"> Events</label>
+        <label><input type="checkbox" id="deiAccessFeedback"> Feedback</label>
+        <button class="gold" type="button" onclick="saveManualDEIAccess()">
+          Save DEI Access
+        </button>
+      </div>
+
+      <div class="admin-section-head portal-access-list-head">
+        <div>
+          <h3>Approved Portal Users</h3>
+          <p>Use this list to verify exactly who can log in and whether they are marked as brother, alumni, or Family Head.</p>
+        </div>
+        <button type="button" onclick="loadPortalAccessRecordsIntoAdmin()">
+          Refresh Access List
+        </button>
+      </div>
+
+      <div id="portalAccessRecordsList" class="portal-access-records">
+        Loading portal access records...
+      </div>
+    </div>
+
+    <div id="adminHandoffTab" class="admin-tab-panel" style="display:none;">
+  <div class="admin-section-head">
+    <div>
+      <h2>VPAR Handoff Notes</h2>
+      <p>Private notes for the incoming VPAR. Document how to run the portal, approve users, update data, and manage the program.</p>
+    </div>
+    <button class="gold" type="button" onclick="saveHandoffNotes()">Save Notes</button>
+  </div>
+
+  <div style="display:grid;gap:14px;margin-top:4px;">
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">How to approve new users</div>
+      <textarea id="handoffApproveUsers" rows="4" placeholder="e.g. Go to Admin → Portal Access → enter their email, set role to brother or alumni, hit Save."></textarea>
+    </div>
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">How to update alumni/brother data</div>
+      <textarea id="handoffUpdateData" rows="4" placeholder="e.g. Go to Admin → Alumni tab, search by name, hit Edit, update fields, hit Save."></textarea>
+    </div>
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">How to post homepage updates</div>
+      <textarea id="handoffPostUpdates" rows="4" placeholder="e.g. Click Post Update in the nav, fill in category, title, body, add images if needed, hit Post."></textarea>
+    </div>
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">How to move seniors to alumni</div>
+      <textarea id="handoffPromoteSeniors" rows="4" placeholder="e.g. Go to Admin → Brothers tab, search senior names, hit Promote to Alumni for each one."></textarea>
+    </div>
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">How mentorship pairings work</div>
+      <textarea id="handoffMentorship" rows="4" placeholder="e.g. Go to Admin → Mentorship Pairings, search alumni mentor and brother, set check-in count, hit Create Pairing."></textarea>
+    </div>
+    <div>
+      <div class="dashboard-eyebrow" style="margin-bottom:8px;">Other notes for incoming VPAR</div>
+      <textarea id="handoffOther" rows="5" placeholder="Anything else the next VPAR needs to know..."></textarea>
+    </div>
+  </div>
+</div>
+
+    <div id="adminAnalyticsTab" class="admin-tab-panel" style="display:none;">
+  <div class="admin-section-head">
+    <div>
+      <h2>Chapter Analytics</h2>
+      <p>Live snapshot of the portal across alumni, brothers, mentorship, and engagement.</p>
+    </div>
+    <button type="button" onclick="loadAnalyticsDashboard()">Refresh</button>
+  </div>
+  <div id="analyticsContent">
+    <div class="mentor-alert">Loading analytics...</div>
+  </div>
+</div>
+
+    <div id="adminProfileEditsTab" class="admin-tab-panel" style="display:none;">
+  <div class="admin-section-head">
+    <div>
+      <h2>Alumni Profile Edit Requests</h2>
+      <p>Review changes submitted by alumni before they go live.</p>
+    </div>
+    <button type="button" onclick="loadProfileEditRequestsIntoAdmin()">Refresh</button>
+  </div>
+  <div id="adminProfileEditsList">
+    Loading profile edit requests...
+  </div>
+</div>
+
+    <div id="adminHomepageTab" class="admin-tab-panel" style="display:none;">
+  <h2>Homepage Settings</h2>
+
+  <div class="mentor-alert" style="display:grid; gap:12px;">
+    <input id="homepageEventTitle" placeholder="Countdown event title">
+    <input id="homepageEventDate" type="datetime-local">
+    <input id="homepageEventDescription" placeholder="Short homepage event description">
+    <div class="article-upload-row">
+      <label class="article-upload-label" for="homepageHeroImage">
+        Upload Homepage Background
+      </label>
+      <input
+        id="homepageHeroImage"
+        class="article-file-input"
+        type="file"
+        accept="image/*"
+        onchange="handleHomepageHeroImage(this)">
+      <button
+        id="homepageHeroRemoveImageBtn"
+        type="button"
+        onclick="removeHomepageHeroImage()"
+        style="display:none;">
+        Remove Background
+      </button>
+    </div>
+    <input id="homepageHeroImageAlt" placeholder="Background image description, e.g. Brothers at formal">
+    <div id="homepageHeroImagePreview" class="article-image-preview hero-image-admin-preview">
+      No homepage image selected.
+    </div>
+
+    <button class="gold" type="button" onclick="saveAdminHomepageSettings()">
+      Save Homepage Settings
+    </button>
+  </div>
+
+  <h2 style="margin-top:24px;">Homepage Articles</h2>
+
+  <div class="mentor-alert" style="display:grid; gap:12px;">
+    <input id="homepageArticleCategory" placeholder="Category, e.g. Alumni Spotlight">
+    <input id="homepageArticleTitle" placeholder="Article title">
+    <textarea id="homepageArticleBody" placeholder="Article body" rows="4"></textarea>
+    <div class="article-upload-row">
+      <label class="article-upload-label" for="homepageArticleImage">
+        Add Gallery Images
+      </label>
+      <input
+        id="homepageArticleImage"
+        class="article-file-input"
+        type="file"
+        multiple
+        accept="image/*"
+        onchange="handleHomepageArticleImages(this, 'admin')">
+      <button
+        id="homepageArticleRemoveImageBtn"
+        type="button"
+        onclick="removeHomepageArticleImage()"
+        style="display:none;">
+        Remove Images
+      </button>
+    </div>
+    <input id="homepageArticleImageAlt" placeholder="Image description, e.g. Brothers at alumni panel">
+    <div id="homepageArticleImagePreview" class="article-image-preview">
+      No image selected.
+    </div>
+    <select id="homepageArticleStatus">
+      <option value="published">Published</option>
+      <option value="draft">Draft</option>
+    </select>
+
+    <button id="homepageArticleSaveBtn" class="gold" type="button" onclick="saveAdminHomepageArticle()">
+      Post Homepage Article
+    </button>
+  </div>
+
+  <div id="adminHomepageArticlesList" style="margin-top:14px;">
+    Loading homepage articles...
+  </div>
+</div>
+
+  </div>
+</div>
+
+<div id="alumniEditModal" class="overlay" style="display:none;">
+  <div class="role-card" style="max-width:580px;width:92%;max-height:85vh;overflow-y:auto;">
+    <div class="dashboard-eyebrow">Alumni Profile</div>
+    <h2>Edit My Profile</h2>
+    <p style="color:var(--muted);margin:6px 0 20px;">Changes go to VPAR for review before going live.</p>
+
+    <div style="display:grid;gap:12px;">
+      <input id="alumniEditCompany" placeholder="Company / Organization">
+      <input id="alumniEditRole" placeholder="Role / Position">
+      <input id="alumniEditLocation" placeholder="Location">
+      <input id="alumniEditLinkedin" placeholder="LinkedIn URL">
+      <input id="alumniEditGradYear" placeholder="Grad Year, e.g. 2022">
+      <input id="alumniEditPledgeClass" placeholder="Pledge Class, e.g. Alpha Mu">
+
+      <div class="article-upload-row">
+        <label class="article-upload-label" for="alumniEditPhoto">
+          Update Profile Photo
+        </label>
+        <input
+          id="alumniEditPhoto"
+          class="article-file-input"
+          type="file"
+          accept="image/*"
+          onchange="handleAlumniEditPhoto(this)">
+        <button
+          id="alumniEditRemovePhotoBtn"
+          type="button"
+          onclick="removeAlumniEditPhoto()"
+          style="display:none;">
+          Remove Photo
+        </button>
+      </div>
+
+      <div id="alumniEditPhotoPreview" class="article-image-preview">
+        No photo selected.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button class="gold" type="button" onclick="submitAlumniEditRequest()">Submit for Review</button>
+      <button type="button" onclick="closeAlumniEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="adminFormModal" class="overlay" style="display:none;">
+  <div class="role-card" style="max-width:650px; width:92%; max-height:85vh; overflow-y:auto;">
+    <h2 id="adminFormTitle">Add Profile</h2>
+
+    <div style="display:grid; gap:12px; margin-top:18px;">
+      <input id="formName" placeholder="Name">
+      <input id="formEmail" placeholder="Email">
+      <textarea
+        id="formAlternateEmails"
+        rows="2"
+        placeholder="Alternate login emails, comma-separated"></textarea>
+      <input id="formLinkedin" placeholder="LinkedIn URL">
+
+      <div class="article-upload-row">
+        <label class="article-upload-label" for="formProfileImage">
+          Upload Profile Photo
+        </label>
+        <input
+          id="formProfileImage"
+          class="article-file-input"
+          type="file"
+          accept="image/*"
+          onchange="handleProfileImage(this)">
+        <button
+          id="removeProfileImageBtn"
+          type="button"
+          onclick="removeProfileImage()"
+          style="display:none;">
+          Remove Photo
+        </button>
+      </div>
+
+      <div id="profileImagePreview" class="article-image-preview">
+        No profile photo selected.
+      </div>
+
+      <div id="alumniFields" style="display:none; gap:12px;">
+        <input id="formCompany" placeholder="Company / Organization">
+        <input id="formRole" placeholder="Role / Position">
+        <input id="formField" placeholder="Field">
+        <input id="formLocation" placeholder="Location">
+        <input id="formLastUpdatedNote" placeholder="Last updated note, e.g. Verified May 2026">
+        <select id="formMentorOptIn">
+          <option value="">Mentorship status: Not listed as mentor</option>
+          <option value="yes">List as alumni mentor</option>
+        </select>
+        <input id="formMentorFocus" placeholder="Mentor focus, e.g. Finance, Consulting, Product">
+        <input id="formMentorCapacity" placeholder="Mentor capacity, e.g. 1 mentee or 2 mentees">
+        <input id="formMentorTouchpoints" placeholder="Touchpoints, e.g. 3 semester check-ins">
+        <input id="formMentorStrengths" placeholder="Mentor strengths, e.g. Resume review + recruiting strategy">
+        <input id="formMentorBestFor" placeholder="Best fit, e.g. Brothers with specific company goals">
+      </div>
+
+      <div id="brotherFields" style="display:none; gap:12px;">
+        <input id="formYear" placeholder="Class Year">
+        <input id="formSchool" placeholder="School">
+        <input id="formMajor" placeholder="Major">
+        <input id="formStatus" placeholder="Status">
+        <input id="formPledgeClass" placeholder="Pledge Class">
+        <select id="formMenteeOptIn">
+          <option value="">Mentorship status: Not listed as mentee</option>
+          <option value="yes">List as brother seeking mentorship</option>
+        </select>
+        <input id="formMenteeIndustry" placeholder="Intended industry, e.g. Finance">
+        <input id="formMenteeCompanies" placeholder="Top companies, e.g. Deloitte, PwC, BCG">
+        <input id="formMenteeQuestion" placeholder="Career question">
+        <input id="formMenteeSupport" placeholder="Support wanted">
+        <input id="formMenteeAvailability" placeholder="Availability">
+        <input id="formMenteeStatusLabel" placeholder="Status label, e.g. Active brother interest">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button type="button" onclick="saveAdminForm()">Save</button>
+      <button type="button" onclick="closeAdminForm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+(function () {
+  async function loadNotes() {
+    const list = document.getElementById("notesList");
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (!window.loadMentorshipNotes) return;
+
+    const notes = await window.loadMentorshipNotes();
+
+    notes.forEach((item) => {
+      const li = document.createElement("li");
+      li.className = "note-item";
+
+      li.innerHTML = `
+        <span>${item.note}</span>
+        <button type="button" class="delete-note-btn">Delete</button>
+      `;
+
+      li.querySelector(".delete-note-btn").onclick = async () => {
+        if (window.deleteMentorshipNote) {
+          await window.deleteMentorshipNote(item.id);
+        }
+
+        li.remove();
+      };
+
+      list.appendChild(li);
+    });
+  }
+
+  async function addNote() {
+    const input = document.getElementById("noteInput");
+    const list = document.getElementById("notesList");
+
+    if (!input || !list) return;
+
+    const noteText = input.value.trim();
+    if (!noteText) return;
+
+    let noteId = null;
+
+    if (window.saveMentorshipNote) {
+      noteId = await window.saveMentorshipNote(noteText);
+    }
+
+    const li = document.createElement("li");
+    li.className = "note-item";
+
+    li.innerHTML = `
+      <span>${noteText}</span>
+      <button type="button" class="delete-note-btn">Delete</button>
+    `;
+
+    li.querySelector(".delete-note-btn").onclick = async () => {
+      if (noteId && window.deleteMentorshipNote) {
+        await window.deleteMentorshipNote(noteId);
+      }
+
+      li.remove();
+    };
+
+    list.appendChild(li);
+    input.value = "";
+  }
+
+  window.addEventListener("load", () => {
+  setTimeout(loadNotes, 500);
+
+  const btn = document.getElementById("addNoteBtn");
+  const input = document.getElementById("noteInput");
+    if (btn) {
+      btn.addEventListener("click", async () => {
+        await addNote();
+      });
+    }
+
+    if (input) {
+      input.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          await addNote();
+        }
+      });
+    }
+  });
+window.showAdminTab = function(tab) {
+  const tabIds = {
+    alumni: "adminAlumniTab",
+    brothers: "adminBrothersTab",
+    requests: "adminRequestsTab",
+    mentees: "adminMenteeRequestsTab",
+    pairings: "adminPairingsTab",
+    photoRequests: "adminPhotoRequestsTab",
+    notes: "adminNotesTab",
+    access: "adminAccessTab",
+    homepage: "adminHomepageTab",
+    profileEdits: "adminProfileEditsTab",
+    analytics: "adminAnalyticsTab",
+    handoff: "adminHandoffTab"
+
+  };
+
+  Object.values(tabIds).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  const selected = document.getElementById(tabIds[tab] || tabIds.alumni);
+  if (selected) selected.style.display = "block";
+
+ if (tab === "photoRequests") {
+  loadPhotoRequestsIntoAdmin();
+}
+
+if (tab === "analytics") {
+  loadAnalyticsDashboard();
+}
+
+if (tab === "handoff") {
+  loadHandoffNotes();
+}
+};
+
+function portalSafeEmail(email) {
+  return String(email || "").replace(/\./g, "_");
+}
+
+function renderPortalAccessControls(profile, portalRole, accessMaps) {
+  const email = profile.email || "";
+  const safeEmail = portalSafeEmail(email);
+  const approved = Boolean(email && accessMaps.approvedUsers?.[safeEmail]);
+  const familyHead = Boolean(email && accessMaps.familyHeads?.[safeEmail]);
+  const storedRole = accessMaps.approvedUsers?.[safeEmail]?.role || "not approved";
+  const statusLabel = approved
+    ? `${storedRole}${familyHead ? " + Family Head" : ""}`
+    : "not approved";
+
+  if (!email) {
+    return `
+      <button class="admin-access-toggle" type="button" onclick='openPortalAccessPanel(${JSON.stringify({
+        name: profile.name || "Profile",
+        email: "",
+        portalRole,
+        approved,
+        familyHead,
+        storedRole
+      })})'>
+        Portal Access
+        <span>email needed</span>
+      </button>
+    `;
+  }
+
+  return `
+    <button class="admin-access-toggle" type="button" onclick='openPortalAccessPanel(${JSON.stringify({
+      name: profile.name || "Profile",
+      email,
+      portalRole,
+      approved,
+      familyHead,
+      storedRole
+    })})'>
+      Portal Access
+      <span>${esc(statusLabel)}</span>
+    </button>
+  `;
+}
+
+window.closePortalAccessPanel = function() {
+  const panel = document.getElementById("portalAccessPanel");
+  if (panel) panel.style.display = "none";
+};
+
+window.openPortalAccessPanel = function(details) {
+  const panel = document.getElementById("portalAccessPanel");
+  const body = document.getElementById("portalAccessPanelBody");
+  if (!panel || !body) return;
+
+  const name = details.name || "Profile";
+  const email = details.email || "";
+  const role = details.portalRole || "";
+  const approved = Boolean(details.approved);
+  const familyHead = Boolean(details.familyHead);
+  const storedRole = details.storedRole || "not approved";
+
+  body.innerHTML = `
+    <div class="portal-access-person">
+      <strong>${esc(name)}</strong>
+      <span>${email ? esc(email) : "No email listed"}</span>
+    </div>
+    <div class="portal-access-status-grid">
+      <div><span>Login</span><strong>${approved ? `Approved as ${esc(storedRole)}` : "Not approved"}</strong></div>
+      <div><span>Family Head</span><strong>${familyHead ? "Yes" : "No"}</strong></div>
+    </div>
+    ${email ? `
+      <div class="admin-access-actions">
+        <button type="button" onclick='approveProfileLogin(${JSON.stringify(email)}, ${JSON.stringify(role)}, ${JSON.stringify(name)})'>
+          ${approved ? "Update Login Role" : "Approve Login"}
+        </button>
+        ${approved ? `<button type="button" onclick='removeProfileLogin(${JSON.stringify(email)})'>Remove Login</button>` : ""}
+        ${familyHead
+          ? `<button type="button" onclick='toggleProfileFamilyHead(${JSON.stringify(email)}, false, ${JSON.stringify(name)})'>Remove Family Head</button>`
+          : `<button type="button" onclick='toggleProfileFamilyHead(${JSON.stringify(email)}, true, ${JSON.stringify(name)})'>Make Family Head</button>`}
+      </div>
+    ` : `<div class="mentor-alert">Add an email to this profile before managing portal access.</div>`}
+  `;
+
+  panel.style.display = "flex";
+};
+
+window.approveProfileLogin = async function(email, role, name) {
+  if (!window.approvePortalUser) return;
+
+  const approved = await window.approvePortalUser(email, role, name);
+  if (!approved) return;
+
+  closePortalAccessPanel();
+  await loadAdminDashboard();
+  await loadPortalAccessRecordsIntoAdmin();
+  toast(`Portal login approved as ${role}.`);
+};
+
+window.removeProfileLogin = async function(email) {
+  if (!window.removePortalUserApproval) return;
+  if (!confirm("Remove this person's login access?")) return;
+
+  const removed = await window.removePortalUserApproval(email);
+  if (!removed) return;
+
+  closePortalAccessPanel();
+  await loadAdminDashboard();
+  await loadPortalAccessRecordsIntoAdmin();
+  toast("Portal login removed.");
+};
+
+window.toggleProfileFamilyHead = async function(email, enabled, name) {
+  if (!window.setFamilyHeadAccess) return;
+
+  const action = enabled ? "give this person Family Head posting access" : "remove Family Head posting access";
+  if (!confirm(`Are you sure you want to ${action}?`)) return;
+
+  const saved = await window.setFamilyHeadAccess(email, enabled, name);
+  if (!saved) return;
+
+  closePortalAccessPanel();
+  await loadAdminDashboard();
+  await loadPortalAccessRecordsIntoAdmin();
+  toast(enabled ? "Family Head access granted." : "Family Head access removed.");
+};
+
+function portalAccessDisplayEmail(emailKey, record) {
+  return String(record?.email || emailKey || "").replace(/_/g, ".");
+}
+
+function renderPortalAccessRecord(emailKey, record, familyHeads, deiEditors) {
+  const email = portalAccessDisplayEmail(emailKey, record).toLowerCase();
+  const safeEmail = portalSafeEmail(email);
+  const familyHead = Boolean(familyHeads?.[safeEmail] || familyHeads?.[emailKey]);
+  const deiEditor = deiEditors?.[safeEmail] || deiEditors?.[emailKey];
+  const deiCategories = Object.entries(deiEditor?.categories || {})
+    .filter(([, enabled]) => Boolean(enabled))
+    .map(([category]) => category);
+  const role = String(record?.role || "not set").toLowerCase();
+  const name = record?.name || "No name listed";
+  const linkedProfile = record?.linkedProfileEmail && record.linkedProfileEmail !== email
+    ? ` · alias for ${record.linkedProfileEmail}`
+    : "";
+
+  return `
+    <div class="mentor-alert portal-access-record">
+      <div>
+        <strong>${esc(email)}</strong>
+        <span>${esc(name)} · ${esc(role)}${esc(linkedProfile)}${familyHead ? " · Family Head" : ""}${deiCategories.length ? ` · DEI: ${esc(deiCategories.join(", "))}` : ""}</span>
+      </div>
+      <div class="admin-card-actions">
+        <button type="button" onclick='approveProfileLogin(${JSON.stringify(email)}, "alumni", ${JSON.stringify(name)})'>Set Alumni</button>
+        <button type="button" onclick='approveProfileLogin(${JSON.stringify(email)}, "brother", ${JSON.stringify(name)})'>Set Brother</button>
+        ${familyHead
+          ? `<button type="button" onclick='toggleProfileFamilyHead(${JSON.stringify(email)}, false, ${JSON.stringify(name)})'>Remove Family Head</button>`
+          : `<button type="button" onclick='toggleProfileFamilyHead(${JSON.stringify(email)}, true, ${JSON.stringify(name)})'>Make Family Head</button>`}
+        <button type="button" onclick='removeProfileLogin(${JSON.stringify(email)})'>Remove Login</button>
+      </div>
+    </div>
+  `;
+}
+
+async function loadPortalAccessRecordsIntoAdmin() {
+  const list = document.getElementById("portalAccessRecordsList");
+  if (!list) return;
+
+  if (!window.loadPortalAccessMaps) {
+    list.innerHTML = `<div class="mentor-alert">Portal access records are still loading.</div>`;
+    return;
+  }
+
+  list.innerHTML = `<div class="mentor-alert">Loading portal access records...</div>`;
+
+  const accessMaps = await window.loadPortalAccessMaps();
+  const records = Object.entries(accessMaps.approvedUsers || {})
+    .sort(([, a], [, b]) => String(a?.email || "").localeCompare(String(b?.email || "")));
+
+  list.innerHTML = records.length
+    ? records.map(([emailKey, record]) => renderPortalAccessRecord(emailKey, record, accessMaps.familyHeads || {}, accessMaps.deiEditors || {})).join("")
+    : `<div class="mentor-alert">No approved portal users yet.</div>`;
+}
+
+window.loadPortalAccessRecordsIntoAdmin = loadPortalAccessRecordsIntoAdmin;
+
+window.saveManualPortalAccess = async function() {
+  if (!window.approvePortalUser) return;
+
+  const nameInput = document.getElementById("manualAccessName");
+  const emailInput = document.getElementById("manualAccessEmail");
+  const roleInput = document.getElementById("manualAccessRole");
+  const familyInput = document.getElementById("manualAccessFamilyHead");
+
+  const name = nameInput ? nameInput.value.trim() : "";
+  const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  const role = roleInput ? roleInput.value : "alumni";
+  const makeFamilyHead = Boolean(familyInput && familyInput.checked);
+
+  if (!email) {
+    alert("Email is required.");
+    return;
+  }
+
+  const approved = await window.approvePortalUser(email, role, name);
+  if (!approved) return;
+
+  if (makeFamilyHead && window.setFamilyHeadAccess) {
+    const familySaved = await window.setFamilyHeadAccess(email, true, name);
+    if (!familySaved) return;
+  }
+
+  if (nameInput) nameInput.value = "";
+  if (emailInput) emailInput.value = "";
+  if (familyInput) familyInput.checked = false;
+
+  await loadAdminDashboard();
+  await loadPortalAccessRecordsIntoAdmin();
+  toast(`${email} approved as ${role}${makeFamilyHead ? " + Family Head" : ""}.`);
+};
+
+window.saveManualDEIAccess = async function() {
+  if (!window.setDEIEditorAccess) return;
+
+  const nameInput = document.getElementById("deiAccessName");
+  const emailInput = document.getElementById("deiAccessEmail");
+  const name = nameInput ? nameInput.value.trim() : "";
+  const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  const categories = [
+    ["overview", "deiAccessOverview"],
+    ["resources", "deiAccessResources"],
+    ["events", "deiAccessEvents"],
+    ["feedback", "deiAccessFeedback"]
+  ]
+    .filter(([, id]) => document.getElementById(id)?.checked)
+    .map(([category]) => category);
+
+  if (!email) {
+    alert("Email is required.");
+    return;
+  }
+
+  const saved = await window.setDEIEditorAccess(email, categories, name);
+  if (!saved) return;
+
+  if (nameInput) nameInput.value = "";
+  if (emailInput) emailInput.value = "";
+  ["deiAccessOverview", "deiAccessResources", "deiAccessEvents", "deiAccessFeedback"].forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) checkbox.checked = false;
+  });
+
+  await loadPortalAccessRecordsIntoAdmin();
+  toast(categories.length ? `${email} can post to ${categories.join(", ")}.` : `${email} DEI access removed.`);
+};
+
+function pairingOption(profile, type) {
+  const label = type === "alumni"
+    ? `${profile.name || "Unnamed"} · ${profile.email || "No email"} · ${profile.company || "Company N/A"}`
+    : `${profile.name || "Unnamed"} · ${profile.email || "No email"} · ${pledgeClassDisplay(profile.pledgeClass)} · Class of ${profile.year || "N/A"}`;
+
+  return {
+    name: profile.name || "",
+    email: String(profile.email || "").toLowerCase().trim(),
+    company: profile.company || "",
+    role: profile.role || "",
+    label
+  };
+}
+
+function fillPairingSelects() {
+  const alumniList = document.getElementById("pairingAlumniOptionsList");
+  const brotherList = document.getElementById("pairingBrotherOptionsList");
+
+  if (!alumniList || !brotherList) return;
+
+  window.pairingAlumniOptions = alumni
+    .filter(profile => profile.email)
+    .map(profile => pairingOption(profile, "alumni"))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  window.pairingBrotherOptions = brothers
+    .filter(profile => profile.email)
+    .map(profile => pairingOption(profile, "brother"))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  alumniList.innerHTML = window.pairingAlumniOptions
+    .map(option => `<option value="${esc(option.label)}"></option>`)
+    .join("");
+
+  brotherList.innerHTML = window.pairingBrotherOptions
+    .map(option => `<option value="${esc(option.label)}"></option>`)
+    .join("");
+}
+
+function parsePairingSelectValue(value) {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    console.error("Pairing select parse failed:", error);
+    return null;
+  }
+}
+
+function pairingOptionFromSearch(inputId, options, requiredLabel) {
+  const input = document.getElementById(inputId);
+  const value = String(input?.value || "").trim();
+  if (!value) return null;
+
+  const exact = options.find(option => option.label === value);
+  if (exact) return exact;
+
+  const normalized = value.toLowerCase();
+  const matches = options.filter(option =>
+    option.label.toLowerCase().includes(normalized) ||
+    option.email.toLowerCase() === normalized ||
+    option.name.toLowerCase().includes(normalized)
+  );
+
+  if (matches.length === 1) return matches[0];
+
+  alert(matches.length
+    ? `Be more specific for ${requiredLabel}; multiple people match that search.`
+    : `Choose a valid ${requiredLabel} from the search suggestions.`);
+
+  if (input) input.focus();
+  return null;
+}
+
+function pairingProgressPercent(brother) {
+  const total = Math.max(1, Number(brother.totalCheckIns || 3));
+  const completed = Math.min(total, Math.max(0, Number(brother.completedCheckIns || 0)));
+  return Math.round((completed / total) * 100);
+}
+
+function renderAdminPairingCard(pairing) {
+  const brothersList = Array.isArray(pairing.brothers) ? pairing.brothers : [];
+
+  return `
+    <div class="mentor-alert pairing-card" data-pairing-id="${esc(pairing.id)}">
+      <div class="pairing-card-head">
+        <div>
+          <div class="dashboard-eyebrow">Alumni Mentor</div>
+          <h3>${esc(pairing.alumniName || "Unnamed Alumni")}</h3>
+          <p>${esc(pairing.alumniRole || "Role N/A")} · ${esc(pairing.alumniCompany || "Company N/A")}</p>
+          <small>${esc(pairing.alumniEmail || "")}</small>
+        </div>
+        <button type="button" onclick='deleteMentorshipPairingFromAdmin(${JSON.stringify(pairing.id)})'>
+          Delete Pairing
+        </button>
+      </div>
+
+      <div class="pairing-brother-grid">
+        ${brothersList.map((brother, index) => {
+          const total = Math.max(1, Number(brother.totalCheckIns || 3));
+          const completed = Math.min(total, Math.max(0, Number(brother.completedCheckIns || 0)));
+          const percent = pairingProgressPercent(brother);
+
+          return `
+            <div class="pairing-brother-card" data-brother-index="${index}">
+              <strong>${esc(brother.name || "Brother")}</strong>
+              <span>${esc(brother.email || "")}</span>
+              <div class="mentor-progress-row">
+                <strong>${completed} of ${total} check-ins</strong>
+                <span>${percent}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${percent}%;"></div>
+              </div>
+              <div class="mentor-progress-controls pairing-progress-controls">
+                <label>
+                  Completed
+                  <input class="pairing-completed-input" type="number" min="0" value="${completed}">
+                </label>
+                <label>
+                  Total
+                  <input class="pairing-total-input" type="number" min="1" value="${total}">
+                </label>
+                <label class="progress-note-control">
+                  Note
+                  <input class="pairing-note-input" type="text" value="${esc(brother.progressNote || "")}" placeholder="Example: Meeting 1 complete">
+                </label>
+                <button class="gold" type="button" onclick='savePairingBrotherProgress(this, ${JSON.stringify(pairing.id)}, ${index})'>
+                  Save
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderCheckInRequestCard(request) {
+  const status = String(request.status || "pending").toLowerCase();
+  const pending = status === "pending";
+
+  return `
+    <div class="mentor-alert checkin-request-card">
+      <div>
+        <strong>${esc(request.brotherName || "Brother check-in")}</strong>
+        <span>${esc(request.alumniName || "Alumni mentor")} pairing</span>
+        <small>Submitted by ${esc(request.requesterEmail || "N/A")} · ${esc(formatUpdatedAt(request.createdAt))}</small>
+      </div>
+      <div class="photo-request-actions">
+        ${pending ? `
+          <button class="gold" type="button" onclick='reviewCheckInRequestFromAdmin(${JSON.stringify(request.id)}, true)'>Approve</button>
+          <button type="button" onclick='reviewCheckInRequestFromAdmin(${JSON.stringify(request.id)}, false)'>Reject</button>
+        ` : `<span class="dashboard-pill">${esc(status)}</span>`}
+      </div>
+    </div>
+  `;
+}
+
+async function loadMentorshipPairingsIntoAdmin() {
+  fillPairingSelects();
+
+  const pairingsList = document.getElementById("adminPairingsList");
+  const checkInList = document.getElementById("adminCheckInRequestsList");
+
+  if (checkInList) {
+    const requests = window.loadMentorshipCheckInRequests
+      ? await window.loadMentorshipCheckInRequests()
+      : [];
+
+    checkInList.innerHTML = requests.length
+      ? requests.map(renderCheckInRequestCard).join("")
+      : `<div class="mentor-alert">No check-in completion requests yet.</div>`;
+  }
+
+  if (!pairingsList) return;
+
+  const pairings = window.loadMentorshipPairings
+    ? await window.loadMentorshipPairings()
+    : [];
+
+  pairingsList.innerHTML = pairings.length
+    ? pairings.map(renderAdminPairingCard).join("")
+    : `<div class="mentor-alert">No mentorship pairings created yet.</div>`;
+}
+
+window.createMentorshipPairingFromAdmin = async function() {
+  const alumniInput = document.getElementById("pairingAlumniSearch");
+  const brotherOneInput = document.getElementById("pairingBrotherOneSearch");
+  const brotherTwoInput = document.getElementById("pairingBrotherTwoSearch");
+  const totalInput = document.getElementById("pairingTotalCheckIns");
+
+  const selectedAlumni = pairingOptionFromSearch(
+    "pairingAlumniSearch",
+    window.pairingAlumniOptions || [],
+    "alumni mentor"
+  );
+  const brotherOne = pairingOptionFromSearch(
+    "pairingBrotherOneSearch",
+    window.pairingBrotherOptions || [],
+    "brother one"
+  );
+  const brotherTwo = String(brotherTwoInput?.value || "").trim()
+    ? pairingOptionFromSearch(
+        "pairingBrotherTwoSearch",
+        window.pairingBrotherOptions || [],
+        "brother two"
+      )
+    : null;
+  const totalCheckIns = Math.max(1, Number(totalInput?.value || 3));
+
+  if (!selectedAlumni || !brotherOne) {
+    alert("Choose one alumni mentor and at least one brother.");
+    return;
+  }
+
+  if (brotherTwo && brotherOne.email === brotherTwo.email) {
+    alert("Brother one and brother two cannot be the same person.");
+    return;
+  }
+
+  const brothersForPairing = [brotherOne, brotherTwo]
+    .filter(Boolean)
+    .map((brother) => ({
+      name: brother.name,
+      email: brother.email,
+      completedCheckIns: 0,
+      totalCheckIns,
+      progressNote: ""
+    }));
+
+  const saved = await window.saveMentorshipPairing({
+    alumniName: selectedAlumni.name,
+    alumniEmail: selectedAlumni.email,
+    alumniCompany: selectedAlumni.company,
+    alumniRole: selectedAlumni.role,
+    brothers: brothersForPairing,
+    status: "active"
+  });
+
+  if (!saved) return;
+
+  if (alumniInput) alumniInput.value = "";
+  if (brotherOneInput) brotherOneInput.value = "";
+  if (brotherTwoInput) brotherTwoInput.value = "";
+
+  await loadMentorshipPairingsIntoAdmin();
+  toast("Mentorship pairing created.");
+};
+
+window.savePairingBrotherProgress = async function(button, pairingId, brotherIndex) {
+  if (!window.loadMentorshipPairings || !window.saveMentorshipPairing) return;
+
+  const card = button?.closest(".pairing-brother-card");
+  if (!card) return;
+
+  const pairings = await window.loadMentorshipPairings();
+  const pairing = pairings.find(item => item.id === pairingId);
+  if (!pairing) return;
+
+  const brothersForPairing = Array.isArray(pairing.brothers) ? [...pairing.brothers] : [];
+  const target = brothersForPairing[brotherIndex];
+  if (!target) return;
+
+  const completedInput = card.querySelector(".pairing-completed-input");
+  const totalInput = card.querySelector(".pairing-total-input");
+  const noteInput = card.querySelector(".pairing-note-input");
+  const totalCheckIns = Math.max(1, Number(totalInput?.value || target.totalCheckIns || 3));
+
+  brothersForPairing[brotherIndex] = {
+    ...target,
+    completedCheckIns: Math.min(totalCheckIns, Math.max(0, Number(completedInput?.value || 0))),
+    totalCheckIns,
+    progressNote: noteInput?.value.trim() || ""
+  };
+
+  const saved = await window.saveMentorshipPairing({
+    ...pairing,
+    brothers: brothersForPairing
+  });
+
+  if (!saved) return;
+
+  await loadMentorshipPairingsIntoAdmin();
+  toast("Pairing progress saved.");
+};
+
+window.deleteMentorshipPairingFromAdmin = async function(pairingId) {
+  if (!window.deleteMentorshipPairing) return;
+  if (!confirm("Delete this mentorship pairing?")) return;
+
+  const deleted = await window.deleteMentorshipPairing(pairingId);
+  if (!deleted) return;
+
+  await loadMentorshipPairingsIntoAdmin();
+  toast("Mentorship pairing deleted.");
+};
+
+window.deleteMentorshipRequestFromAdmin = async function(requestId) {
+  if (!window.deleteMentorshipRequest) return;
+  if (!confirm("Delete this mentorship request?")) return;
+
+  const deleted = await window.deleteMentorshipRequest(requestId);
+  if (!deleted) return;
+
+  await loadAdminDashboard();
+  if (typeof loadHomepageMentorshipStatusIntoPage === "function") {
+    await loadHomepageMentorshipStatusIntoPage();
+  }
+  toast("Mentorship request deleted.");
+};
+
+window.reviewCheckInRequestFromAdmin = async function(requestId, approved) {
+  if (!window.reviewMentorshipCheckInRequest) return;
+
+  const reviewed = await window.reviewMentorshipCheckInRequest(requestId, approved);
+  if (!reviewed) return;
+
+  await loadMentorshipPairingsIntoAdmin();
+  toast(approved ? "Check-in approved." : "Check-in rejected.");
+};
+
+function renderPhotoRequestCard(request) {
+  const status = String(request.status || "pending").toLowerCase();
+  const isPending = status === "pending";
+
+  return `
+    <div class="mentor-alert photo-request-card">
+      <div class="photo-request-preview">
+        ${request.imageUrl
+          ? `<img src="${esc(request.imageUrl)}" alt="${esc(request.profileName || "Pending profile photo")}">`
+          : `<div class="face"></div>`}
+      </div>
+      <div class="photo-request-content">
+        <strong>${esc(request.profileName || "Brother profile")}</strong>
+        <span>${esc(request.profileEmail || request.requesterEmail || "No email listed")}</span>
+        <small>Status: ${esc(status)} • Submitted: ${esc(formatUpdatedAt(request.createdAt))}</small>
+      </div>
+      <div class="photo-request-actions">
+        ${isPending ? `
+          <button class="gold" type="button" onclick='approvePhotoRequestFromAdmin(${JSON.stringify(request.id)})'>
+            Approve
+          </button>
+          <button type="button" onclick='rejectPhotoRequestFromAdmin(${JSON.stringify(request.id)})'>
+            Reject
+          </button>
+        ` : `
+          <span class="dashboard-pill">${esc(status)}</span>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+async function loadPhotoRequestsIntoAdmin() {
+  const list = document.getElementById("adminPhotoRequestsList");
+  if (!list) return;
+
+  if (!window.loadProfilePhotoRequests) {
+    list.innerHTML = `<div class="mentor-alert">Photo request tools are still loading.</div>`;
+    return;
+  }
+
+  const requests = await window.loadProfilePhotoRequests();
+
+  list.innerHTML = requests.length
+    ? requests.map(renderPhotoRequestCard).join("")
+    : `<div class="mentor-alert">No profile photo requests yet.</div>`;
+}
+
+window.approvePhotoRequestFromAdmin = async function(requestId) {
+  if (!window.approveProfilePhotoRequest) return;
+  if (!confirm("Approve this photo and make it public on the brother profile?")) return;
+
+  const approved = await window.approveProfilePhotoRequest(requestId);
+  if (!approved) return;
+
+  await loadFirebaseData();
+  await loadAdminDashboard();
+  renderBrothers();
+  toast("Profile photo approved.");
+};
+
+window.rejectPhotoRequestFromAdmin = async function(requestId) {
+  if (!window.rejectProfilePhotoRequest) return;
+  if (!confirm("Reject this profile photo request?")) return;
+
+  const rejected = await window.rejectProfilePhotoRequest(requestId);
+  if (!rejected) return;
+
+  await loadAdminDashboard();
+  toast("Profile photo request rejected.");
+};
+
+async function loadAdminDashboard() {
+  await loadFirebaseData();
+
+  const adminAlumniCount = document.getElementById("adminAlumniCount");
+  const brotherCount = document.getElementById("brotherCount");
+  const requestCount = document.getElementById("requestCount");
+  const menteeRequestCount = document.getElementById("menteeRequestCount");
+  const notesCount = document.getElementById("notesCount");
+
+  const adminAlumniList = document.getElementById("adminAlumniList");
+  const adminBrothersList = document.getElementById("adminBrothersList");
+  const adminRequestsList = document.getElementById("adminRequestsList");
+  const adminMenteeRequestsList = document.getElementById("adminMenteeRequestsList");
+  const adminNotesList = document.getElementById("adminNotesList");
+
+  if (
+    !adminAlumniCount ||
+    !brotherCount ||
+    !requestCount ||
+    !menteeRequestCount ||
+    !notesCount ||
+    !adminAlumniList ||
+    !adminBrothersList ||
+    !adminRequestsList ||
+    !adminMenteeRequestsList ||
+    !adminNotesList
+  ) {
+    return;
+  }
+
+  adminAlumniCount.textContent = alumni.length;
+  brotherCount.textContent = brothers.length;
+
+  const accessMaps = window.loadPortalAccessMaps
+    ? await window.loadPortalAccessMaps()
+    : { approvedUsers: {}, familyHeads: {} };
+
+  const alumniSearch = (document.getElementById("adminAlumniSearch")?.value || "")
+    .trim()
+    .toLowerCase();
+
+  const filteredAlumni = alumni
+    .map((a, originalIndex) => ({ a, originalIndex }))
+    .filter(({ a }) => {
+      const text = `${a.name} ${a.company} ${a.email} ${a.role} ${a.pledgeClass}`.toLowerCase();
+      return text.includes(alumniSearch);
+    })
+    .slice(0, 50);
+
+  adminAlumniList.innerHTML =
+    filteredAlumni.length
+      ? filteredAlumni.map(({ a, originalIndex }) => `
+        <div class="mentor-alert">
+          <strong>${esc(a.name)}</strong><br>
+          <span>${esc(a.company || "")} • ${esc(a.role || "")}</span><br>
+          <small>${esc(a.field || "")} • ${esc(a.location || "")}</small><br>
+          <small>Last updated: ${esc(a.lastUpdatedNote || formatUpdatedAt(a.updatedAt || a.importedAt || a.createdAt))}</small>
+          ${a.alternateEmails?.length ? `<br><small>Alternate logins: ${esc(formatAlternateEmails(a.alternateEmails))}</small>` : ""}
+          ${a.mentorOptIn ? `<br><small>Mentorship: Alumni mentor • ${esc(a.mentorFocus || a.field || "Focus TBD")}</small>` : ""}
+          <div class="admin-card-actions">
+            <button type="button" onclick="editAlumni(${originalIndex})">Edit</button>
+            <button type="button" onclick="deleteAlumni(${originalIndex})">Delete</button>
+            ${renderPortalAccessControls(a, "alumni", accessMaps)}
+          </div>
+        </div>
+      `).join("")
+      : `<div class="mentor-alert">No alumni found with that name.</div>`;
+
+  const brotherSearch = (document.getElementById("adminBrotherSearch")?.value || "")
+    .trim()
+    .toLowerCase();
+
+  const filteredBrothers = brothers
+    .map((b, originalIndex) => ({ b, originalIndex }))
+    .filter(({ b }) => {
+      const text = `${b.name} ${b.email} ${b.major} ${b.pledgeClass} ${b.year}`.toLowerCase();
+      return text.includes(brotherSearch);
+    })
+    .slice(0, 50);
+
+  adminBrothersList.innerHTML =
+    filteredBrothers.length
+      ? filteredBrothers.map(({ b, originalIndex }) => `
+        <div class="mentor-alert">
+          <strong>${esc(b.name)}</strong><br>
+          <span>${esc(b.school || "")} • ${esc(b.major || "")}</span><br>
+          <small>Class of ${esc(b.year || "")} • ${esc(pledgeClassDisplay(b.pledgeClass))}</small>
+          ${b.alternateEmails?.length ? `<br><small>Alternate logins: ${esc(formatAlternateEmails(b.alternateEmails))}</small>` : ""}
+          ${b.menteeOptIn ? `<br><small>Mentorship: Seeking mentorship • ${esc(b.menteeIndustry || brotherMajorGroup(b.major))}</small>` : ""}
+          <div class="admin-card-actions">
+            <button type="button" onclick="editBrother(${originalIndex})">Edit</button>
+            <button type="button" onclick="deleteBrother(${originalIndex})">Delete</button>
+            <button type="button" onclick="openPromoteConfirm(${originalIndex})">Promote to Alumni</button>
+            ${renderPortalAccessControls(b, "brother", accessMaps)}
+          </div>
+        </div>
+      `).join("")
+      : `<div class="mentor-alert">No brother found with that name.</div>`;
+
+  const mentorRequests = window.loadAdminMentorRequests
+    ? await window.loadAdminMentorRequests()
+    : [];
+
+  const menteeRequests = window.loadAdminMenteeRequests
+    ? await window.loadAdminMenteeRequests()
+    : [];
+
+  const adminNotes = window.loadAdminNotesForAdmin
+    ? await window.loadAdminNotesForAdmin()
+    : [];
+
+  requestCount.textContent = mentorRequests.length;
+  menteeRequestCount.textContent = menteeRequests.length;
+  notesCount.textContent = adminNotes.length;
+
+  adminRequestsList.innerHTML = mentorRequests.length
+    ? mentorRequests.map(request =>
+        window.renderRequestCard
+          ? window.renderRequestCard(request, "Mentor Request")
+          : `<div class="mentor-alert">${esc(request.mentorName || "Mentor Request")}</div>`
+      ).join("")
+    : `<div class="mentor-alert">No mentor requests yet.</div>`;
+
+  adminMenteeRequestsList.innerHTML = menteeRequests.length
+    ? menteeRequests.map(request =>
+        window.renderRequestCard
+          ? window.renderRequestCard(request, "Mentee Request")
+          : `<div class="mentor-alert">${esc(request.mentorName || "Mentee Request")}</div>`
+      ).join("")
+    : `<div class="mentor-alert">No mentee requests yet.</div>`;
+
+  adminNotesList.innerHTML = adminNotes.length
+    ? adminNotes.map(note =>
+        window.renderAdminNoteCard
+          ? window.renderAdminNoteCard(note)
+          : `<div class="mentor-alert">${esc(note.note || "Mentorship note")}</div>`
+      ).join("")
+    : `<div class="mentor-alert">No mentorship notes yet.</div>`;
+
+  await loadPhotoRequestsIntoAdmin();
+}
+
+window.loadAdminDashboard = loadAdminDashboard;
+
+async function openAdminPanel() {
+  const adminPanel = document.getElementById("adminPanel");
+  if (!adminPanel) return;
+
+  adminPanel.style.display = "flex";
+
+  if (!alumni.length || !brothers.length) {
+    await loadFirebaseData();
+  }
+
+  await loadAdminDashboard();
+  await loadHomepageSettingsIntoAdmin();
+  await loadHomepageArticlesIntoAdmin();
+
+  const adminAlumniSearch = document.getElementById("adminAlumniSearch");
+  const adminBrotherSearch = document.getElementById("adminBrotherSearch");
+
+  if (adminAlumniSearch && !adminAlumniSearch.dataset.listenerAdded) {
+    adminAlumniSearch.addEventListener("input", loadAdminDashboard);
+    adminAlumniSearch.dataset.listenerAdded = "true";
+  }
+
+  if (adminBrotherSearch && !adminBrotherSearch.dataset.listenerAdded) {
+    adminBrotherSearch.addEventListener("input", loadAdminDashboard);
+    adminBrotherSearch.dataset.listenerAdded = "true";
+  }
+
+  showAdminTab("alumni");
+}
+
+
+let editingType = null;
+let editingIndex = null;
+
+function clearAdminForm() {
+  [
+    "formName",
+    "formCompany",
+    "formRole",
+    "formField",
+    "formLocation",
+    "formLinkedin",
+    "formLastUpdatedNote",
+    "formMentorOptIn",
+    "formMentorFocus",
+    "formMentorCapacity",
+    "formMentorTouchpoints",
+    "formMentorStrengths",
+    "formMentorBestFor",
+    "formEmail",
+    "formAlternateEmails",
+    "formProfileImage",
+    "formYear",
+    "formSchool",
+    "formMajor",
+    "formStatus",
+    "formPledgeClass",
+    "formMenteeOptIn",
+    "formMenteeIndustry",
+    "formMenteeCompanies",
+    "formMenteeQuestion",
+    "formMenteeSupport",
+    "formMenteeAvailability",
+    "formMenteeStatusLabel"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  editingProfileImageFile = null;
+  editingProfileImageUrl = "";
+  editingProfileImagePath = "";
+  setProfileImagePreview("");
+}
+function setAdminFormType(type) {
+  const alumniFields = document.getElementById("alumniFields");
+  const brotherFields = document.getElementById("brotherFields");
+
+  if (alumniFields) alumniFields.style.display = type === "alumni" ? "grid" : "none";
+  if (brotherFields) brotherFields.style.display = type === "brother" ? "grid" : "none";
+}
+function fillAdminForm(data) {
+  document.getElementById("formName").value = data.name || "";
+  document.getElementById("formCompany").value = data.company || "";
+  document.getElementById("formRole").value = data.role || "";
+  document.getElementById("formField").value = data.field || "";
+  document.getElementById("formLocation").value = data.location || "";
+  document.getElementById("formLinkedin").value = data.linkedin || "";
+  document.getElementById("formLastUpdatedNote").value = data.lastUpdatedNote || "";
+  document.getElementById("formMentorOptIn").value = data.mentorOptIn ? "yes" : "";
+  document.getElementById("formMentorFocus").value = data.mentorFocus || data.focus || "";
+  document.getElementById("formMentorCapacity").value = data.mentorCapacity || data.capacity || "";
+  document.getElementById("formMentorTouchpoints").value = data.mentorTouchpoints || data.touchpoints || "";
+  document.getElementById("formMentorStrengths").value = data.mentorStrengths || data.mentorFit || "";
+  document.getElementById("formMentorBestFor").value = data.mentorBestFor || data.bestFor || "";
+  document.getElementById("formEmail").value = data.email || "";
+  document.getElementById("formAlternateEmails").value = formatAlternateEmails(data.alternateEmails || data.alternateEmail || "");
+
+  document.getElementById("formYear").value = data.year || "";
+  document.getElementById("formSchool").value = data.school || "";
+  document.getElementById("formMajor").value = data.major || "";
+  document.getElementById("formStatus").value = data.status || "";
+  document.getElementById("formPledgeClass").value = data.pledgeClass || "";
+  document.getElementById("formMenteeOptIn").value = data.menteeOptIn ? "yes" : "";
+  document.getElementById("formMenteeIndustry").value = data.menteeIndustry || data.intendedIndustry || "";
+  document.getElementById("formMenteeCompanies").value = data.menteeCompanies || data.topCompanies || "";
+  document.getElementById("formMenteeQuestion").value = data.menteeQuestion || data.careerQuestion || "";
+  document.getElementById("formMenteeSupport").value = data.menteeSupport || data.supportWanted || "";
+  document.getElementById("formMenteeAvailability").value = data.menteeAvailability || data.availability || "";
+  document.getElementById("formMenteeStatusLabel").value = data.menteeStatusLabel || data.statusLabel || "";
+
+  editingProfileImageFile = null;
+  editingProfileImageUrl = data.profileImageUrl || "";
+  editingProfileImagePath = data.profileImagePath || "";
+  setProfileImagePreview(editingProfileImageUrl);
+}
+
+window.openAddAlumniForm = function() {
+  editingType = "alumni";
+  editingIndex = null;
+  clearAdminForm();
+setAdminFormType("alumni");
+  document.getElementById("adminFormTitle").textContent = "Add Alumni Profile";
+  document.getElementById("adminFormModal").style.display = "flex";
+};
+
+window.openAddBrotherForm = function() {
+  editingType = "brother";
+  editingIndex = null;
+  clearAdminForm();
+setAdminFormType("brother");
+  document.getElementById("adminFormTitle").textContent = "Add Brother Profile";
+  document.getElementById("adminFormModal").style.display = "flex";
+};
+
+window.editAlumni = function(index) {
+  editingType = "alumni";
+  editingIndex = index;
+setAdminFormType("alumni");
+  document.getElementById("adminFormTitle").textContent = "Edit Alumni Profile";
+  fillAdminForm(alumni[index]);
+
+  document.getElementById("adminFormModal").style.display = "flex";
+};
+
+window.editBrother = function(index) {
+  editingType = "brother";
+  editingIndex = index;
+setAdminFormType("brother");
+
+  document.getElementById("adminFormTitle").textContent = "Edit Brother Profile";
+  fillAdminForm(brothers[index]);
+
+  document.getElementById("adminFormModal").style.display = "flex";
+};
+
+window.closeAdminForm = function() {
+  document.getElementById("adminFormModal").style.display = "none";
+};
+
+window.saveAdminForm = async function() {
+  if (window.requireLiveAdminAccess && !(await window.requireLiveAdminAccess("save directory profile changes"))) return;
+
+  const profile = {
+    name: document.getElementById("formName").value.trim(),
+    company: document.getElementById("formCompany").value.trim(),
+    role: document.getElementById("formRole").value.trim(),
+    field: document.getElementById("formField").value.trim(),
+    location: document.getElementById("formLocation").value.trim(),
+    linkedin: document.getElementById("formLinkedin").value.trim(),
+    lastUpdatedNote: document.getElementById("formLastUpdatedNote").value.trim(),
+    mentorOptIn: document.getElementById("formMentorOptIn").value === "yes",
+    mentorFocus: document.getElementById("formMentorFocus").value.trim(),
+    mentorCapacity: document.getElementById("formMentorCapacity").value.trim(),
+    mentorTouchpoints: document.getElementById("formMentorTouchpoints").value.trim(),
+    mentorStrengths: document.getElementById("formMentorStrengths").value.trim(),
+    mentorBestFor: document.getElementById("formMentorBestFor").value.trim(),
+    email: document.getElementById("formEmail").value.trim(),
+    alternateEmails: parseAlternateEmails(document.getElementById("formAlternateEmails").value),
+    year: document.getElementById("formYear").value.trim(),
+    school: document.getElementById("formSchool").value.trim(),
+    major: document.getElementById("formMajor").value.trim(),
+    status: document.getElementById("formStatus").value.trim(),
+    pledgeClass: document.getElementById("formPledgeClass").value.trim(),
+    menteeOptIn: document.getElementById("formMenteeOptIn").value === "yes",
+    menteeIndustry: document.getElementById("formMenteeIndustry").value.trim(),
+    menteeCompanies: document.getElementById("formMenteeCompanies").value.trim(),
+    menteeQuestion: document.getElementById("formMenteeQuestion").value.trim(),
+    menteeSupport: document.getElementById("formMenteeSupport").value.trim(),
+    menteeAvailability: document.getElementById("formMenteeAvailability").value.trim(),
+    menteeStatusLabel: document.getElementById("formMenteeStatusLabel").value.trim()
+  };
+
+  if (!profile.name) {
+    alert("Name is required.");
+    return;
+  }
+
+  const existingProfile =
+    editingType === "alumni"
+      ? (editingIndex !== null ? alumni[editingIndex] : null)
+      : (editingIndex !== null ? brothers[editingIndex] : null);
+
+  profile.profileImageUrl = editingProfileImageUrl || existingProfile?.profileImageUrl || "";
+  profile.profileImagePath = editingProfileImagePath || existingProfile?.profileImagePath || "";
+
+  if (editingProfileImageFile && window.uploadProfileImage) {
+    const profileId =
+      existingProfile?.firebaseId ||
+      (window.makeDirectoryKey ? window.makeDirectoryKey(profile) : slug(profile.name));
+    const uploadedImage = await window.uploadProfileImage(editingProfileImageFile, editingType || "profile", profileId);
+
+    if (!uploadedImage) return;
+
+    profile.profileImageUrl = uploadedImage.url;
+    profile.profileImagePath = uploadedImage.path;
+  }
+
+  if (editingType === "alumni") {
+    if (editingIndex !== null && alumni[editingIndex]?.firebaseId) {
+      profile.firebaseId = alumni[editingIndex].firebaseId;
+    }
+
+    if (window.saveAlumniProfile) {
+      const firebaseId = await window.saveAlumniProfile(profile);
+      if (!firebaseId) return;
+      profile.firebaseId = firebaseId;
+    }
+
+    if (editingIndex !== null) {
+      alumni[editingIndex] = profile;
+    } else {
+      alumni.unshift(profile);
+    }
+  }
+
+  if (editingType === "brother") {
+    if (editingIndex !== null && brothers[editingIndex]?.firebaseId) {
+      profile.firebaseId = brothers[editingIndex].firebaseId;
+    }
+
+    if (window.saveBrotherProfile) {
+      const firebaseId = await window.saveBrotherProfile(profile);
+      if (!firebaseId) return;
+      profile.firebaseId = firebaseId;
+    }
+
+    if (editingIndex !== null) {
+      brothers[editingIndex] = profile;
+    } else {
+      brothers.unshift(profile);
+    }
+  }
+
+  if (window.syncProfileLoginAccess && profile.email) {
+    const synced = await window.syncProfileLoginAccess(profile, editingType);
+    if (!synced) return;
+  }
+
+  if (typeof loadFirebaseData === "function" && (window.loadAlumniProfiles || window.loadBrotherProfiles)) {
+    await loadFirebaseData();
+  }
+
+  await loadAdminDashboard();
+  renderAlumni();
+  renderBrothers();
+  fillFilters();
+  closeAdminForm();
+  removeProfileImage();
+  toast("Profile saved.");
+};
+
+
+const adminBtn = document.getElementById("adminPanelBtn");
+
+if (adminBtn) {
+  adminBtn.onclick = openAdminPanel;
+}
+
+})();
+
+document.addEventListener("keydown", function(e) {
+  if (e.key !== "Escape") return;
+  const modals = [
+    "articleModal",
+    "profilePhotoModal",
+    "alumniEditModal",
+    "mentorshipConfirmOverlay",
+    "ackOverlay",
+    "newMatchPopup",
+    "adminFormModal",
+    "familyPostPanel",
+    "deiPostPanel",
+    "portalAccessPanel"
+  ];
+  modals.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.style.display !== "none") {
+      el.style.display = "none";
+    }
+  });
+});
+
+</script>
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+
+<div id="newMatchPopup" class="ack-overlay" style="display:none;">
+  <div class="ack-card" style="text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+    <div class="dashboard-eyebrow" style="text-align:center;margin-bottom:8px;">You've been matched!</div>
+    <h2 id="newMatchPopupTitle">You have a new mentorship match</h2>
+    <p id="newMatchPopupBody" style="margin:10px 0 22px;">Check your mentorship workspace to get started.</p>
+    <div class="ack-actions">
+      <button type="button" onclick="closeNewMatchPopup()">Later</button>
+      <button class="gold" type="button" onclick="closeNewMatchPopup(); showMyMentorship()">Go to My Mentorship</button>
+    </div>
+  </div>
+</div>
+
+<div id="promoteConfirmOverlay" class="ack-overlay" style="display:none;" onclick="closePromoteConfirm()">
+  <div class="ack-card" onclick="event.stopPropagation()">
+    <div class="dashboard-eyebrow">Admin Action</div>
+    <h2 id="promoteConfirmTitle">Promote to Alumni?</h2>
+    <p id="promoteConfirmBody" style="color:var(--muted);">This will move them from the brothers directory to alumni.</p>
+    <div class="ack-actions">
+      <button type="button" onclick="closePromoteConfirm()">Cancel</button>
+      <button class="gold" type="button" onclick="confirmPromote()">Yes, Promote</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
