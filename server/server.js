@@ -70,7 +70,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   FRONTEND_URL,
   // Allow Vercel preview deployments: https://ak-psi-nu-chapter-portal-*.vercel.app
-  /^https:\/\/ak-psi-nu-chapter-portal-[a-z0-9]+\.vercel\.app$/,
+  /^https:\/\/ak-psi-nu-chapter-portal-[a-z0-9-]+\.vercel\.app$/,
 ].filter(Boolean);
 
 const corsOptions = {
