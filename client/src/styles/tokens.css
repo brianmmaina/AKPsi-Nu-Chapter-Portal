@@ -46,6 +46,16 @@
   --accent-hover: #b8941e;
   --accent-subtle: rgba(211, 175, 55, 0.15);
   
+  /* Archive Theme (Beige/Cream History Book Aesthetic - matches FamilySelection) */
+  --archive-bg: #f4ede2;
+  --archive-bg-subtle: #f4ede2;
+  --archive-surface: rgba(255, 255, 255, 0.6);
+  --archive-border: rgba(109, 81, 34, 0.15);
+  --archive-text: #6d5122;
+  --archive-text-muted: rgba(51, 38, 20, 0.65);
+  --archive-text-subtitle: #9a7d45;
+  --archive-accent: #D3AF37;
+  
   /* Semantic Colors */
   --success: #10b981;
   --warning: #f59e0b;
