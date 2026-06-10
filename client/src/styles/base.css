@@ -15,6 +15,14 @@
   box-sizing: border-box;
 }
 
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
 /* Body and typography styles moved to index.css @layer base 
    to override Tailwind's reset after it loads */
 
