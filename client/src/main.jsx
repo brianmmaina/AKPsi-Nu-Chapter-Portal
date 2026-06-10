@@ -7,7 +7,7 @@ import { PointsProvider } from './context/PointsContext.jsx';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <PointsProvider>
-      <App />
+    <App />
     </PointsProvider>
   </StrictMode>,
 );
