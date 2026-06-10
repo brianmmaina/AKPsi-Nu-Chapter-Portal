@@ -64,21 +64,46 @@ const logger = {
 // SECURITY MIDDLEWARE
 // ============================================================================
 
-// CORS configuration - SIMPLIFIED: Allow all origins for now
-// This makes it work immediately without complex config
-app.options('*', cors({
-  origin: true, // Allow any origin
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// CORS configuration - Production-ready with specific allowed origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  FRONTEND_URL,
+  // Allow Vercel preview deployments: https://ak-psi-nu-chapter-portal-*.vercel.app
+  /^https:\/\/ak-psi-nu-chapter-portal-[a-z0-9]+\.vercel\.app$/,
+].filter(Boolean);
 
-app.use(cors({
-  origin: true, // Allow any origin
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if origin matches allowed list
+    const isAllowed = allowedOrigins.some((allowed) => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else if (NODE_ENV !== 'production') {
+      // Allow unknown origins in development for testing
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+  credentials: false,
+  maxAge: 86400,
+};
+
+app.use(cors(corsOptions));
 
 // HTTPS enforcement in production (after CORS so preflight works)
 if (NODE_ENV === 'production') {
@@ -892,7 +917,7 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  logger.info(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server running on 0.0.0.0:${PORT}`);
   logger.info(`Environment: ${NODE_ENV}`);
 });
