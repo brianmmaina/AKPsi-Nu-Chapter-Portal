@@ -32,9 +32,9 @@ const TOP_BAR_CSS = `
   .akpsi-topbar {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 12px 20px 16px;
-    color: #000000;
+    gap: 0;
+    padding: 16px 30px 18px;
+    color: #2b2118;
     pointer-events: auto;
     transition: opacity 0.18s ease-out, transform 0.18s ease-out;
   }
@@ -45,63 +45,88 @@ const TOP_BAR_CSS = `
     pointer-events: none;
   }
 
-  .akpsi-topbar-row {
-    display: flex;
-    width: 100%;
-    align-items: center;
-  }
-
-  .akpsi-topbar-row--primary {
-    gap: 16px;
-  }
-
-  .akpsi-topbar-left,
-  .akpsi-topbar-right {
+  .akpsi-toolbar-top {
     display: flex;
     align-items: center;
-    gap: 12px;
-  }
-
-  .akpsi-topbar-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-
-  .akpsi-tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .akpsi-topbar-row--secondary {
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .akpsi-toolbar-divider {
+    height: 1px;
+    background: linear-gradient(90deg, rgba(122,98,68,0.12), rgba(122,98,68,0.04));
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+
+  .akpsi-toolbar-bottom {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     flex-wrap: wrap;
   }
 
-  .akpsi-topbar-row-left {
-    flex: 1;
-    max-width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .akpsi-search-bar {
-    width: 100%;
-  }
-
-  .akpsi-topbar-row-right {
+  .akpsi-identity {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .akpsi-topbar * {
-    color: #000000 !important;
+  .akpsi-nav-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .akpsi-tab-strip {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .akpsi-tab-pill {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    height: 46px;
+    background: rgba(122,98,68,0.09);
+    border-radius: 12px;
+    padding: 5px;
+  }
+
+  .akpsi-utilities {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .akpsi-search-wrap {
+    width: 330px;
+    flex-shrink: 0;
+  }
+
+  .akpsi-toolbar-view-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(122,98,68,0.10);
+  }
+
+  @media (max-width: 900px) {
+    .akpsi-toolbar-bottom {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .akpsi-search-wrap {
+      width: 100%;
+    }
+    .akpsi-tab-strip {
+      justify-content: flex-start;
+    }
   }
 `;
 
@@ -222,7 +247,18 @@ const CrestIcon = ({ themeKey, color, fallback }) => {
 
  */
 
-const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onChangeFamily, onToast, onOpenPoints }) => {
+const FamilyTreeView = ({
+  families,
+  selectedFamily: initialSelectedFamily,
+  onChangeFamily,
+  onToast,
+  onOpenPoints,
+  activeView,
+  onChangeView,
+  onBack,
+  onBackToHome,
+  canGoBack,
+}) => {
 
   const [selectedFamily, setSelectedFamily] = useState(initialSelectedFamily || families[0] || null);
 
@@ -306,6 +342,12 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           const inactiveTabHoverBg = isDarkTheme
             ? hexToRgba(themeAccent, 0.18)
             : 'rgba(255, 230, 170, 0.35)';
+          const viewTabOptions = [
+            { id: 'TREE', label: 'Family Tree' },
+            { id: 'POINTS', label: 'Points' },
+            { id: 'INFO', label: 'Information Hub' },
+          ];
+          const hasViewTabs = typeof onChangeView === 'function';
 
           const {
             searchPalette,
@@ -342,169 +384,121 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
           );
 
           return (
-      <div 
-        style={{
-          position: 'sticky',
-          top: 'env(safe-area-inset-top, 0px)',
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          padding: '12px 20px 12px 20px',
-          pointerEvents: 'auto',
-          background: 'transparent',
-        }}
-      >
-
-              {/* Unified Glass Container */}
+            <div
+              style={{
+                position: 'sticky',
+                top: 'env(safe-area-inset-top, 0px)',
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                padding: '12px 20px',
+                pointerEvents: 'auto',
+                background: 'transparent',
+              }}
+            >
+              <style>{TOP_BAR_CSS}</style>
 
               <div
                 className={`akpsi-topbar ${isProfileOpen ? 'akpsi-topbar--hidden' : ''}`}
                 style={{
-                  backdropFilter: 'blur(12px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
-                  background: 'rgba(255, 255, 255, 0.45)',
-                  borderRadius: '18px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
-                  border: `1px solid ${hexToRgba('#c9a857', 0.15)}`,
-                  color: '#000000',
+                  backdropFilter: 'blur(18px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+                  background: 'linear-gradient(145deg, rgba(255,253,248,0.92), rgba(246,235,211,0.84))',
+                  borderRadius: '20px',
+                  boxShadow: '0 18px 44px rgba(58,43,26,0.12), inset 0 1px 0 rgba(255,255,255,0.72)',
+                  border: '1px solid rgba(122,98,68,0.18)',
+                  color: '#2b2118',
                 }}
               >
-                <style>{TOP_BAR_CSS}</style>
-
-                <div className="akpsi-topbar-row akpsi-topbar-row--primary">
-                  <div className="akpsi-topbar-left">
-                    <div
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: presentation.header?.crestBg || 'rgba(201, 168, 87, 0.15)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '18px',
-                        fontWeight: 700,
-                        color: '#000000',
-                      }}
-                    >
+                {/* ── Top row: identity + nav ── */}
+                <div className="akpsi-toolbar-top">
+                  <div className="akpsi-identity">
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: presentation.header?.crestBg || 'rgba(201,168,87,0.18)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
                       {crestIcon}
                     </div>
-                    <span
-                      style={{
-                        fontSize: '14px',
-                        fontFamily: themeTitleFont,
-                        fontWeight: 600,
-                        color: '#000000',
-                        letterSpacing: '0.03em',
-                      }}
-                    >
+                    <span style={{
+                      fontSize: '14px',
+                      fontFamily: themeTitleFont,
+                      fontWeight: 700,
+                      color: '#2b2118',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                    }}>
                       {selectedFamily.name}
                     </span>
                   </div>
-                  <div className="akpsi-topbar-center">
-                    <div className="akpsi-tabs">
-                      {families.map((family) => {
-                        const isActive = selectedFamily.id === family.id;
-                        const familyTheme = getThemeStyles(family.theme);
-                        const familyAccent = familyTheme?.accent || '#c9a857';
-                        const isFamilyDark = ['power', 'pride', 'wolfpack', 'greed'].includes(family.theme);
-                        const tabActiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.25) : hexToRgba(familyAccent, 0.30);
-                        const tabInactiveBg = isFamilyDark ? hexToRgba(familyAccent, 0.12) : 'rgba(255, 230, 170, 0.25)';
-                        const tabInactiveHoverBg = isFamilyDark ? hexToRgba(familyAccent, 0.18) : 'rgba(255, 230, 170, 0.35)';
-                        return (
-                          <button
-                            key={family.id}
-                            onClick={() => setSelectedFamily(family)}
-                            style={{
-                              position: 'relative',
-                              padding: '8px 20px',
-                              borderRadius: '18px',
-                              background: isActive ? tabActiveBg : tabInactiveBg,
-                              backdropFilter: 'blur(8px)',
-                              WebkitBackdropFilter: 'blur(8px)',
-                              border: 'none',
-                              cursor: 'pointer',
-                              transition: 'all 200ms ease',
-                              fontWeight: isActive ? 700 : 600,
-                              fontSize: '13px',
-                              fontFamily: themeBodyFont,
-                              color: '#000000',
-                              letterSpacing: '0.02em',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isActive) {
-                                e.currentTarget.style.background = tabInactiveHoverBg;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isActive) {
-                                e.currentTarget.style.background = inactiveTabBg;
-                              }
-                            }}
-                            aria-label={`Switch to ${family.name} family`}
-                            aria-current={isActive ? 'true' : 'false'}
-                          >
-                            {family.name}
-                            {isActive && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  bottom: '4px',
-                                  left: '50%',
-                                  transform: 'translateX(-50%)',
-                                  width: '60%',
-                                  height: '3px',
-                                  backgroundColor: familyAccent,
-                                  borderRadius: '999px',
-                                }}
-                              />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="akpsi-topbar-right">
-                    <button
-                      onClick={onChangeFamily}
-                      style={{
-                        padding: '8px 18px',
-                        fontSize: '13px',
-                        fontFamily: themeBodyFont,
-                        borderRadius: '18px',
-                        background: inactiveTabBg,
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        border: 'none',
-                        color: '#000000',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        transition: 'all 200ms ease',
-                        whiteSpace: 'nowrap',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = inactiveTabHoverBg;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = inactiveTabBg;
-                      }}
-                    >
-                      Back
-                    </button>
+
+                  <div className="akpsi-nav-buttons">
+                    {canGoBack && onBack && (
+                      <button
+                        onClick={onBack}
+                        style={{
+                          padding: '0 18px',
+                          height: '42px',
+                          fontSize: '13px',
+                          fontFamily: themeBodyFont,
+                          borderRadius: '12px',
+                          background: 'rgba(255,253,248,0.95)',
+                          border: '1px solid rgba(122,98,68,0.22)',
+                          color: '#2b2118',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          transition: 'all 200ms ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,230,216,0.95)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,253,248,0.95)'; }}
+                      >
+                        Back
+                      </button>
+                    )}
+                    {onBackToHome && (
+                      <button
+                        onClick={onBackToHome}
+                        style={{
+                          padding: '0 18px',
+                          height: '42px',
+                          fontSize: '13px',
+                          fontFamily: themeBodyFont,
+                          borderRadius: '12px',
+                          background: 'rgba(211,175,55,0.82)',
+                          border: 'none',
+                          color: '#2b1a08',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          transition: 'all 200ms ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                      >
+                        Back to Home
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="akpsi-topbar-row akpsi-topbar-row--secondary">
-                  <div className="akpsi-topbar-row-left">
-                    <div className="akpsi-search-bar">
-                      <SearchBar
-                        brothers={brothersIndex}
-                        onSelectBrother={selectBrotherHandler}
-                        onSelectMajor={selectMajorHandler}
-                        palette={searchPalette}
-                      />
-                    </div>
+                {/* ── Divider ── */}
+                <div className="akpsi-toolbar-divider" />
+
+                {/* ── Bottom row: search | tabs | utilities ── */}
+                <div className="akpsi-toolbar-bottom">
+                  {/* Search */}
+                  <div className="akpsi-search-wrap">
+                    <SearchBar
+                      brothers={brothersIndex}
+                      onSelectBrother={selectBrotherHandler}
+                      onSelectMajor={selectMajorHandler}
+                      palette={searchPalette}
+                    />
                     {activeMajor && (
                       <MajorResultsPanel
                         major={activeMajor}
@@ -514,57 +508,132 @@ const FamilyTreeView = ({ families, selectedFamily: initialSelectedFamily, onCha
                       />
                     )}
                   </div>
-                  <div className="akpsi-topbar-row-right">
+
+                  {/* Family tabs */}
+                  <div className="akpsi-tab-strip">
+                    <div className="akpsi-tab-pill">
+                      {families.map((family) => {
+                        const isActive = selectedFamily.id === family.id;
+                        return (
+                          <button
+                            key={family.id}
+                            onClick={() => setSelectedFamily(family)}
+                            style={{
+                              padding: '0 18px',
+                              height: '36px',
+                              borderRadius: '9px',
+                              background: isActive
+                                ? 'linear-gradient(145deg, rgba(225,188,65,0.32), rgba(211,175,55,0.22))'
+                                : 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              transition: 'all 180ms ease',
+                              fontWeight: isActive ? 700 : 600,
+                              fontSize: '0.78rem',
+                              fontFamily: themeBodyFont,
+                              color: '#2b2118',
+                              letterSpacing: '0.04em',
+                              boxShadow: isActive
+                                ? 'inset 0 1px 4px rgba(58,43,26,0.12), 0 1px 0 rgba(255,255,255,0.5)'
+                                : 'none',
+                              whiteSpace: 'nowrap',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isActive) e.currentTarget.style.background = 'rgba(122,98,68,0.09)';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive) e.currentTarget.style.background = 'transparent';
+                            }}
+                            aria-label={`Switch to ${family.name} family`}
+                            aria-current={isActive ? 'true' : 'false'}
+                          >
+                            {family.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Utilities */}
+                  <div className="akpsi-utilities">
                     <select
                       value={highlightState.lineageHighlightMode}
-                      onChange={(event) => highlightState.setLineageHighlightMode(event.target.value)}
+                      onChange={(e) => highlightState.setLineageHighlightMode(e.target.value)}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.65)',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)',
-                        color: '#000000',
+                        background: 'rgba(255,253,248,0.95)',
+                        color: '#2b2118',
                         fontFamily: themeBodyFont,
-                        border: `1px solid ${hexToRgba('#c9a857', 0.20)}`,
-                        borderRadius: '20px',
-                        padding: '6px 14px',
+                        border: '1px solid rgba(122,98,68,0.20)',
+                        borderRadius: '12px',
+                        padding: '0 14px',
+                        height: '42px',
                         fontSize: '12px',
                         fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
+                        letterSpacing: '0.05em',
                         cursor: 'pointer',
                         appearance: 'none',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                       }}
                     >
                       <option value="off">Highlight: Off</option>
-                      <option value="ancestors">Highlight: Ancestors</option>
-                      <option value="descendants">Highlight: Descendants</option>
-                      <option value="both">Highlight: Lineage</option>
+                      <option value="ancestors">Ancestors</option>
+                      <option value="descendants">Descendants</option>
+                      <option value="both">Lineage</option>
                     </select>
                     <button
                       type="button"
                       onClick={exportHandler}
                       disabled={preparingExport}
                       style={{
-                        background: themeAccent,
-                        color: '#000000',
+                        background: 'rgba(211,175,55,0.82)',
+                        color: '#2b1a08',
                         fontFamily: themeBodyFont,
                         border: 'none',
-                        padding: '6px 16px',
-                        borderRadius: '20px',
+                        padding: '0 18px',
+                        height: '42px',
+                        borderRadius: '12px',
                         fontWeight: 600,
                         fontSize: '12px',
                         cursor: preparingExport ? 'wait' : 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
                         opacity: preparingExport ? 0.65 : 1,
                         transition: 'all 200ms ease',
                         whiteSpace: 'nowrap',
+                        letterSpacing: '0.04em',
                       }}
                     >
                       {preparingExport ? 'Preparing…' : 'Export / Print'}
                     </button>
                   </div>
                 </div>
+
+                {/* ── Optional view tabs ── */}
+                {hasViewTabs && (
+                  <div className="akpsi-toolbar-view-row">
+                    {viewTabOptions.map((tab) => {
+                      const isActiveView = activeView === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => onChangeView?.(tab.id)}
+                          style={{
+                            padding: '6px 16px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            letterSpacing: '0.03em',
+                            cursor: 'pointer',
+                            background: isActiveView ? 'rgba(211,175,55,0.28)' : 'rgba(122,98,68,0.08)',
+                            color: '#2b2118',
+                            transition: 'background 200ms ease',
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           );
