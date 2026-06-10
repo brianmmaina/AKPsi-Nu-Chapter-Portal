@@ -11,7 +11,7 @@ import FamilyCard from './FamilyCard';
  * @param {Function} props.onSelectFamily - Callback when a family is selected
  * @returns {JSX.Element} Family selection page
  */
-const FamilySelection = ({ families, onSelectFamily }) => {
+const FamilySelection = ({ families, onSelectFamily, onBack, onBackToHome, canGoBack }) => {
   const [clickedIndex, setClickedIndex] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -33,22 +33,62 @@ const FamilySelection = ({ families, onSelectFamily }) => {
 
   return (
     <div
-      className="relative min-h-screen flex flex-col"
+      className="relative flex flex-col family-selection"
       style={{
         padding: 'var(--space-4)',
         backgroundColor: '#f4ede2',
         backgroundImage:
           'radial-gradient(circle at top, rgba(211,175,55,0.12) 0%, rgba(244,237,226,0) 55%), linear-gradient(135deg, rgba(109,81,34,0.08) 0%, rgba(244,237,226,0) 60%)',
+        overflow: 'hidden',
+        position: 'relative',
+        height: '100vh',
+        maxHeight: '100vh',
       }}
     >
-      {/* Large centered AKΨ watermark */}
-      <div className="akpsi-watermark" aria-hidden>
-        <div className="akpsi-watermark-inner">ΑΚΨ</div>
-      </div>
+      {/* Background Image Layer */}
+      <div className="family-selection__bg-image" aria-hidden />
+      {/* Pattern Overlay on Background */}
+      <div className="family-selection__bg-pattern" aria-hidden />
       {/* Subtle repeating pattern overlay */}
       <div className="akpsi-pattern-overlay" aria-hidden />
       
-      <div className="relative container max-w-5xl mx-auto flex-1 flex flex-col justify-center" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)' }}>
+      {/* Navigation Buttons */}
+      <div className="family-selection__nav" style={{
+        position: 'absolute',
+        top: 'var(--space-4)',
+        right: 'var(--space-4)',
+        zIndex: 10,
+      }}>
+        {onBackToHome && (
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className="nav-button"
+            style={{
+              padding: '8px 18px',
+              fontSize: '13px',
+              fontFamily: 'var(--font-body)',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.12)',
+              color: '#0f0f0f',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: 'all 200ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f2f2f2';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#ffffff';
+            }}
+          >
+            Back to Home
+          </button>
+        )}
+      </div>
+      
+      <div className="relative container max-w-5xl mx-auto flex-1 flex flex-col justify-center family-selection__content" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)', zIndex: 3, overflowY: 'auto', height: '100%', maxHeight: '100%' }}>
         {/* Compact Header Section */}
         <div className="text-center" style={{ marginBottom: 'var(--space-8)' }}>
           {/* Fraternity Seal - Smaller */}
@@ -70,7 +110,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
             style={{
               fontSize: 'calc(var(--text-2xl) * 1.1)',
               fontFamily: 'var(--font-display)',
-              color: '#6d5122',
+              color: '#3a2410',
               fontWeight: '700',
               letterSpacing: '0.4em',
               textTransform: 'uppercase',
@@ -83,7 +123,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
             style={{
               fontSize: 'var(--text-lg)',
               fontFamily: 'var(--font-display)',
-              color: '#9a7d45',
+              color: '#6b4e22',
               fontWeight: '500',
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
@@ -95,7 +135,7 @@ const FamilySelection = ({ families, onSelectFamily }) => {
           <p
             style={{
               fontSize: 'var(--text-sm)',
-              color: 'rgba(51, 38, 20, 0.65)',
+              color: 'rgba(51, 38, 20, 0.88)',
               maxWidth: '520px',
               margin: '0 auto',
             }}
@@ -142,16 +182,21 @@ const FamilySelection = ({ families, onSelectFamily }) => {
       </div>
 
       {/* Footer at bottom of page */}
-      <footer className="w-full text-center" style={{ 
-        paddingTop: 'var(--space-4)', 
-        paddingBottom: 'var(--space-4)',
-        borderTop: '1px solid var(--glass-border)',
+      <footer className="w-full text-center family-selection__footer" style={{
+        paddingTop: '14px',
+        paddingBottom: '14px',
+        borderTop: '1px solid rgba(122,98,68,0.14)',
         marginTop: 'auto',
+        position: 'relative',
+        zIndex: 3,
       }}>
         <p
           style={{
-            fontSize: 'var(--text-xs)',
-            color: 'var(--text-muted)',
+            fontSize: '10px',
+            color: 'rgba(109,81,34,0.55)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            fontWeight: 600,
           }}
         >
           © {new Date().getFullYear()} Alpha Kappa Psi Nu Chapter
