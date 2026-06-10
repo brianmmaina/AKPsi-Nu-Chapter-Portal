@@ -1,299 +1,141 @@
 {
-  "SEMESTER": {
+  "roster": {
     "members": [
-      {
-        "memberId": "101",
-        "memberName": "Alex Kim",
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 68
-      },
-      {
-        "memberId": "204",
-        "memberName": "Maya Patel",
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 62
-      },
-      {
-        "memberId": "305",
-        "memberName": "Jordan Lee",
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 55
-      },
-      {
-        "memberId": "118",
-        "memberName": "Brandon Chen",
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 50
-      },
-      {
-        "memberId": "233",
-        "memberName": "Samira Yusuf",
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 48
-      },
-      {
-        "memberId": "412",
-        "memberName": "Diego Martinez",
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 44
-      }
+      { "memberId": "101", "memberName": "Alex Kim", "familyId": "empire", "familyName": "Empire" },
+      { "memberId": "118", "memberName": "Brandon Chen", "familyId": "empire", "familyName": "Empire" },
+      { "memberId": "204", "memberName": "Maya Patel", "familyId": "wolfpack", "familyName": "Wolfpack" },
+      { "memberId": "233", "memberName": "Samira Yusuf", "familyId": "wolfpack", "familyName": "Wolfpack" },
+      { "memberId": "305", "memberName": "Jordan Lee", "familyId": "pride", "familyName": "Pride" },
+      { "memberId": "412", "memberName": "Diego Martinez", "familyId": "pride", "familyName": "Pride" }
     ],
     "families": [
-      {
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 230,
-        "averagePointsPerMember": 57.5
-      },
-      {
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 210,
-        "averagePointsPerMember": 52.5
-      },
-      {
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 190,
-        "averagePointsPerMember": 47.5
-      }
-    ],
-    "events": [
-      {
-        "id": "evt-sem-001",
-        "memberId": "101",
-        "eventName": "Chapter 1",
-        "category": "CHAPTER",
-        "date": "2025-09-05",
-        "points": 8
-      },
-      {
-        "id": "evt-sem-002",
-        "memberId": "101",
-        "eventName": "Professional Workshop",
-        "category": "PROFESSIONAL",
-        "date": "2025-09-10",
-        "points": 10
-      },
-      {
-        "id": "evt-sem-003",
-        "memberId": "204",
-        "eventName": "DEI Dialogue",
-        "category": "DEI",
-        "date": "2025-09-12",
-        "points": 12
-      },
-      {
-        "id": "evt-sem-004",
-        "memberId": "305",
-        "eventName": "Service Saturday",
-        "category": "SERVICE",
-        "date": "2025-09-14",
-        "points": 15
-      },
-      {
-        "id": "evt-sem-005",
-        "memberId": "118",
-        "eventName": "Chapter 2",
-        "category": "CHAPTER",
-        "date": "2025-09-19",
-        "points": 8
-      },
-      {
-        "id": "evt-sem-006",
-        "memberId": "233",
-        "eventName": "Committee Work Session",
-        "category": "OTHER",
-        "date": "2025-09-20",
-        "points": 6
-      },
-      {
-        "id": "evt-sem-007",
-        "memberId": "412",
-        "eventName": "Service Saturday",
-        "category": "SERVICE",
-        "date": "2025-09-21",
-        "points": 15
-      },
-      {
-        "id": "evt-sem-008",
-        "memberId": "101",
-        "eventName": "Networking Night",
-        "category": "SOCIAL",
-        "date": "2025-09-24",
-        "points": 6
-      },
-      {
-        "id": "evt-sem-009",
-        "memberId": "204",
-        "eventName": "Chapter 3",
-        "category": "CHAPTER",
-        "date": "2025-09-26",
-        "points": 8
-      },
-      {
-        "id": "evt-sem-010",
-        "memberId": "305",
-        "eventName": "Externship Prep",
-        "category": "PROFESSIONAL",
-        "date": "2025-09-28",
-        "points": 10
-      }
+      { "familyId": "empire", "familyName": "Empire", "memberCount": 2 },
+      { "familyId": "wolfpack", "familyName": "Wolfpack", "memberCount": 2 },
+      { "familyId": "pride", "familyName": "Pride", "memberCount": 2 }
     ]
   },
-  "YEAR": {
-    "members": [
-      {
-        "memberId": "101",
-        "memberName": "Alex Kim",
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 142
-      },
-      {
-        "memberId": "204",
-        "memberName": "Maya Patel",
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 137
-      },
-      {
-        "memberId": "305",
-        "memberName": "Jordan Lee",
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 126
-      },
-      {
-        "memberId": "118",
-        "memberName": "Brandon Chen",
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 120
-      },
-      {
-        "memberId": "233",
-        "memberName": "Samira Yusuf",
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 118
-      },
-      {
-        "memberId": "412",
-        "memberName": "Diego Martinez",
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 110
-      }
-    ],
-    "families": [
-      {
-        "familyId": "empire",
-        "familyName": "Empire",
-        "totalPoints": 520,
-        "averagePointsPerMember": 65
-      },
-      {
-        "familyId": "wolfpack",
-        "familyName": "Wolfpack",
-        "totalPoints": 505,
-        "averagePointsPerMember": 63.1
-      },
-      {
-        "familyId": "pride",
-        "familyName": "Pride",
-        "totalPoints": 470,
-        "averagePointsPerMember": 58.7
-      }
-    ],
-    "events": [
-      {
-        "id": "evt-yr-001",
-        "memberId": "101",
-        "eventName": "Fall Chapter Kickoff",
-        "category": "CHAPTER",
-        "date": "2025-01-15",
-        "points": 8
-      },
-      {
-        "id": "evt-yr-002",
-        "memberId": "101",
-        "eventName": "Winter Service Trip",
-        "category": "SERVICE",
-        "date": "2025-02-02",
-        "points": 18
-      },
-      {
-        "id": "evt-yr-003",
-        "memberId": "204",
-        "eventName": "Career Trek",
-        "category": "PROFESSIONAL",
-        "date": "2025-03-08",
-        "points": 15
-      },
-      {
-        "id": "evt-yr-004",
-        "memberId": "305",
-        "eventName": "Spring DEI Summit",
-        "category": "DEI",
-        "date": "2025-03-18",
-        "points": 14
-      },
-      {
-        "id": "evt-yr-005",
-        "memberId": "118",
-        "eventName": "Chapter Retreat",
-        "category": "SOCIAL",
-        "date": "2025-04-04",
-        "points": 12
-      },
-      {
-        "id": "evt-yr-006",
-        "memberId": "233",
-        "eventName": "Regional Conference",
-        "category": "PROFESSIONAL",
-        "date": "2025-04-22",
-        "points": 20
-      },
-      {
-        "id": "evt-yr-007",
-        "memberId": "412",
-        "eventName": "Spring Service Day",
-        "category": "SERVICE",
-        "date": "2025-05-01",
-        "points": 18
-      },
-      {
-        "id": "evt-yr-008",
-        "memberId": "101",
-        "eventName": "Summer Internship Panel",
-        "category": "PROFESSIONAL",
-        "date": "2025-06-10",
-        "points": 12
-      },
-      {
-        "id": "evt-yr-009",
-        "memberId": "204",
-        "eventName": "Community Clean Up",
-        "category": "SERVICE",
-        "date": "2025-07-15",
-        "points": 18
-      },
-      {
-        "id": "evt-yr-010",
-        "memberId": "305",
-        "eventName": "Alumni Networking Night",
-        "category": "SOCIAL",
-        "date": "2025-08-12",
-        "points": 10
-      }
-    ]
-  }
+  "events": [
+    {
+      "id": "base-chapter-1",
+      "name": "Chapter Meeting #1",
+      "date": "2025-09-05",
+      "category": "CHAPTER",
+      "subcategory": "Required",
+      "required": true,
+      "defaultPoints": 8,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-chapter-2",
+      "name": "Chapter Meeting #2",
+      "date": "2025-09-12",
+      "category": "CHAPTER",
+      "subcategory": "Required",
+      "required": true,
+      "defaultPoints": 8,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-pro-workshop",
+      "name": "Professional Workshop",
+      "date": "2025-09-18",
+      "category": "PROFESSIONAL",
+      "subcategory": "Internal",
+      "required": false,
+      "defaultPoints": 12,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-dei-dialogue",
+      "name": "DEI Dialogue",
+      "date": "2025-09-20",
+      "category": "DEI",
+      "subcategory": "Dialogue",
+      "required": false,
+      "defaultPoints": 12,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-service-saturday",
+      "name": "Service Saturday",
+      "date": "2025-09-28",
+      "category": "SERVICE",
+      "subcategory": "Community",
+      "required": false,
+      "defaultPoints": 15,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-social-mixer",
+      "name": "Recruitment Social Mixer",
+      "date": "2025-10-04",
+      "category": "SOCIAL",
+      "subcategory": "Recruitment",
+      "required": false,
+      "defaultPoints": 6,
+      "checkpoints": ["CP1"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-ritual-fall",
+      "name": "Ritual Rehearsal",
+      "date": "2025-10-12",
+      "category": "RITUAL",
+      "subcategory": "Internal",
+      "required": true,
+      "defaultPoints": 10,
+      "checkpoints": ["CP2"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-committee-weekly",
+      "name": "Committee Weekly Touchpoint",
+      "date": "2025-10-18",
+      "category": "COMMITTEE",
+      "subcategory": "Operations",
+      "required": false,
+      "defaultPoints": 5,
+      "checkpoints": ["CP2"],
+      "countsForFamilyCup": true,
+      "timeframe": "SEMESTER"
+    },
+    {
+      "id": "base-competition-cp3",
+      "name": "Case Competition",
+      "date": "2025-11-02",
+      "category": "COMPETITION",
+      "subcategory": "Professional",
+      "required": false,
+      "defaultPoints": 18,
+      "checkpoints": ["CP3"],
+      "countsForFamilyCup": true,
+      "timeframe": "YEAR"
+    },
+    {
+      "id": "manual-adjustment",
+      "name": "Manual Adjustment",
+      "date": "2025-09-01",
+      "category": "OTHER",
+      "subcategory": "Adjustment",
+      "required": false,
+      "defaultPoints": 0,
+      "checkpoints": [],
+      "countsForFamilyCup": false,
+      "timeframe": "SEMESTER"
+    }
+  ],
+  "awards": []
 }
 
