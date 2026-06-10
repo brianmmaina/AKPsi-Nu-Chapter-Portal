@@ -1,8 +1,12 @@
 import { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import {
+  addManualAdjustment,
   clearPointsDataCache,
+  createEvent,
   getMemberEvents,
   getPointsData,
+  recordAttendance,
+  updateEvent,
 } from '../services/pointsService';
 import MemberPointsDetailModal from '../components/points/MemberPointsDetailModal';
 
@@ -17,6 +21,7 @@ export const PointsProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [activeMemberId, setActiveMemberId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [lastSynced, setLastSynced] = useState(null);
 
   const loadData = useCallback(async (targetTimeframe) => {
     setLoading(true);
@@ -24,6 +29,7 @@ export const PointsProvider = ({ children }) => {
     try {
       const data = await getPointsData(targetTimeframe);
       setPointsData(data);
+      setLastSynced(new Date());
     } catch (err) {
       setError(err);
     } finally {
@@ -68,6 +74,38 @@ export const PointsProvider = ({ children }) => {
     return getMemberEvents(pointsData, activeMemberId);
   }, [pointsData, activeMemberId]);
 
+  const createEventAction = useCallback(
+    async (definition) => {
+      await createEvent(definition);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const updateEventAction = useCallback(
+    async (id, updates) => {
+      await updateEvent(id, updates);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const recordAttendanceAction = useCallback(
+    async (eventId, memberIds) => {
+      await recordAttendance(eventId, memberIds);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const addAdjustmentAction = useCallback(
+    async (memberId, deltaPoints, note) => {
+      await addManualAdjustment(memberId, deltaPoints, note);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const contextValue = useMemo(
     () => ({
       timeframe,
@@ -76,7 +114,14 @@ export const PointsProvider = ({ children }) => {
       loading,
       error,
       refresh,
+      lastSynced,
       openMemberPoints,
+      actions: {
+        createEvent: createEventAction,
+        updateEvent: updateEventAction,
+        recordAttendance: recordAttendanceAction,
+        addManualAdjustment: addAdjustmentAction,
+      },
     }),
     [
       timeframe,
@@ -85,7 +130,12 @@ export const PointsProvider = ({ children }) => {
       loading,
       error,
       refresh,
+      lastSynced,
       openMemberPoints,
+      createEventAction,
+      updateEventAction,
+      recordAttendanceAction,
+      addAdjustmentAction,
     ],
   );
 
