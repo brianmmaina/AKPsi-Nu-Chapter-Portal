@@ -15,8 +15,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+const MAX_ATTEMPTS = 20;
 const SESSION_EXPIRY_HOURS = 24;
 const JWT_EXPIRY_HOURS = 24;
 const REQUEST_SIZE_LIMIT = '10mb';
