@@ -3,12 +3,12 @@ import axios from 'axios';
 // Ensure baseURL ends with /api
 const getBaseURL = () => {
   const envURL = import.meta.env.VITE_API_URL;
-  if (envURL) {
-    const cleanURL = envURL.replace(/\/$/, '');
-    return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
+  if (!envURL) {
+    console.error('VITE_API_URL is not set — API calls will fail');
+    return '/api';
   }
-  // Default to production backend if no env var set
-  return 'https://akpsi-family-tree-production.up.railway.app/api';
+  const cleanURL = envURL.replace(/\/$/, '');
+  return cleanURL.endsWith('/api') ? cleanURL : `${cleanURL}/api`;
 };
 
 const api = axios.create({
