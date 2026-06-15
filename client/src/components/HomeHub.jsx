@@ -2,11 +2,13 @@ const HomeHub = ({ onNavigate }) => {
   const cards = [
     {
       id: 'POINTS',
+      label: 'Rankings',
       title: 'Points Leaderboard',
-      description: 'Family Cup rankings, streaks, and individual brother achievements.',
+      description: 'Family Cup standings, streak bonuses, and individual brother achievements across the term.',
+      cta: 'View rankings',
       pattern: 'chart',
       icon: (
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v18h18" />
           <path d="M7 16l4-4 4 4 6-6" />
         </svg>
@@ -14,45 +16,46 @@ const HomeHub = ({ onNavigate }) => {
     },
     {
       id: 'FAMILY_TREES',
+      label: 'Lineage',
       title: 'Family Trees',
-      description: 'Lineage, family histories, and member connections across generations.',
+      description: 'The complete Nu Chapter lineage — nine pledge classes, eighty brothers, and every connection across generations.',
+      cta: 'Explore lineages',
       pattern: 'tree',
       icon: (
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="22" x2="12" y2="13" />
-          <path d="M12 13 C12 13 7 11 5 7 C8 7 10 8 12 10 C14 8 16 7 19 7 C17 11 12 13 12 13Z" fill="currentColor" fillOpacity="0.15" />
-          <path d="M12 16 C12 16 6 14 4 9 C7.5 9 10 11 12 13 C14 11 16.5 9 20 9 C18 14 12 16 12 16Z" fill="currentColor" fillOpacity="0.1" />
-          <path d="M12 10 C10 8 7.5 5 8 2 C10 3.5 11 6 12 7 C13 6 14 3.5 16 2 C16.5 5 14 8 12 10Z" fill="currentColor" fillOpacity="0.18" />
-          <path d="M12 22 C10 21 8 21.5 7 22" />
-          <path d="M12 22 C14 21 16 21.5 17 22" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22v-9" />
+          <path d="M12 13C10 11 7 9 5 7c3 0 5 1 7 3 2-2 4-3 7-3-2 4-7 6-7 6z" />
+          <path d="M12 17C9 15 6 13 4 10c3.5 0 6 2 8 4 2-2 4.5-4 8-4-2 4-8 7-8 7z" />
         </svg>
       ),
     },
     {
       id: 'INFO',
+      label: 'Resources',
       title: 'Information Hub',
-      description: 'Calendars, newsletters, and deadlines in one centralized archive.',
+      description: 'Chapter calendars, officer contacts, newsletters, and deadlines gathered in one centralized archive.',
+      cta: 'Open archive',
       pattern: 'archive',
       icon: (
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 4h16v16H4z" />
-          <path d="M4 8h16" />
-          <path d="M8 12h8" />
-          <path d="M8 16h8" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="1" />
+          <path d="M3 8h18" />
+          <path d="M7 12h10M7 16h7" />
         </svg>
       ),
     },
     {
       id: 'NETWORK',
+      label: 'Alumni',
       title: 'Professional Network',
-      description: 'Alumni directory, mentorship program, and active brothers network for career connections.',
+      description: 'Alumni directory, mentorship pairings, and the active brothers network for career connections.',
+      cta: 'Browse network',
       pattern: 'network',
       icon: (
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       ),
     },
@@ -60,17 +63,11 @@ const HomeHub = ({ onNavigate }) => {
 
   return (
     <div className="home-hub">
-      {/* Background Image Layer */}
       <div className="home-hub__bg-image" aria-hidden />
-      {/* Pattern Overlay on Background */}
       <div className="home-hub__bg-pattern" aria-hidden />
-      {/* AKPsi Watermark */}
-      <div className="akpsi-watermark" aria-hidden>
-        <div className="akpsi-watermark-inner">ΑΚΨ</div>
-      </div>
-      {/* Pattern Overlay */}
+      <div className="akpsi-watermark" aria-hidden><div className="akpsi-watermark-inner">ΑΚΨ</div></div>
       <div className="akpsi-pattern-overlay" aria-hidden />
-      
+
       <header className="home-hub__header">
         <div>
           <p className="eyebrow">AKPsi Nu Chapter</p>
@@ -78,10 +75,9 @@ const HomeHub = ({ onNavigate }) => {
           <p className="subtitle">Your central hub for points, family trees, and chapter resources.</p>
         </div>
       </header>
-      
-      {/* Decorative Divider */}
+
       <div className="home-hub__divider" aria-hidden />
-      
+
       <div className="home-hub__grid">
         {cards.map((card) => (
           <button
@@ -90,10 +86,25 @@ const HomeHub = ({ onNavigate }) => {
             className={`home-hub__card home-hub__card--${card.pattern}`}
             onClick={() => onNavigate(card.id)}
           >
-            <div className="home-hub__card-icon">{card.icon}</div>
-            <div className="home-hub__card-content">
-              <h2>{card.title}</h2>
-              <p>{card.description}</p>
+            {/* Header row: label left, icon right */}
+            <div className="home-hub__card-header">
+              <span className="home-hub__card-label">{card.label}</span>
+              <div className="home-hub__card-icon">{card.icon}</div>
+            </div>
+
+            {/* Body: text only */}
+            <div className="home-hub__card-body">
+              <div className="home-hub__card-content">
+                <h2>{card.title}</h2>
+                <p>{card.description}</p>
+              </div>
+            </div>
+
+            {/* Footer: CTA */}
+            <div className="home-hub__card-footer">
+              <span className="home-hub__card-cta">
+                {card.cta} <span className="home-hub__card-cta-arrow">→</span>
+              </span>
             </div>
           </button>
         ))}
@@ -105,4 +116,3 @@ const HomeHub = ({ onNavigate }) => {
 };
 
 export default HomeHub;
-
