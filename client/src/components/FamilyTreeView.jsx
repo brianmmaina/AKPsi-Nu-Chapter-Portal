@@ -11,7 +11,8 @@ const PAGE_LAYOUT_CSS = `
     display: flex;
     flex-direction: column;
     height: 100vh;
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
   }
 
   .family-tree-content {
@@ -288,7 +289,7 @@ const FamilyTreeView = ({
 
     return (
 
-      <div style={{ minHeight: '100vh', backgroundColor: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
+      <div style={{ minHeight: '100dvh', backgroundColor: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
 
         <div>No families found. Please initialize the database.</div>
 
@@ -310,8 +311,8 @@ const FamilyTreeView = ({
       <div
         className="family-tree-page"
         style={{
-          minHeight: '100vh',
-          height: '100vh',
+          minHeight: '100dvh',
+          height: '100dvh',
           backgroundColor: themeBackground,
           transition: 'background-color 400ms ease',
         }}
