@@ -6,69 +6,49 @@ const Login = ({ password, setPassword, handleLogin }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#e8ddd0',
       overflow: 'hidden',
+      background: '#080e16',
     }}>
 
-      {/* Paper grid texture */}
+      {/* Background photo */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: [
-          'repeating-linear-gradient(0deg,  transparent, transparent 28px, rgba(100,76,48,0.035) 28px, rgba(100,76,48,0.035) 29px)',
-          'repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(100,76,48,0.035) 28px, rgba(100,76,48,0.035) 29px)',
-        ].join(', '),
-        zIndex: 2,
+        backgroundImage: 'url(/images/home-background.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        filter: 'brightness(0.22) saturate(0.5)',
+        zIndex: 0,
+      }} aria-hidden />
+
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(4,8,14,0.70) 100%)',
+        zIndex: 1,
         pointerEvents: 'none',
       }} aria-hidden />
 
-      {/* Login card */}
+      {/* Card */}
       <div style={{
         position: 'relative',
-        zIndex: 3,
-        width: 'min(390px, calc(100vw - 32px))',
-        padding: '48px 38px 36px',
-        background: 'rgba(255, 252, 246, 0.96)',
-        border: '1px solid rgba(112, 88, 52, 0.22)',
-        borderRadius: '8px',
-        boxShadow: '0 14px 32px rgba(54, 40, 24, 0.16), 0 2px 6px rgba(54, 40, 24, 0.08)',
+        zIndex: 2,
+        width: 'min(380px, calc(100vw - 32px))',
+        padding: '56px 44px 48px',
+        background: '#ffffff',
+        border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: '4px',
+        boxShadow: '0 40px 80px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.28)',
       }}>
-        {/* Top rule */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '2px',
-          borderRadius: '8px 8px 0 0',
-          background: 'linear-gradient(90deg, transparent 0%, rgba(154,118,58,0.55) 35%, rgba(154,118,58,0.55) 65%, transparent 100%)',
-        }} aria-hidden />
 
-        {/* PRIVATE ACCESS label */}
-        <p style={{
-          textAlign: 'center',
-          marginBottom: '18px',
-          fontSize: '0.62rem',
-          fontFamily: 'var(--font-body)',
-          fontWeight: 700,
-          letterSpacing: '0.28em',
-          color: 'rgba(138, 106, 58, 0.65)',
-          textTransform: 'uppercase',
-        }}>
-          Private Access
-        </p>
 
         {/* Crest */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
           <img
-            src="/akpsi-seal.png"
-            alt="Alpha Kappa Psi Seal"
-            style={{
-              width: '52px',
-              height: '52px',
-              objectFit: 'contain',
-              opacity: 0.72,
-            }}
+            src="/akpsi-crest.png"
+            alt="Alpha Kappa Psi"
+            style={{ width: '80px', height: '80px', objectFit: 'contain', opacity: 1, clipPath: 'inset(0 5px 0 0)' }}
             loading="eager"
           />
         </div>
@@ -77,138 +57,109 @@ const Login = ({ password, setPassword, handleLogin }) => {
         <h1 style={{
           textAlign: 'center',
           margin: '0 0 6px',
-          fontSize: '1.05rem',
-          fontFamily: 'var(--font-display)',
+          fontSize: '1.1rem',
+          fontFamily: 'Inter, system-ui, sans-serif',
           fontWeight: 700,
-          color: '#221608',
-          letterSpacing: '0.16em',
+          color: '#0a0a0a',
+          letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          lineHeight: 1.2,
         }}>
           Alpha Kappa Psi
         </h1>
 
-        {/* Subtitle */}
         <p style={{
           textAlign: 'center',
-          margin: 0,
+          margin: '0 0 36px',
           fontSize: '0.72rem',
-          fontFamily: 'var(--font-body)',
-          fontWeight: 600,
-          letterSpacing: '0.22em',
-          color: 'rgba(106, 80, 44, 0.72)',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          fontWeight: 500,
+          letterSpacing: '0.18em',
+          color: 'rgba(10,10,10,0.42)',
           textTransform: 'uppercase',
         }}>
-          Nu Chapter Portal
+          Nu Chapter
         </p>
 
-        {/* Divider */}
-        <div style={{
-          width: '64px',
-          height: '1px',
-          background: 'rgba(154, 118, 58, 0.38)',
-          margin: '16px auto 28px',
-        }} aria-hidden />
-
         {/* Form */}
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <label htmlFor="password" style={{
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            style={{
               display: 'block',
-              marginBottom: '7px',
-              fontSize: '0.62rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-              color: 'rgba(106, 80, 44, 0.72)',
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                display: 'block',
-                width: '100%',
-                height: '48px',
-                padding: '0 14px',
-                fontSize: '14px',
-                fontFamily: 'var(--font-body)',
-                color: '#221608',
-                background: '#fffdf8',
-                border: '1px solid rgba(126, 97, 53, 0.34)',
-                borderRadius: '5px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                boxShadow: 'none',
-                transition: 'border-color 0.15s ease',
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = 'rgba(154, 118, 58, 0.72)';
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = 'rgba(126, 97, 53, 0.34)';
-              }}
-              placeholder="Enter password"
-              required
-              autoFocus
-              aria-required="true"
-            />
-          </div>
+              width: '100%',
+              height: '48px',
+              padding: '0 14px',
+              fontSize: '14px',
+              fontFamily: 'Inter, system-ui, sans-serif',
+              color: '#0a0a0a',
+              background: '#f5f5f5',
+              border: '1px solid #e0e0e0',
+              borderRadius: '4px',
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+            }}
+            onFocus={e => {
+              e.target.style.borderColor = '#0a0a0a';
+              e.target.style.boxShadow = '0 0 0 3px rgba(10,10,10,0.08)';
+              e.target.style.background = '#ffffff';
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = '#e0e0e0';
+              e.target.style.boxShadow = 'none';
+              e.target.style.background = '#f5f5f5';
+            }}
+            placeholder="Chapter password"
+            required
+            autoFocus
+          />
 
           <button
             type="submit"
             style={{
-              display: 'block',
               width: '100%',
-              height: '46px',
-              marginTop: '4px',
-              fontSize: '0.78rem',
-              fontFamily: 'var(--font-body)',
-              fontWeight: 800,
+              height: '48px',
+              fontSize: '0.72rem',
+              fontFamily: 'Inter, system-ui, sans-serif',
+              fontWeight: 700,
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
-              background: '#d9b54b',
-              color: '#21180d',
-              border: '1px solid rgba(117, 88, 32, 0.25)',
-              borderRadius: '5px',
+              background: '#0a0a0a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
               cursor: 'pointer',
-              transition: 'background 0.15s ease, transform 0.15s ease',
+              transition: 'background 0.15s, transform 0.12s, box-shadow 0.15s',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.20)',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#cda43c';
+              e.currentTarget.style.background = '#2a2a2a';
               e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.28)';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#d9b54b';
+              e.currentTarget.style.background = '#0a0a0a';
               e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.20)';
             }}
           >
             Enter
           </button>
         </form>
-
-        {/* Bottom rule */}
-        <div style={{
-          marginTop: '28px',
-          height: '1px',
-          background: 'rgba(154, 118, 58, 0.18)',
-        }} aria-hidden />
-
-        <p style={{
-          textAlign: 'center',
-          margin: '12px 0 0',
-          fontSize: '0.60rem',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'rgba(138, 106, 58, 0.42)',
-          fontFamily: 'var(--font-body)',
-        }}>
-          AKΨ Nu Chapter · Member Access Only
-        </p>
       </div>
+
+      <style>{`
+        .login-input:-webkit-autofill,
+        .login-input:-webkit-autofill:hover,
+        .login-input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px #f5f5f5 inset !important;
+          -webkit-text-fill-color: #0a0a0a !important;
+          border-color: #e0e0e0 !important;
+        }
+      `}</style>
     </div>
   );
 };
