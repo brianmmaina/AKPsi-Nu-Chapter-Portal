@@ -88,7 +88,7 @@ const FamilyCard = ({ family, index, isClicked, onClick, isLoaded = false }) => 
         border: cardStyle.border,
         borderRadius: '18px',
         padding: '1.25rem 1.5rem',
-        width: '230px',
+        width: 'clamp(160px, 40vw, 230px)',
         minHeight: '104px',
         boxShadow: cardStyle.shadow,
         transition: 'transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, opacity var(--motion-med) var(--ease-standard)',
