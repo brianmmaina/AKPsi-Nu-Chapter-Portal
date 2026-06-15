@@ -8,7 +8,7 @@ const FAMILY_STYLES = {
   pride:    { bg: 'rgba(52,22,6,0.09)',     color: '#3a1a06', border: 'rgba(194,158,80,0.34)' },
 };
 
-const FAMILY_ACCENT_COLORS = {
+const FAMILY_ACCENT = {
   empire:   '#c9a857',
   greed:    '#2d6a3f',
   wolfpack: '#7aa0d4',
@@ -16,18 +16,18 @@ const FAMILY_ACCENT_COLORS = {
   pride:    '#c9a857',
 };
 
-const PODIUM_RANK = [
-  { rankColor: '#8a6520' },
-  { rankColor: '#5a6a7a' },
-  { rankColor: '#7a4e28' },
+const RANK_META = [
+  { label: 'CURRENT LEADER', accent: '#B8960C', rankColor: '#8a6520', bg: 'rgba(184,150,12,0.06)' },
+  { label: 'SECOND PLACE',   accent: '#7a8a98', rankColor: '#5a6a7e', bg: 'rgba(148,163,184,0.05)' },
+  { label: 'THIRD PLACE',    accent: '#9a6040', rankColor: '#7a4e28', bg: 'rgba(176,120,80,0.05)' },
 ];
 
-const StreakText = ({ member, compact = false }) => {
-  if (!member.streak || member.streak === 0) return <span className="lb-table__no-streak">·</span>;
+const StreakText = ({ member }) => {
+  if (!member.streak || member.streak === 0) return <span className="lb-table__no-streak">—</span>;
   return (
     <span className="lb-streak-text">
       {member.streak}-event streak
-      {member.streakKey === 'goat' && <span className="lb-streak-goat">G.O.A.T.</span>}
+      {member.streakKey === 'goat' && <span className="lb-streak-goat"> G.O.A.T.</span>}
     </span>
   );
 };
@@ -45,7 +45,7 @@ const LeaderboardTable = ({ members = [], loading, onSelectMember }) => {
     const base = q
       ? sorted.filter((m) => `${m.memberName} ${m.familyName}`.toLowerCase().includes(q))
       : sorted;
-    return base.slice(0, 23);
+    return base.slice(0, 22);
   }, [sorted, query]);
 
   const rankMap = useMemo(
@@ -57,41 +57,43 @@ const LeaderboardTable = ({ members = [], loading, onSelectMember }) => {
 
   return (
     <div className="leaderboard">
-      {/* ── Podium ── */}
+
+      {/* ── Ranking Plaques ── */}
       <div className="lb-podium">
         {highlight.length === 0 ? (
           <div className="lb-podium__empty">
-            {loading ? 'Loading leaderboard…' : 'No points recorded yet.'}
+            {loading ? 'Loading chapter records…' : 'No points recorded yet.'}
           </div>
         ) : (
           highlight.map((member, i) => {
-            const pod = PODIUM_RANK[i];
+            const meta = RANK_META[i];
             const famKey = (member.familyName || '').toLowerCase();
-            const famAccent = FAMILY_ACCENT_COLORS[famKey] || '#c9a857';
+            const famAccent = FAMILY_ACCENT[famKey] || '#c9a857';
             return (
               <button
                 key={member.memberId}
                 type="button"
                 className={`lb-podium-card lb-podium-card--${i + 1}`}
-                style={{
-                  borderTop: `3px solid ${famAccent}`,
-                  borderRight: '1px solid rgba(122,98,68,0.13)',
-                  borderBottom: '1px solid rgba(122,98,68,0.13)',
-                  borderLeft: '1px solid rgba(122,98,68,0.13)',
-                }}
+                style={{ borderTopColor: i === 0 ? meta.accent : famAccent }}
                 onClick={() => onSelectMember?.(member.memberId)}
               >
-                {i === 0 && <span className="lb-podium-card__leader-label">Current Leader</span>}
-                <div className="lb-podium-card__rank" style={{ color: pod.rankColor }}>#{i + 1}</div>
+                <span className="lb-podium-card__label" style={{ color: meta.rankColor }}>
+                  {meta.label}
+                </span>
+                <div className="lb-podium-card__rank" style={{ color: meta.rankColor }}>
+                  #{i + 1}
+                </div>
                 <div className="lb-podium-card__name">{member.memberName}</div>
                 <div className="lb-podium-card__family">{member.familyName}</div>
-                <div className="lb-podium-card__points" style={{ color: pod.rankColor }}>
-                  {member.totalPoints} pts
+                <div className="lb-podium-card__divider" />
+                <div className="lb-podium-card__points" style={{ color: meta.rankColor }}>
+                  {member.totalPoints}
+                  <span className="lb-podium-card__pts-unit"> pts</span>
                 </div>
                 {member.streak > 0 && (
                   <span className="lb-podium-card__streak">
                     {member.streak}-event streak
-                    {member.streakKey === 'goat' && <span className="lb-streak-goat">G.O.A.T.</span>}
+                    {member.streakKey === 'goat' && <span className="lb-streak-goat"> G.O.A.T.</span>}
                   </span>
                 )}
               </button>
@@ -103,7 +105,7 @@ const LeaderboardTable = ({ members = [], loading, onSelectMember }) => {
       {/* ── Search row ── */}
       <div className="lb-controls">
         <div className="lb-search">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0.45, flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ opacity: 0.42, flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
           <input
@@ -121,7 +123,7 @@ const LeaderboardTable = ({ members = [], loading, onSelectMember }) => {
         </p>
       </div>
 
-      {/* ── Table ── */}
+      {/* ── Ledger Table ── */}
       <div className="lb-table-wrap">
         <table className="lb-table">
           <thead>
@@ -166,13 +168,14 @@ const LeaderboardTable = ({ members = [], loading, onSelectMember }) => {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="lb-table__empty">
-                  {loading ? 'Loading…' : 'No matches found.'}
+                  {loading ? 'Loading chapter records…' : 'No matches found.'}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
     </div>
   );
 };
