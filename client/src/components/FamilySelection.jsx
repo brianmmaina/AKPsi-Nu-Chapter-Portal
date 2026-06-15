@@ -39,10 +39,9 @@ const FamilySelection = ({ families, onSelectFamily, onBack, onBackToHome, canGo
         backgroundColor: '#f4ede2',
         backgroundImage:
           'radial-gradient(circle at top, rgba(211,175,55,0.12) 0%, rgba(244,237,226,0) 55%), linear-gradient(135deg, rgba(109,81,34,0.08) 0%, rgba(244,237,226,0) 60%)',
-        overflow: 'hidden',
+        overflowX: 'hidden',
         position: 'relative',
-        height: '100vh',
-        maxHeight: '100vh',
+        /* height handled by .family-selection CSS class (100dvh) */
       }}
     >
       {/* Background Image Layer */}
@@ -65,30 +64,36 @@ const FamilySelection = ({ families, onSelectFamily, onBack, onBackToHome, canGo
             onClick={onBackToHome}
             className="nav-button"
             style={{
-              padding: '8px 18px',
-              fontSize: '13px',
+              padding: '7px 16px',
+              fontSize: '10px',
               fontFamily: 'var(--font-body)',
-              background: '#ffffff',
-              border: '1px solid rgba(0,0,0,0.12)',
-              color: '#0f0f0f',
+              background: 'rgba(253,250,243,0.92)',
+              border: '1px solid rgba(122,98,68,0.28)',
+              color: '#3a2410',
               cursor: 'pointer',
-              fontWeight: 600,
-              transition: 'all 200ms ease',
+              fontWeight: 700,
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase',
+              transition: 'all 180ms ease',
               whiteSpace: 'nowrap',
+              borderRadius: '4px',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.80), 0 2px 8px rgba(54,40,24,0.12)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#f2f2f2';
+              e.currentTarget.style.background = 'rgba(253,250,243,1)';
+              e.currentTarget.style.borderColor = 'rgba(122,98,68,0.45)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.background = 'rgba(253,250,243,0.92)';
+              e.currentTarget.style.borderColor = 'rgba(122,98,68,0.28)';
             }}
           >
-            Back to Home
+            ← Archive Home
           </button>
         )}
       </div>
       
-      <div className="relative container max-w-5xl mx-auto flex-1 flex flex-col justify-center family-selection__content" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)', zIndex: 3, overflowY: 'auto', height: '100%', maxHeight: '100%' }}>
+      <div className="relative container max-w-5xl mx-auto flex-1 flex flex-col justify-center family-selection__content" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)', zIndex: 3 }}>
         {/* Compact Header Section */}
         <div className="text-center" style={{ marginBottom: 'var(--space-8)' }}>
           {/* Fraternity Seal - Smaller */}
