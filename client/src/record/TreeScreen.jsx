@@ -19,12 +19,21 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
   const [exporting, setExporting] = useState(false);
 
   const zoomBy = useCallback((d) => {
-    setZoom((z) => Math.min(2, Math.max(0.5, +(z + d).toFixed(2))));
+    setZoom((z) => Math.min(2.5, Math.max(0.2, +(z + d).toFixed(2))));
   }, []);
+
+  // Fit the whole tree into the viewport width.
+  const fitZoom = useCallback(() => {
+    const el = boxRef.current;
+    const available = el ? el.clientWidth - 34 : 0;
+    if (!available || !layout.width) return 1;
+    return Math.min(1, Math.max(0.2, +(available / layout.width).toFixed(2)));
+  }, [layout.width]);
+
   const zoomReset = useCallback(() => {
-    setZoom(1);
+    setZoom(fitZoom());
     setPan({ x: 0, y: 0 });
-  }, []);
+  }, [fitZoom]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -37,11 +46,24 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
     return () => window.removeEventListener('keydown', onKey);
   }, [zoomBy, zoomReset]);
 
-  // Reset viewport when switching families
+  // Start fitted so the whole tree is visible; refit when switching families.
   useEffect(() => {
-    setZoom(1);
+    setZoom(fitZoom());
     setPan({ x: 0, y: 0 });
-  }, [fid]);
+  }, [fid, fitZoom]);
+
+  // ⌘/Ctrl + scroll zooms the chart (plain scroll still pans/scrolls).
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      zoomBy(e.deltaY > 0 ? -0.1 : 0.1);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [zoomBy]);
 
   const onDown = (e) => {
     dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
@@ -180,8 +202,25 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
               onMouseLeave={onUp}
               style={{ overflow: 'auto', cursor: 'grab', border: '1px solid rgba(43,35,24,.14)', background: 'var(--ncr-well)', padding: '26px 16px' }}
             >
-              <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'top center', transition: 'transform .07s linear' }}>
-                <div style={{ position: 'relative', width: layout.width, height: layout.height, margin: '0 auto' }}>
+              {/* Outer box tracks the scaled size so the scroll area shrinks with the zoom. */}
+              <div
+                style={{
+                  width: Math.max(1, Math.round(layout.width * zoom)),
+                  height: Math.max(1, Math.round(layout.height * zoom)),
+                  margin: '0 auto',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                    transformOrigin: 'top left',
+                    transition: 'transform .07s linear',
+                    position: 'relative',
+                    width: layout.width,
+                    height: layout.height,
+                  }}
+                >
                   {layout.edges.map((ed, i) => (
                     <div
                       key={i}
@@ -247,18 +286,18 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
                     </button>
                   ))}
                 </div>
-                {!layout.hasRels && layout.nodes.length > 0 && (
-                  <div className="ncr-italic" style={{ fontSize: 13, color: 'var(--ncr-muted)', marginTop: 24, textAlign: 'center' }}>
-                    Brothers are on record but not yet connected — set each brother's Big from their record card.
-                  </div>
-                )}
-                <div className="ncr-italic" style={{ fontSize: 13, color: 'var(--ncr-muted)', marginTop: 28, textAlign: 'center' }}>
-                  The full {fam.name} lineage · {register.length} brothers on record.
+              </div>
+              {!layout.hasRels && layout.nodes.length > 0 && (
+                <div className="ncr-italic" style={{ fontSize: 13, color: 'var(--ncr-muted)', marginTop: 24, textAlign: 'center' }}>
+                  Brothers are on record but not yet connected — set each brother's Big from their record card.
                 </div>
+              )}
+              <div className="ncr-italic" style={{ fontSize: 13, color: 'var(--ncr-muted)', marginTop: 28, textAlign: 'center' }}>
+                The full {fam.name} lineage · {register.length} brothers on record.
               </div>
             </div>
             <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ncr-faint)', marginTop: 10 }}>
-              Drag to pan · 0 reset · + / − zoom
+              Drag to pan · 0 reset · + / − or ⌘ scroll to zoom
             </div>
           </div>
 

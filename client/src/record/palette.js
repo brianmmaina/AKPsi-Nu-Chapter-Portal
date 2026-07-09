@@ -108,3 +108,14 @@ export const hexA = (hex, a) => {
   const n = String(hex || '#2b2318').replace('#', '');
   return `rgba(${parseInt(n.slice(0, 2), 16)},${parseInt(n.slice(2, 4), 16)},${parseInt(n.slice(4, 6), 16)},${a})`;
 };
+
+/**
+ * Chapter photo washed into the paper aesthetic: the image sits under a
+ * paper-tone overlay so ink text keeps its contrast. Higher wash = fainter photo.
+ */
+export const photoBg = (url, wash = 0.86) => ({
+  backgroundImage: `linear-gradient(rgba(230,220,198,${wash}), rgba(230,220,198,${wash})), url(${url})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundAttachment: 'fixed',
+});

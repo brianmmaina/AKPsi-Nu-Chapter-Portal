@@ -21,7 +21,23 @@ import MajorModal from './record/MajorModal';
 import { usePoints } from './context/PointsContext';
 import { auth, families as familiesApi } from './api';
 import { buildLiveModel, buildSampleModel } from './record/model';
+import { photoBg } from './record/palette';
 import { pointSystemConfig } from './config/pointSystemConfig';
+
+// Chapter photos behind each screen, washed into the paper tone.
+// Denser screens get a heavier wash so tables stay readable.
+const SCREEN_BG = {
+  gate: ['/images/gate-bg.jpg', 0.78],
+  landing: ['/images/landing-bg.jpg', 0.84],
+  index: ['/images/index-bg.jpg', 0.85],
+  rankings: ['/images/ledger-bg.jpg', 0.92],
+  admin: ['/images/ledger-bg.jpg', 0.93],
+  lineage: ['/images/lineage-bg.jpg', 0.86],
+  addbrother: ['/images/lineage-bg.jpg', 0.92],
+  alumni: ['/images/network-bg.jpg', 0.88],
+  resources: ['/images/resources-bg.jpg', 0.89],
+};
+const TREE_BG_COUNT = 5;
 
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 const DEMO_PASSWORD = 'nuchapter';
@@ -340,9 +356,18 @@ function App() {
         ? 'lineage'
         : screen;
 
+  // Per-screen photo background; the tree cycles a photo per family.
+  let bgStyle = {};
+  if (screen === 'tree') {
+    const idx = Math.max(0, M.famOrder.indexOf(treeFamily)) % TREE_BG_COUNT;
+    bgStyle = photoBg(`/images/tree-${idx + 1}.jpg`, 0.88);
+  } else if (SCREEN_BG[screen]) {
+    bgStyle = photoBg(SCREEN_BG[screen][0], SCREEN_BG[screen][1]);
+  }
+
   return (
     <ErrorBoundary>
-      <div className="ncr-grain" style={{ minHeight: '100vh' }}>
+      <div className="ncr-grain" style={{ minHeight: '100vh', ...bgStyle }}>
         {toast && (
           <div className="ncr-toast" style={{ background: toast.type === 'error' ? 'var(--ncr-crimson-deep)' : 'var(--ncr-ink)' }}>
             {toast.msg}
