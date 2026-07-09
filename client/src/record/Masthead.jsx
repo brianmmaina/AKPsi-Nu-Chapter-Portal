@@ -31,7 +31,7 @@ export default function Masthead({
           onClick={() => onNav('index')}
           style={{ display: 'flex', alignItems: 'center', gap: 13, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
         >
-          <img src="/akpsi-crest.png" alt="" style={{ width: 30, height: 30, objectFit: 'contain', mixBlendMode: 'multiply' }} />
+          <img src="/akpsi-crest.png" alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} />
           <span
             style={{
               fontFamily: 'var(--ncr-ui)',

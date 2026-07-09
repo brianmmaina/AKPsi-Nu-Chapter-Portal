@@ -31,7 +31,7 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, gateH
       <img
         src="/akpsi-crest.png"
         alt="crest"
-        style={{ width: 128, height: 128, objectFit: 'contain', mixBlendMode: 'multiply', marginBottom: 26 }}
+        style={{ width: 128, height: 128, objectFit: 'contain', marginBottom: 26 }}
       />
       <div className="ncr-label ncr-label--gold" style={{ letterSpacing: '.4em', marginBottom: 14 }}>
         Established 1916 · Boston University

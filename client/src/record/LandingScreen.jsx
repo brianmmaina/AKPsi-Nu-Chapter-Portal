@@ -44,7 +44,7 @@ export default function LandingScreen({ onEnter }) {
         <img
           src="/akpsi-crest.png"
           alt="Alpha Kappa Psi crest"
-          style={{ width: 140, height: 140, objectFit: 'contain', mixBlendMode: 'multiply', margin: '0 auto 30px', display: 'block' }}
+          style={{ width: 140, height: 140, objectFit: 'contain', margin: '0 auto 30px', display: 'block' }}
         />
         <div style={label({ fontSize: 11, letterSpacing: '.42em', color: 'var(--ncr-gold)', marginBottom: 22 })}>
           The Professional Fraternity · Boston University · MCMXVI
