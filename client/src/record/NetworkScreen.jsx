@@ -11,7 +11,10 @@ const svc = () => import('./networkService');
 import { initials, hexA } from './palette';
 
 const IND_COLOR = { Finance: '#3b6fb0', Consulting: '#8a4fb0', Technology: '#0f766e', Accounting: '#9a6040' };
-const FILTERS = ['All', 'Mentors', 'Finance', 'Technology', 'Consulting'];
+const IND_FALLBACK = '#5c4f3c';
+
+// Deployed portal (mentorship workspace, pairings admin, DEI, messages).
+const PORTAL_URL = 'https://nu-chapter-connect-portal.web.app';
 
 const MENTOR_STEPS = [
   { no: 'I', title: 'Submit Interests', desc: 'Note target industries, companies, and goals for the term.', current: false },
@@ -22,6 +25,10 @@ const MENTOR_STEPS = [
 export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSignedOut, onOpenBrother, notify }) {
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState('All');
+  const [dirQuery, setDirQuery] = useState('');
+  const [dirField, setDirField] = useState('All');
+  const [dirLocation, setDirLocation] = useState('All');
+  const [dirYear, setDirYear] = useState('All');
   const signedIn = !!netUser;
 
   const meBro = useMemo(() => {
@@ -37,6 +44,7 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
         company: a.company || '—',
         role: a.role || '',
         industry: a.field || a.industry || 'Other',
+        location: a.location || '',
         mentor: !!a.mentor,
         linkedin: a.linkedin || '',
         email: (a.email || '').toLowerCase(),
@@ -45,9 +53,42 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
     return SAMPLE_ALUMNI;
   }, [netAlumni]);
 
-  const alumni = alumniSource.filter((a) =>
-    filter === 'All' ? true : filter === 'Mentors' ? a.mentor : a.industry === filter,
+  // Dynamic filter options derived from the loaded directory.
+  const dirFields = useMemo(
+    () => [...new Set(alumniSource.map((a) => a.industry).filter(Boolean))].sort(),
+    [alumniSource],
   );
+  const dirLocations = useMemo(
+    () => [...new Set(alumniSource.map((a) => a.location).filter(Boolean))].sort(),
+    [alumniSource],
+  );
+  const dirYears = useMemo(
+    () => [...new Set(alumniSource.map((a) => a.year).filter(Boolean))].sort((a, b) => b.localeCompare(a)),
+    [alumniSource],
+  );
+
+  const dq = dirQuery.trim().toLowerCase();
+  const alumni = alumniSource.filter((a) => {
+    if (filter === 'Mentors' && !a.mentor) return false;
+    if (dirField !== 'All' && a.industry !== dirField) return false;
+    if (dirLocation !== 'All' && a.location !== dirLocation) return false;
+    if (dirYear !== 'All' && a.year !== dirYear) return false;
+    if (dq) {
+      const hay = `${a.name} ${a.company} ${a.role} ${a.location} ${a.year}`.toLowerCase();
+      if (!hay.includes(dq)) return false;
+    }
+    return true;
+  });
+
+  const dirFiltered =
+    dq || filter !== 'All' || dirField !== 'All' || dirLocation !== 'All' || dirYear !== 'All';
+  const resetDirectory = () => {
+    setFilter('All');
+    setDirQuery('');
+    setDirField('All');
+    setDirLocation('All');
+    setDirYear('All');
+  };
 
   const signIn = async () => {
     if (busy) return;
@@ -285,7 +326,7 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
               </div>
             </div>
             <a
-              href="/portal/index.html"
+              href={PORTAL_URL}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -310,8 +351,8 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
               Alumni Directory
               {!netAlumni || !netAlumni.length ? ' · preview data' : ''}
             </span>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {FILTERS.map((t) => (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {['All', 'Mentors'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setFilter(t)}
@@ -330,7 +371,79 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
                   {t}
                 </button>
               ))}
+              <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 11, color: 'var(--ncr-muted)' }}>
+                {alumni.length} of {alumniSource.length} {alumniSource.length === 1 ? 'record' : 'records'}
+              </span>
             </div>
+          </div>
+
+          {/* Search + dynamic filters (company / role / field / location / class year) */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
+            <input
+              value={dirQuery}
+              onChange={(e) => setDirQuery(e.target.value)}
+              placeholder="Search name, company, role, location…"
+              aria-label="Search alumni"
+              style={{
+                flex: '1 1 260px',
+                minWidth: 220,
+                boxSizing: 'border-box',
+                height: 38,
+                padding: '0 14px',
+                background: '#f2ebdb',
+                border: '1px solid var(--ncr-rule)',
+                borderRadius: 0,
+                fontFamily: 'var(--ncr-ui)',
+                fontSize: 13,
+                color: 'var(--ncr-ink)',
+                outline: 'none',
+              }}
+            />
+            <select
+              className="ncr-select"
+              value={dirField}
+              onChange={(e) => setDirField(e.target.value)}
+              aria-label="Filter by field"
+              style={{ width: 'auto', height: 38, fontSize: 12.5 }}
+            >
+              <option value="All">All Fields</option>
+              {dirFields.map((f) => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+            {dirLocations.length > 0 && (
+              <select
+                className="ncr-select"
+                value={dirLocation}
+                onChange={(e) => setDirLocation(e.target.value)}
+                aria-label="Filter by location"
+                style={{ width: 'auto', height: 38, fontSize: 12.5 }}
+              >
+                <option value="All">All Locations</option>
+                {dirLocations.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            )}
+            {dirYears.length > 0 && (
+              <select
+                className="ncr-select"
+                value={dirYear}
+                onChange={(e) => setDirYear(e.target.value)}
+                aria-label="Filter by class year"
+                style={{ width: 'auto', height: 38, fontSize: 12.5 }}
+              >
+                <option value="All">All Years</option>
+                {dirYears.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            )}
+            {dirFiltered && (
+              <button className="ncr-btn-ghost ncr-btn-ghost--soft" onClick={resetDirectory} style={{ height: 38, padding: '0 14px' }}>
+                Reset
+              </button>
+            )}
           </div>
           <div
             style={{
@@ -352,8 +465,13 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
             <span>Industry</span>
             <span style={{ textAlign: 'right' }}>Link</span>
           </div>
+          {alumni.length === 0 && (
+            <div className="ncr-italic" style={{ fontSize: 13, color: 'var(--ncr-muted)', padding: '16px 4px' }}>
+              No alumni match these filters.
+            </div>
+          )}
           {alumni.map((a, i) => {
-            const indColor = IND_COLOR[a.industry] || '#5c4f3c';
+            const indColor = IND_COLOR[a.industry] || IND_FALLBACK;
             return (
               <div
                 key={`${a.name}-${i}`}
@@ -387,8 +505,15 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
                     {a.year ? `Class of ${a.year}` : 'Alumnus'}
                   </span>
                 </span>
-                <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 14, color: 'var(--ncr-ink)' }}>
-                  {[a.role, a.company].filter(Boolean).join(' · ')}
+                <span>
+                  <span style={{ display: 'block', fontFamily: 'var(--ncr-ui)', fontSize: 14, color: 'var(--ncr-ink)' }}>
+                    {[a.role, a.company].filter(Boolean).join(' · ')}
+                  </span>
+                  {a.location && (
+                    <span style={{ display: 'block', fontFamily: 'var(--ncr-ui)', fontSize: 11, color: 'var(--ncr-muted)', marginTop: 2 }}>
+                      {a.location}
+                    </span>
+                  )}
                 </span>
                 <span>
                   <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 11.5, color: indColor, background: hexA(indColor, 0.1), padding: '3px 9px' }}>
