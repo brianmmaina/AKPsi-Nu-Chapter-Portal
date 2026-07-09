@@ -1,6 +1,6 @@
 // Password gate — wired to POST /api/auth via the parent's handleEnter.
 
-export default function GateScreen({ pw, onPwChange, onSubmit, loginError, gateHint, onBackToLanding, busy }) {
+export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBackToLanding, busy }) {
   const year = new Date().getFullYear();
   return (
     <div
@@ -20,7 +20,7 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, gateH
         className="ncr-link-btn"
         style={{ position: 'absolute', top: 30, left: 40, fontSize: 11, letterSpacing: '.2em' }}
       >
-        ← Back
+        About the Chapter
       </button>
       <div
         className="ncr-label"
@@ -70,9 +70,6 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, gateH
             className="ncr-input"
             style={{ height: 46, padding: '0 14px', fontSize: 16 }}
           />
-          <div className="ncr-label--sm" style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ncr-faint)', marginTop: 7 }}>
-            {gateHint}
-          </div>
         </div>
         {loginError && <div className="ncr-error">{loginError}</div>}
         <button type="submit" className="ncr-btn" disabled={busy} style={{ height: 48, marginTop: 8, letterSpacing: '.26em', fontSize: 11.5 }}>

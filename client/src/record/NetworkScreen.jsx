@@ -11,7 +11,7 @@ const svc = () => import('./networkService');
 import { initials, hexA } from './palette';
 
 const IND_COLOR = { Finance: '#3b6fb0', Consulting: '#8a4fb0', Technology: '#0f766e', Accounting: '#9a6040' };
-const IND_FALLBACK = '#5c4f3c';
+const IND_FALLBACK = '#46392a';
 
 // Deployed portal (mentorship workspace, pairings admin, DEI, messages).
 const PORTAL_URL = 'https://nu-chapter-connect-portal.web.app';

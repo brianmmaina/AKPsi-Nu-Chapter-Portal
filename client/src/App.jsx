@@ -51,8 +51,8 @@ function App() {
   const [loginError, setLoginError] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
 
-  // Navigation
-  const [screen, setScreen] = useState('landing');
+  // Navigation — unauthenticated visitors land directly on the password gate.
+  const [screen, setScreen] = useState('gate');
   const [navStack, setNavStack] = useState([]);
   const [treeFamily, setTreeFamily] = useState('');
   const [selectedBrother, setSelectedBrother] = useState(null);
@@ -174,7 +174,7 @@ function App() {
     setAuthed(false);
     setAuthToken(null);
     setOfficerAuthed(false);
-    setScreen('landing');
+    setScreen('gate');
     setNavStack([]);
     setNetUser(null);
     setNetAlumni(null);
@@ -239,7 +239,7 @@ function App() {
           setLoginError('');
           notify('Welcome to the archive (offline preview).');
         } else {
-          setLoginError('Chapter server unreachable — check your connection, or use the demo password.');
+          setLoginError('Chapter server unreachable — check your connection and try again.');
           setPw('');
         }
       } else {
@@ -266,7 +266,7 @@ function App() {
           setOfficerAuthed(true);
           return { ok: true };
         }
-        return { ok: false, error: 'Server unreachable — offline demo password: nuofficer.' };
+        return { ok: false, error: 'Server unreachable — try again once the connection is back.' };
       }
       return { ok: false, error: res.error };
     },
@@ -330,12 +330,7 @@ function App() {
     loadLiveData();
   }, [notify, refreshPoints, loadLiveData]);
 
-  const gateHint = liveLoaded
-    ? 'Chapter password · verified by the server'
-    : 'Server offline · demo password: nuchapter';
-  const officerHint = liveLoaded
-    ? 'Same chapter credential · verified by the server'
-    : 'Offline demo password: nuofficer';
+  const officerHint = 'Same chapter credential · verified by the server';
 
   const showHeader = authed && screen !== 'landing' && screen !== 'gate';
   const headerActive =
@@ -368,7 +363,6 @@ function App() {
             onPwChange={(e) => setPw(e.target.value)}
             onSubmit={handleEnter}
             loginError={loginError}
-            gateHint={gateHint}
             busy={loginBusy}
             onBackToLanding={() => setScreen('landing')}
           />
