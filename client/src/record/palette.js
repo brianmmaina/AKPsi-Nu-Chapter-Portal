@@ -113,8 +113,8 @@ export const hexA = (hex, a) => {
  * Chapter photo washed into the paper aesthetic: the image sits under a
  * paper-tone overlay so ink text keeps its contrast. Higher wash = fainter photo.
  */
-export const photoBg = (url, wash = 0.86) => ({
-  backgroundImage: `linear-gradient(rgba(230,220,198,${wash}), rgba(230,220,198,${wash})), url(${url})`,
+export const photoBg = (url, wash = 0.9) => ({
+  backgroundImage: `linear-gradient(rgba(240,233,218,${wash}), rgba(240,233,218,${wash})), url(${url})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',

@@ -27,15 +27,15 @@ import { pointSystemConfig } from './config/pointSystemConfig';
 // Chapter photos behind each screen, washed into the paper tone.
 // Denser screens get a heavier wash so tables stay readable.
 const SCREEN_BG = {
-  gate: ['/images/gate-bg.jpg', 0.78],
-  landing: ['/images/landing-bg.jpg', 0.84],
-  index: ['/images/index-bg.jpg', 0.85],
-  rankings: ['/images/ledger-bg.jpg', 0.92],
-  admin: ['/images/ledger-bg.jpg', 0.93],
-  lineage: ['/images/lineage-bg.jpg', 0.86],
-  addbrother: ['/images/lineage-bg.jpg', 0.92],
-  alumni: ['/images/network-bg.jpg', 0.88],
-  resources: ['/images/resources-bg.jpg', 0.89],
+  gate: ['/images/gate-bg.jpg', 0.88],
+  landing: ['/images/landing-bg.jpg', 0.9],
+  index: ['/images/index-bg.jpg', 0.91],
+  rankings: ['/images/ledger-bg.jpg', 0.95],
+  admin: ['/images/ledger-bg.jpg', 0.96],
+  lineage: ['/images/lineage-bg.jpg', 0.92],
+  addbrother: ['/images/lineage-bg.jpg', 0.95],
+  alumni: ['/images/network-bg.jpg', 0.93],
+  resources: ['/images/resources-bg.jpg', 0.93],
 };
 const TREE_BG_COUNT = 5;
 
@@ -360,7 +360,7 @@ function App() {
   let bgStyle = {};
   if (screen === 'tree') {
     const idx = Math.max(0, M.famOrder.indexOf(treeFamily)) % TREE_BG_COUNT;
-    bgStyle = photoBg(`/images/tree-${idx + 1}.jpg`, 0.88);
+    bgStyle = photoBg(`/images/tree-${idx + 1}.jpg`, 0.93);
   } else if (SCREEN_BG[screen]) {
     bgStyle = photoBg(SCREEN_BG[screen][0], SCREEN_BG[screen][1]);
   }
