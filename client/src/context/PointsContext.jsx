@@ -5,10 +5,10 @@ import {
   createEvent,
   getMemberEvents,
   getPointsData,
+  getPointsSource,
   recordAttendance,
   updateEvent,
 } from '../services/pointsService';
-import MemberPointsDetailModal from '../components/points/MemberPointsDetailModal';
 
 const DEFAULT_TIMEFRAME = 'SEMESTER';
 
@@ -17,10 +17,9 @@ const PointsContext = createContext(null);
 export const PointsProvider = ({ children }) => {
   const [timeframe, setTimeframe] = useState(DEFAULT_TIMEFRAME);
   const [pointsData, setPointsData] = useState(null);
+  const [source, setSource] = useState('local');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeMemberId, setActiveMemberId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastSynced, setLastSynced] = useState(null);
 
   const loadData = useCallback(async (targetTimeframe) => {
@@ -29,6 +28,7 @@ export const PointsProvider = ({ children }) => {
     try {
       const data = await getPointsData(targetTimeframe);
       setPointsData(data);
+      setSource(getPointsSource());
       setLastSynced(new Date());
     } catch (err) {
       setError(err);
@@ -53,27 +53,6 @@ export const PointsProvider = ({ children }) => {
     setTimeframe(nextTimeframe);
   }, []);
 
-  const openMemberPoints = useCallback((memberId) => {
-    if (!memberId) return;
-    setActiveMemberId(String(memberId));
-    setIsModalOpen(true);
-  }, []);
-
-  const closeMemberPoints = useCallback(() => {
-    setIsModalOpen(false);
-    setActiveMemberId(null);
-  }, []);
-
-  const activeMemberSummary = useMemo(() => {
-    if (!pointsData || !activeMemberId) return null;
-    return pointsData.members.find((member) => member.memberId === activeMemberId) || null;
-  }, [pointsData, activeMemberId]);
-
-  const activeMemberEvents = useMemo(() => {
-    if (!pointsData || !activeMemberId) return [];
-    return getMemberEvents(pointsData, activeMemberId);
-  }, [pointsData, activeMemberId]);
-
   const createEventAction = useCallback(
     async (definition) => {
       await createEvent(definition);
@@ -91,8 +70,8 @@ export const PointsProvider = ({ children }) => {
   );
 
   const recordAttendanceAction = useCallback(
-    async (eventId, memberIds) => {
-      await recordAttendance(eventId, memberIds);
+    async (eventId, memberIds, fallbackPoints) => {
+      await recordAttendance(eventId, memberIds, fallbackPoints);
       await refresh();
     },
     [refresh],
@@ -106,16 +85,25 @@ export const PointsProvider = ({ children }) => {
     [refresh],
   );
 
+  const memberEvents = useCallback(
+    (memberId) => {
+      if (!pointsData || !memberId) return [];
+      return getMemberEvents(pointsData, String(memberId));
+    },
+    [pointsData],
+  );
+
   const contextValue = useMemo(
     () => ({
       timeframe,
       setTimeframe: handleSetTimeframe,
       pointsData,
+      source,
       loading,
       error,
       refresh,
       lastSynced,
-      openMemberPoints,
+      memberEvents,
       actions: {
         createEvent: createEventAction,
         updateEvent: updateEventAction,
@@ -127,11 +115,12 @@ export const PointsProvider = ({ children }) => {
       timeframe,
       handleSetTimeframe,
       pointsData,
+      source,
       loading,
       error,
       refresh,
       lastSynced,
-      openMemberPoints,
+      memberEvents,
       createEventAction,
       updateEventAction,
       recordAttendanceAction,
@@ -139,18 +128,7 @@ export const PointsProvider = ({ children }) => {
     ],
   );
 
-  return (
-    <PointsContext.Provider value={contextValue}>
-      {children}
-      <MemberPointsDetailModal
-        isOpen={isModalOpen}
-        onClose={closeMemberPoints}
-        member={activeMemberSummary}
-        events={activeMemberEvents}
-        timeframe={timeframe}
-      />
-    </PointsContext.Provider>
-  );
+  return <PointsContext.Provider value={contextValue}>{children}</PointsContext.Provider>;
 };
 
 export const usePoints = () => {
@@ -160,4 +138,3 @@ export const usePoints = () => {
   }
   return ctx;
 };
-

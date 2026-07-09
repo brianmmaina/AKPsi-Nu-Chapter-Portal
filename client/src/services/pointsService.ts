@@ -633,6 +633,15 @@ const loadGoogleSheetsSnapshot = async (): Promise<PointsData> => {
 
 const useGoogleSheets = Boolean(import.meta.env.VITE_GOOGLE_SHEETS_ID);
 
+export type PointsSource = 'sheets' | 'supabase' | 'local';
+
+let lastSource: PointsSource = 'local';
+
+/** Where the most recently loaded points snapshot came from. */
+export function getPointsSource(): PointsSource {
+  return lastSource;
+}
+
 export async function getPointsData(timeframe: PointsTimeframe): Promise<PointsData> {
   if (cache.has(timeframe)) {
     return cache.get(timeframe)!;
@@ -642,6 +651,7 @@ export async function getPointsData(timeframe: PointsTimeframe): Promise<PointsD
     try {
       const snapshot = await loadGoogleSheetsSnapshot();
       cache.set(timeframe, snapshot);
+      lastSource = 'sheets';
       return snapshot;
     } catch (error) {
       console.warn('Failed to load Google Sheets data, falling back to local source.', error);
@@ -653,11 +663,13 @@ export async function getPointsData(timeframe: PointsTimeframe): Promise<PointsD
       ? await loadSupabaseSnapshot(timeframe)
       : await loadFallbackSnapshot(timeframe);
     cache.set(timeframe, snapshot);
+    lastSource = useSupabase ? 'supabase' : 'local';
     return snapshot;
   } catch (error) {
     console.warn('Failed to load Supabase data, falling back to local source.', error);
     const snapshot = await loadFallbackSnapshot(timeframe);
     cache.set(timeframe, snapshot);
+    lastSource = 'local';
     return snapshot;
   }
 }
@@ -838,20 +850,33 @@ export async function updateEvent(
   return updateLocalEvent(id, updates);
 }
 
-export async function recordAttendance(eventId: string, memberIds: string[]): Promise<void> {
+export async function recordAttendance(
+  eventId: string,
+  memberIds: string[],
+  fallbackPoints?: number,
+): Promise<void> {
   if (memberIds.length === 0) return;
 
   if (useSupabase) {
-    const event = await fetchSupabaseEventById(eventId);
+    // Sheets-sourced events (e.g. chapter meetings) may not exist as
+    // points_events rows; use the caller-provided points in that case.
+    let eventPoints: number | undefined;
+    try {
+      const event = await fetchSupabaseEventById(eventId);
+      eventPoints = event?.defaultPoints;
+    } catch {
+      eventPoints = undefined;
+    }
+    const points = eventPoints ?? fallbackPoints ?? 0;
     const timestamp = new Date().toISOString();
     const awards = memberIds.map<PointAward>((memberId) => ({
       eventId,
       memberId,
-      points: event?.defaultPoints ?? 0,
+      points,
       createdAt: timestamp,
       termId: CURRENT_TERM,
     }));
-    await insertSupabaseAwards(awards, event?.defaultPoints ?? 0);
+    await insertSupabaseAwards(awards, points);
     return;
   }
 
