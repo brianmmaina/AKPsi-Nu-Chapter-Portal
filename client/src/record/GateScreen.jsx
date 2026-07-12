@@ -10,20 +10,31 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 24px',
+        padding: '96px 24px',
         position: 'relative',
         zIndex: 5,
       }}
     >
-      <button
-        onClick={onBackToLanding}
-        className="ncr-link-btn ncr-chip-scrim"
-        style={{ position: 'absolute', top: 30, left: 40, fontSize: 11, letterSpacing: '.2em' }}
+      <div
+        className="ncr-band"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          borderBottom: '1px solid var(--ncr-ink)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 24,
+          padding: '16px 40px',
+          flexWrap: 'wrap',
+        }}
       >
-        About the Chapter
-      </button>
-      <div style={{ position: 'absolute', top: 36, left: 0, right: 0, textAlign: 'center' }}>
-        <span className="ncr-label ncr-chip-scrim" style={{ fontSize: 10.5, letterSpacing: '.42em' }}>
+        <button onClick={onBackToLanding} className="ncr-link-btn ncr-link-btn--crimson" style={{ fontSize: 11, letterSpacing: '.2em' }}>
+          About the Chapter →
+        </button>
+        <span className="ncr-label" style={{ fontSize: 10.5, letterSpacing: '.42em' }}>
           Members of the Brotherhood Only
         </span>
       </div>
@@ -86,8 +97,11 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
         </button>
       </form>
       </div>
-      <div style={{ position: 'absolute', bottom: 30, left: 0, right: 0, textAlign: 'center' }}>
-        <span className="ncr-label ncr-chip-scrim" style={{ fontSize: 10, letterSpacing: '.22em', color: 'var(--ncr-faint)' }}>
+      <div
+        className="ncr-band"
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '1px solid var(--ncr-ink)', textAlign: 'center', padding: '13px 40px' }}
+      >
+        <span className="ncr-label" style={{ fontSize: 10, letterSpacing: '.22em', color: 'var(--ncr-faint)' }}>
           © {year} · Alpha Kappa Psi Nu Chapter
         </span>
       </div>
