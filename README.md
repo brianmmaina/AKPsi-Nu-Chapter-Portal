@@ -30,7 +30,7 @@ Officers unlock the admin portal from **Life Points → Officer Tools** with the
 | Layer | Technology |
 |---|---|
 | Frontend | React 19, Vite 7 (deployed on Vercel) |
-| Backend | Node.js 20, Express (deployed on Railway) |
+| Backend | Node.js 20, Express (deployed on Render) |
 | Chapter DB | PostgreSQL (Supabase) — families, brothers, relationships, posts |
 | Points | Google Sheets API (primary) → Supabase → bundled sample fallback |
 | Alumni network | Firebase Auth (Google) + Firestore, lazy-loaded chunk |
@@ -62,11 +62,11 @@ cd client && npm run build    # production build → client/dist
 
 **Frontend — Vercel** (config in `vercel.json`): builds `client/`, SPA rewrite to `index.html`. Set env vars from `client/.env.example` in the Vercel dashboard — `VITE_API_URL` must point at the deployed server.
 
-**Backend — Railway** (config in `railway.json`): runs `server/server.js`. Required env vars:
+**Backend — Render** (web service: root directory `server`, start command `node server.js`): the server already handles Render's proxy headers and SSL. Required env vars, set in the Render dashboard:
 
 | Var | Purpose |
 |---|---|
-| `DATABASE_URL` | Supabase Postgres connection string (Session Pooler URL preferred; direct URLs are auto-converted) |
+| `DATABASE_URL` | Supabase Postgres connection string (Session Pooler URL preferred on IPv4-only hosts; direct URLs are auto-converted) |
 | `PASSWORD` | Member password |
 | `ADMIN_PASSWORD` | Officer password (falls back to `PASSWORD` with a warning — set it) |
 | `JWT_SECRET` | Token signing secret — **required in production; server exits without it** |
@@ -75,7 +75,7 @@ cd client && npm run build    # production build → client/dist
 
 Tables are created/migrated automatically on server start (`initializeDatabase`), including the `posts` table for the Information Hub.
 
-A `server/Dockerfile` + `fly.toml` also exist if you ever move off Railway; Vercel + Railway is the canonical pair.
+`railway.json`, `server/Dockerfile`, and `server/fly.toml` are leftovers from other hosts and can be ignored; Vercel + Render is the canonical pair.
 
 ## Fall launch checklist
 
