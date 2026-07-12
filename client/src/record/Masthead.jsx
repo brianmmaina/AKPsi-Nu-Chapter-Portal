@@ -25,7 +25,8 @@ export default function Masthead({
   const noResults = showSearch && !searchBrothers.length && !searchMajors.length;
 
   return (
-    <div className="ncr-band" style={{ position: 'relative', zIndex: 30, maxWidth: 1340, margin: '0 auto', padding: '22px 40px 0' }}>
+    <div className="ncr-band" style={{ position: 'relative', zIndex: 30, borderBottom: '1px solid var(--ncr-ink)' }}>
+      <div style={{ maxWidth: 1340, margin: '0 auto', padding: '22px 40px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <button
           onClick={() => onNav('index')}
@@ -146,6 +147,7 @@ export default function Masthead({
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

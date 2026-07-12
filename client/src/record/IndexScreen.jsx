@@ -89,12 +89,10 @@ export default function IndexScreen({ onOpen, stats }) {
         ))}
       </div>
       <div
-        className="ncr-snapshot-grid ncr-band"
+        className="ncr-snapshot-grid ncr-band ncr-band--framed"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
-          borderTop: '1px solid var(--ncr-rule-strong)',
-          borderBottom: '1px solid var(--ncr-rule-soft)',
           marginTop: 34,
         }}
       >

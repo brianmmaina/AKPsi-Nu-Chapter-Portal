@@ -25,7 +25,7 @@ export default function LandingScreen({ onEnter }) {
   return (
     <div style={{ position: 'relative', zIndex: 5 }}>
       <div style={{ maxWidth: 1340, margin: '0 auto', padding: '22px 40px 0' }}>
-        <div className="ncr-band" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '10px 14px' }}>
+        <div className="ncr-band ncr-band--framed" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '10px 14px' }}>
           <span style={label({ fontSize: 11, fontWeight: 500, letterSpacing: '.26em', color: 'var(--ncr-ink-mid)' })}>
             Alpha Kappa Psi · Nu Chapter
           </span>
@@ -79,12 +79,10 @@ export default function LandingScreen({ onEnter }) {
 
       <div style={{ maxWidth: 1340, margin: '0 auto', padding: '0 40px' }}>
         <div
-          className="ncr-snapshot-grid ncr-band"
+          className="ncr-snapshot-grid ncr-band ncr-band--framed"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            borderTop: '1px solid var(--ncr-rule-strong)',
-            borderBottom: '1px solid var(--ncr-rule-soft)',
           }}
         >
           {LANDING_STATS.map((s) => (
@@ -97,7 +95,7 @@ export default function LandingScreen({ onEnter }) {
       </div>
 
       <div style={{ maxWidth: 1340, margin: '0 auto', padding: '64px 40px 0' }}>
-        <div className="ncr-band" style={{ padding: '30px 28px 8px' }}>
+        <div className="ncr-band ncr-band--framed" style={{ padding: '30px 28px 8px' }}>
         <div style={label({ fontSize: 11, letterSpacing: '.3em', color: 'var(--ncr-gold)', textAlign: 'center', marginBottom: 34 })}>
           What the Archive Holds
         </div>
@@ -130,7 +128,7 @@ export default function LandingScreen({ onEnter }) {
       </div>
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '80px 40px' }}>
-        <div className="ncr-band" style={{ padding: '38px 34px', textAlign: 'center' }}>
+        <div className="ncr-band ncr-band--framed" style={{ padding: '38px 34px', textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--ncr-display)', fontSize: 34, lineHeight: 1.32, color: 'var(--ncr-ink)' }}>
           “Brotherhood, scholarship, and service — kept in the record so that every class may answer to the last.”
         </div>
@@ -140,7 +138,7 @@ export default function LandingScreen({ onEnter }) {
         </div>
       </div>
 
-      <div className="ncr-band" style={{ borderTop: '1px solid var(--ncr-rule-mid)' }}>
+      <div className="ncr-band" style={{ borderTop: '1px solid var(--ncr-ink)' }}>
         <div style={{ maxWidth: 1340, margin: '0 auto', padding: '30px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <img src="/akpsi-seal.png" alt="" style={{ width: 46, height: 46, objectFit: 'contain', opacity: 0.85 }} />
