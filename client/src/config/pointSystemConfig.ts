@@ -380,7 +380,9 @@ const pointEvents: PointEventConfig[] = [
 ];
 
 export const pointSystemConfig: PointSystemConfig = {
-  semester: 'Spring 2026',
+  // Default/fallback only — the live term comes from the server settings
+  // (GET /api/settings → current_term) and is editable in officer tools.
+  semester: 'Fall 2026',
   checkpoints,
   specialRequirements,
   requiredEvents,

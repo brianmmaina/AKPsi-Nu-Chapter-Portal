@@ -420,6 +420,19 @@ async function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_relationships_big_id ON relationships(big_id);
       `);
       
+      // Chapter-wide settings (e.g. the current points season/term)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await pool.query(`
+        INSERT INTO settings (key, value) VALUES ('current_term', 'Fall 2026')
+        ON CONFLICT (key) DO NOTHING;
+      `);
+
       // Information Hub posts (announcements, newsletters, deadlines)
       await pool.query(`
         CREATE TABLE IF NOT EXISTS posts (
@@ -997,6 +1010,43 @@ app.delete('/api/relationships/:littleId', requireAdmin, async (req, res) => {
   } catch (error) {
     logger.error('Error deleting relationship:', error.message);
     res.status(500).json(sanitizeError(error, req));
+  }
+});
+
+// ============================================================================
+// CHAPTER SETTINGS
+// ============================================================================
+
+// Public: chapter settings as a key/value object
+app.get('/api/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT key, value FROM settings');
+    const settings = {};
+    result.rows.forEach((row) => {
+      settings[row.key] = row.value;
+    });
+    res.json(settings);
+  } catch (error) {
+    logger.error('Error fetching settings:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  }
+});
+
+// Admin: update settings (currently just current_term)
+app.put('/api/settings', requireAdmin, async (req, res) => {
+  try {
+    const currentTerm = validateString(req.body?.current_term, 'Current term', 60);
+    if (!currentTerm) {
+      return res.status(400).json({ error: 'current_term is required' });
+    }
+    await pool.query(`
+      INSERT INTO settings (key, value) VALUES ('current_term', $1)
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+    `, [currentTerm]);
+    res.json({ success: true, current_term: currentTerm });
+  } catch (error) {
+    logger.error('Error updating settings:', error.message);
+    res.status(400).json({ error: error.message || 'Invalid settings' });
   }
 });
 

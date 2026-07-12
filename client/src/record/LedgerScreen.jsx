@@ -26,6 +26,7 @@ const serif = (extra) => ({ fontFamily: 'var(--ncr-serif)', color: 'var(--ncr-in
 
 export default function LedgerScreen({
   M,
+  term,
   pointsSource,
   lastSynced,
   timeframe,
@@ -83,7 +84,7 @@ export default function LedgerScreen({
     { label: 'Current Leader', value: topMember.name, sub: `${topMember.points} pts`, accent: '#9a7327' },
     { label: 'Family Cup Leader', value: cupLeader.name, sub: `${Number(cupLeader.avg).toFixed(1)} avg / member`, accent: '#7a3b2e' },
     { label: 'Longest Streak', value: `${longest} events`, accent: '#b5651d' },
-    { label: 'Current Term', value: pointSystemConfig.semester, accent: '#6b6f3a' },
+    { label: 'Current Term', value: term, accent: '#6b6f3a' },
   ];
 
   const checkpoints = pointSystemConfig.checkpoints.map((cp) => ({

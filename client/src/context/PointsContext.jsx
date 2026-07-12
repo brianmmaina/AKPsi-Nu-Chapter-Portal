@@ -7,8 +7,11 @@ import {
   getPointsData,
   getPointsSource,
   recordAttendance,
+  setCurrentTermLabel,
   updateEvent,
 } from '../services/pointsService';
+import { pointSystemConfig } from '../config/pointSystemConfig';
+import { settings as settingsApi } from '../api';
 
 const DEFAULT_TIMEFRAME = 'SEMESTER';
 
@@ -21,6 +24,7 @@ export const PointsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastSynced, setLastSynced] = useState(null);
+  const [term, setTerm] = useState(pointSystemConfig.semester);
 
   const loadData = useCallback(async (targetTimeframe) => {
     setLoading(true);
@@ -47,6 +51,39 @@ export const PointsProvider = ({ children }) => {
       await loadData(targetTimeframe);
     },
     [timeframe, loadData],
+  );
+
+  // The live term comes from the chapter server; the config value is only a
+  // fallback. When it differs, re-point the points service and reload.
+  useEffect(() => {
+    let alive = true;
+    settingsApi
+      .get()
+      .then((res) => {
+        const serverTerm = res?.data?.current_term;
+        if (alive && serverTerm && serverTerm !== pointSystemConfig.semester) {
+          setTerm(serverTerm);
+          setCurrentTermLabel(serverTerm);
+          refresh();
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setSeason = useCallback(
+    async (label) => {
+      const trimmed = String(label || '').trim();
+      if (!trimmed) throw new Error('Enter a term, e.g. "Fall 2026".');
+      await settingsApi.update({ current_term: trimmed });
+      setTerm(trimmed);
+      setCurrentTermLabel(trimmed);
+      await refresh();
+    },
+    [refresh],
   );
 
   const handleSetTimeframe = useCallback((nextTimeframe) => {
@@ -104,11 +141,13 @@ export const PointsProvider = ({ children }) => {
       refresh,
       lastSynced,
       memberEvents,
+      term,
       actions: {
         createEvent: createEventAction,
         updateEvent: updateEventAction,
         recordAttendance: recordAttendanceAction,
         addManualAdjustment: addAdjustmentAction,
+        setSeason,
       },
     }),
     [
@@ -121,10 +160,12 @@ export const PointsProvider = ({ children }) => {
       refresh,
       lastSynced,
       memberEvents,
+      term,
       createEventAction,
       updateEventAction,
       recordAttendanceAction,
       addAdjustmentAction,
+      setSeason,
     ],
   );
 

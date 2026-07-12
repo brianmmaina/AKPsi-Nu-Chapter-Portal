@@ -22,7 +22,6 @@ import { usePoints } from './context/PointsContext';
 import { auth, families as familiesApi } from './api';
 import { buildLiveModel, buildSampleModel } from './record/model';
 import { photoBg } from './record/palette';
-import { pointSystemConfig } from './config/pointSystemConfig';
 
 // Chapter photos behind each screen, washed into the paper tone.
 // Washes stay light so the photos show; text outside cards sits on local
@@ -88,7 +87,7 @@ function App() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  const { pointsData, source: pointsSource, timeframe, setTimeframe, refresh: refreshPoints, lastSynced } = usePoints();
+  const { pointsData, source: pointsSource, timeframe, setTimeframe, refresh: refreshPoints, lastSynced, term } = usePoints();
 
   const notify = useCallback((msg, type = 'success') => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -150,7 +149,7 @@ function App() {
   }, [liveLoaded, liveFamilies, liveTrees, pointsData]);
 
   const canWrite = M.live && !!authToken;
-  const tfLabel = timeframe === 'YEAR' ? 'Academic Year' : pointSystemConfig.semester;
+  const tfLabel = timeframe === 'YEAR' ? 'Academic Year' : term;
 
   // ── Navigation ──
   const nav = useCallback(
@@ -391,11 +390,12 @@ function App() {
 
         {authed && (
           <main id="main-content">
-            {screen === 'index' && <IndexScreen onOpen={(key) => nav(key)} stats={indexStats} />}
+            {screen === 'index' && <IndexScreen onOpen={(key) => nav(key)} stats={indexStats} term={term} />}
 
             {screen === 'rankings' && (
               <LedgerScreen
                 M={M}
+                term={term}
                 pointsSource={pointsSource}
                 lastSynced={lastSynced}
                 timeframe={timeframe}

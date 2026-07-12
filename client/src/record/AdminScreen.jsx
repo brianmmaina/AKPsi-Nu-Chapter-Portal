@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { usePoints } from '../context/PointsContext';
 import RosterAdmin from './RosterAdmin';
 import PostsAdmin from './PostsAdmin';
+import SeasonAdmin from './SeasonAdmin';
 
 const CATEGORIES = ['CHAPTER', 'PROFESSIONAL', 'SERVICE', 'SOCIAL', 'RITUAL', 'COMPETITION', 'DEI', 'RECRUITMENT', 'COMMITTEE', 'OTHER'];
 
@@ -240,6 +241,7 @@ export default function AdminScreen({
               {tabBtn('adjust', 'Adjustments')}
               {tabBtn('roster', 'Roster & Trees')}
               {tabBtn('posts', 'Hub Posts')}
+              {tabBtn('season', 'Season')}
             </div>
             <button className="ncr-btn-ghost" onClick={onLockOfficer} style={{ marginBottom: 8, padding: '7px 13px', color: 'var(--ncr-muted)' }}>
               Lock
@@ -407,6 +409,8 @@ export default function AdminScreen({
           )}
 
           {tab === 'posts' && <PostsAdmin notify={notify} />}
+
+          {tab === 'season' && <SeasonAdmin notify={notify} />}
         </>
       )}
     </div>

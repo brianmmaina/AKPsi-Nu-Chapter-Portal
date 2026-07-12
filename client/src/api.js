@@ -63,6 +63,11 @@ export const relationships = {
   remove: (littleId, familyId) => api.delete(`/relationships/${littleId}`, { params: { family_id: familyId } }),
 };
 
+export const settings = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data),
+};
+
 export const posts = {
   getActive: () => api.get('/posts'),
   getAll: () => api.get('/posts/all'),

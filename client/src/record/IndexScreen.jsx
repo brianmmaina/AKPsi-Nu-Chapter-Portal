@@ -1,6 +1,28 @@
 // The Index — table of contents for the four archive sections.
 
-export default function IndexScreen({ onOpen, stats }) {
+const toRoman = (num) => {
+  const table = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
+    [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ];
+  let n = num;
+  let out = '';
+  for (const [v, sym] of table) {
+    while (n >= v) {
+      out += sym;
+      n -= v;
+    }
+  }
+  return out;
+};
+
+/** "Fall 2026" → "Fall Term · MMXXVI"; anything unparseable shows as-is. */
+const termKicker = (term) => {
+  const m = /^(.+?)\s+(\d{4})$/.exec(String(term || '').trim());
+  return m ? `${m[1]} Term · ${toRoman(Number(m[2]))}` : String(term || '');
+};
+
+export default function IndexScreen({ onOpen, stats, term }) {
   const sections = [
     {
       no: '01',
@@ -45,7 +67,7 @@ export default function IndexScreen({ onOpen, stats }) {
       <div className="ncr-hero" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24, marginBottom: 30 }}>
         <div style={{ maxWidth: 620 }}>
           <div className="ncr-label ncr-label--gold" style={{ letterSpacing: '.36em', marginBottom: 14 }}>
-            Spring Term · MMXXVI
+            {termKicker(term)}
           </div>
           <h1 className="ncr-display-1" style={{ fontSize: 58, lineHeight: 0.98, marginBottom: 14 }}>The Index</h1>
           <p className="ncr-italic" style={{ fontSize: 18, lineHeight: 1.5, margin: 0, maxWidth: 480 }}>Choose a record to open.</p>

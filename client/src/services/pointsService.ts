@@ -106,8 +106,22 @@ const supabase = getSupabaseClient();
 const useSupabase = Boolean(supabase);
 
 const bootstrapData = pointsDataSource as BootstrapData;
-const CURRENT_TERM =
-  pointSystemConfig.semester?.replace(/\s+/g, '_').toUpperCase() || 'CURRENT_TERM';
+
+const termToId = (label: string) =>
+  String(label || '').trim().replace(/\s+/g, '_').toUpperCase();
+
+// Mutable: awards are tagged/filtered by the current term, which officers can
+// change from the admin Season tab (persisted via GET/PUT /api/settings).
+let CURRENT_TERM = termToId(pointSystemConfig.semester) || 'CURRENT_TERM';
+
+/** Point the service at a new term (e.g. "Fall 2026"); clears cached snapshots. */
+export function setCurrentTermLabel(label: string) {
+  const next = termToId(label);
+  if (next && next !== CURRENT_TERM) {
+    CURRENT_TERM = next;
+    cache.clear();
+  }
+}
 const STORAGE_VERSION = 'v1';
 const STORAGE_KEY = `akpsi_points_admin_state_${STORAGE_VERSION}`;
 const MANUAL_ADJUST_EVENT_ID = 'manual-adjustment';
