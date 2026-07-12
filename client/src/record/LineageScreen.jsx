@@ -18,54 +18,76 @@ export default function LineageScreen({ M, onOpenFamily }) {
           and mentorship ties.
         </p>
       </div>
-      <div className="ncr-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
-        {M.famOrder.map((fid) => {
-          const fam = M.FAM[fid];
-          return (
-            <button
-              key={fid}
-              className="ncr-lift"
-              onClick={() => onOpenFamily(fid)}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 20,
-                textAlign: 'left',
-                background: fam.soft,
-                border: `1px solid ${fam.accent}`,
-                padding: '22px 24px',
-                cursor: 'pointer',
-                overflow: 'hidden',
-              }}
-            >
-              <span
-                style={{
-                  width: 64,
-                  height: 64,
-                  flex: 'none',
-                  background: fam.accent,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--ncr-display)',
-                  fontSize: 34,
-                  color: '#f4ecda',
-                }}
-              >
-                {fam.letter}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 25, fontWeight: 700, color: 'var(--ncr-ink)' }}>{fam.name}</div>
-                <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 3 }}>{fam.subtitle}</div>
-                <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', color: fam.accent, marginTop: 8 }}>
-                  {fam.founded ? `${fam.founded} · ` : ''}{fam.count} brothers →
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      <FamilyPyramid M={M} onOpenFamily={onOpenFamily} />
+    </div>
+  );
+}
+
+/** Family cards arranged as a centered pyramid (narrow row on top). */
+function FamilyPyramid({ M, onOpenFamily }) {
+  const card = (fid) => {
+    const fam = M.FAM[fid];
+    return (
+      <button
+        key={fid}
+        className="ncr-lift ncr-band"
+        onClick={() => onOpenFamily(fid)}
+        style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20,
+          textAlign: 'left',
+          backgroundImage: `linear-gradient(${fam.soft}, ${fam.soft})`,
+          border: `1px solid var(--ncr-ink)`,
+          padding: '22px 24px',
+          cursor: 'pointer',
+          overflow: 'hidden',
+          width: 'min(410px, 100%)',
+        }}
+      >
+        <span
+          style={{
+            width: 64,
+            height: 64,
+            flex: 'none',
+            background: fam.accent,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'var(--ncr-display)',
+            fontSize: 34,
+            color: '#f4ecda',
+          }}
+        >
+          {fam.letter}
+        </span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 25, fontWeight: 700, color: 'var(--ncr-ink)' }}>{fam.name}</div>
+          <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 3 }}>{fam.subtitle}</div>
+          <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', color: fam.accent, marginTop: 8 }}>
+            {fam.founded ? `${fam.founded} · ` : ''}{fam.count} brothers →
+          </div>
+        </div>
+      </button>
+    );
+  };
+
+  const ids = M.famOrder;
+  const bottomCount = Math.ceil(ids.length / 2);
+  const topRow = ids.slice(0, ids.length - bottomCount);
+  const bottomRow = ids.slice(ids.length - bottomCount);
+
+  const row = (list, key) => (
+    <div key={key} style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap' }}>
+      {list.map(card)}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'stretch', maxWidth: 1290, margin: '0 auto' }}>
+      {topRow.length > 0 && row(topRow, 'top')}
+      {row(bottomRow, 'bottom')}
     </div>
   );
 }
