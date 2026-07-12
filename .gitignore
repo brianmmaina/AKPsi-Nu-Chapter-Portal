@@ -37,3 +37,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Design handoff reference (kept locally, not part of the app)
+design_handoff_nu_chapter_record/
+
+# Claude Code local settings
+.claude/
