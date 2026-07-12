@@ -63,14 +63,16 @@ export default function AddBrotherScreen({ M, defaultFamily, canWrite, onDone, o
 
   return (
     <div className="ncr-shell">
-      <div className="ncr-folio-row">
-        <button className="ncr-link-btn" onClick={onCancel} style={{ fontSize: 11, letterSpacing: '.2em' }}>
-          ← Lineage
-        </button>
-        <span className="ncr-folio-line" />
-        <span className="ncr-folio-note">New Roster Entry</span>
+      <div className="ncr-hero" style={{ marginBottom: 30 }}>
+        <div className="ncr-folio-row">
+          <button className="ncr-link-btn" onClick={onCancel} style={{ fontSize: 11, letterSpacing: '.2em' }}>
+            ← Lineage
+          </button>
+          <span className="ncr-folio-line" />
+          <span className="ncr-folio-note">New Roster Entry</span>
+        </div>
+        <h1 className="ncr-display-1" style={{ margin: '14px 0 0' }}>Add a Brother</h1>
       </div>
-      <h1 className="ncr-display-1" style={{ margin: '14px 0 30px' }}>Add a Brother</h1>
       <div className="ncr-side-grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 44, alignItems: 'start', maxWidth: 760 }}>
         <div>
           <div className="ncr-field-label" style={{ marginBottom: 10 }}>Photograph</div>

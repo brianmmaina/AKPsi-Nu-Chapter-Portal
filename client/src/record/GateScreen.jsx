@@ -17,17 +17,26 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
     >
       <button
         onClick={onBackToLanding}
-        className="ncr-link-btn"
+        className="ncr-link-btn ncr-chip-scrim"
         style={{ position: 'absolute', top: 30, left: 40, fontSize: 11, letterSpacing: '.2em' }}
       >
         About the Chapter
       </button>
-      <div
-        className="ncr-label"
-        style={{ position: 'absolute', top: 36, left: 0, right: 0, textAlign: 'center', fontSize: 10.5, letterSpacing: '.42em' }}
-      >
-        Members of the Brotherhood Only
+      <div style={{ position: 'absolute', top: 36, left: 0, right: 0, textAlign: 'center' }}>
+        <span className="ncr-label ncr-chip-scrim" style={{ fontSize: 10.5, letterSpacing: '.42em' }}>
+          Members of the Brotherhood Only
+        </span>
       </div>
+      <div
+        className="ncr-hero ncr-hero--center"
+        style={{
+          width: 'min(560px, 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '44px 36px 40px',
+        }}
+      >
       <img
         src="/akpsi-crest.png"
         alt="crest"
@@ -76,11 +85,11 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
           {busy ? 'Verifying…' : 'Enter the Archive'}
         </button>
       </form>
-      <div
-        className="ncr-label"
-        style={{ position: 'absolute', bottom: 30, left: 0, right: 0, textAlign: 'center', fontSize: 10, letterSpacing: '.22em', color: 'var(--ncr-faint)' }}
-      >
-        © {year} · Alpha Kappa Psi Nu Chapter
+      </div>
+      <div style={{ position: 'absolute', bottom: 30, left: 0, right: 0, textAlign: 'center' }}>
+        <span className="ncr-label ncr-chip-scrim" style={{ fontSize: 10, letterSpacing: '.22em', color: 'var(--ncr-faint)' }}>
+          © {year} · Alpha Kappa Psi Nu Chapter
+        </span>
       </div>
     </div>
   );

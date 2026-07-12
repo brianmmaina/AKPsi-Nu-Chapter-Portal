@@ -133,12 +133,14 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
 
   return (
     <div className="ncr-shell">
-      <div className="ncr-folio-row">
-        <span className="ncr-folio-no">No. 04</span>
-        <span className="ncr-folio-line" />
-        <span className="ncr-folio-note">Alumni & Active Brothers</span>
+      <div className="ncr-hero" style={{ marginBottom: 28 }}>
+        <div className="ncr-folio-row">
+          <span className="ncr-folio-no">No. 04</span>
+          <span className="ncr-folio-line" />
+          <span className="ncr-folio-note">Alumni & Active Brothers</span>
+        </div>
+        <h1 className="ncr-display-1" style={{ margin: '14px 0 0' }}>The Network</h1>
       </div>
-      <h1 className="ncr-display-1" style={{ margin: '14px 0 28px' }}>The Network</h1>
 
       {!signedIn && (
         <div className="ncr-card" style={{ maxWidth: 440, margin: '30px auto 60px', textAlign: 'center', padding: '44px 40px' }}>

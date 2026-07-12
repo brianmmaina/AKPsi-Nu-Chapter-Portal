@@ -107,8 +107,8 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
 
   return (
     <div style={{ position: 'relative', zIndex: 5 }}>
-      {/* Themed banner */}
-      <div style={{ background: fam.soft, borderBottom: `4px solid ${fam.accent}` }}>
+      {/* Themed banner — family tint layered over a paper scrim so the title reads over the photo */}
+      <div className="ncr-band" style={{ backgroundImage: `linear-gradient(${fam.soft}, ${fam.soft})`, borderBottom: `4px solid ${fam.accent}` }}>
         <div style={{ maxWidth: 1340, margin: '0 auto', padding: '30px 40px' }}>
           <button className="ncr-link-btn" onClick={onBackToLineage} style={{ fontSize: 11, letterSpacing: '.2em', marginBottom: 18, color: 'var(--ncr-ink-mid)' }}>
             ← Lineage

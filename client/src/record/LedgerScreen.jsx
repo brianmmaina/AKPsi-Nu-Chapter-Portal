@@ -21,7 +21,7 @@ const CATEGORY_ORDER = [
 
 const AUTO_KEYS = new Set(['pledge_meeting_attendance', 'pledge_meeting_participation']);
 
-const sectionLabel = { fontFamily: 'var(--ncr-ui)', fontSize: 11, letterSpacing: '.24em', textTransform: 'uppercase', color: 'var(--ncr-muted)' };
+const sectionLabel = { fontFamily: 'var(--ncr-ui)', fontSize: 11, letterSpacing: '.24em', textTransform: 'uppercase', color: 'var(--ncr-ink-mid)' };
 const serif = (extra) => ({ fontFamily: 'var(--ncr-serif)', color: 'var(--ncr-ink)', ...extra });
 
 export default function LedgerScreen({
@@ -157,6 +157,7 @@ export default function LedgerScreen({
 
   return (
     <div className="ncr-shell">
+      <div className="ncr-hero" style={{ marginBottom: 26 }}>
       <div className="ncr-folio-row">
         <span className="ncr-folio-no">No. 01</span>
         <span className="ncr-folio-line" />
@@ -177,7 +178,7 @@ export default function LedgerScreen({
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', margin: '14px 0 26px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', marginTop: 14 }}>
         <div>
           <h1 className="ncr-display-1">Life Points Ledger</h1>
           <div className="ncr-italic" style={{ fontSize: 15, color: 'var(--ncr-muted)', marginTop: 8 }}>
@@ -198,6 +199,7 @@ export default function LedgerScreen({
             Officer Tools
           </button>
         </div>
+      </div>
       </div>
 
       {/* Snapshot */}

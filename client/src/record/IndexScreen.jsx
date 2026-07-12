@@ -42,7 +42,7 @@ export default function IndexScreen({ onOpen, stats }) {
 
   return (
     <div className="ncr-shell">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24, marginBottom: 30 }}>
+      <div className="ncr-hero" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24, marginBottom: 30 }}>
         <div style={{ maxWidth: 620 }}>
           <div className="ncr-label ncr-label--gold" style={{ letterSpacing: '.36em', marginBottom: 14 }}>
             Spring Term · MMXXVI
@@ -89,7 +89,7 @@ export default function IndexScreen({ onOpen, stats }) {
         ))}
       </div>
       <div
-        className="ncr-snapshot-grid"
+        className="ncr-snapshot-grid ncr-band"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
