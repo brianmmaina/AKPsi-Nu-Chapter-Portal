@@ -53,11 +53,22 @@ export const brothers = {
   get: (id) => api.get(`/brothers/${id}`),
   create: (data) => api.post('/brothers', data), // Token is added via interceptor
   update: (id, data) => api.put(`/brothers/${id}`, data), // Token is added via interceptor
+  remove: (id) => api.delete(`/brothers/${id}`),
+  bulkStatus: (ids, status) => api.put('/brothers/bulk-status', { ids, status }),
 };
 
 export const relationships = {
   update: (littleId, data) => api.put(`/relationships/${littleId}`, data), // Token is added via interceptor
   create: (data) => api.post('/relationships', data), // Token is added via interceptor
+  remove: (littleId, familyId) => api.delete(`/relationships/${littleId}`, { params: { family_id: familyId } }),
+};
+
+export const posts = {
+  getActive: () => api.get('/posts'),
+  getAll: () => api.get('/posts/all'),
+  create: (data) => api.post('/posts', data),
+  update: (id, data) => api.put(`/posts/${id}`, data),
+  remove: (id) => api.delete(`/posts/${id}`),
 };
 
 export default api;

@@ -1,8 +1,11 @@
-// Points Administration — officer-gated writes to the chapter records:
-// record attendance, create events, log manual adjustments.
+// Chapter Administration — officer-gated writes to the chapter records:
+// points (attendance, events, adjustments), roster & tree maintenance,
+// and Information Hub posts.
 
 import { useState, useMemo } from 'react';
 import { usePoints } from '../context/PointsContext';
+import RosterAdmin from './RosterAdmin';
+import PostsAdmin from './PostsAdmin';
 
 const CATEGORIES = ['CHAPTER', 'PROFESSIONAL', 'SERVICE', 'SOCIAL', 'RITUAL', 'COMPETITION', 'DEI', 'RECRUITMENT', 'COMMITTEE', 'OTHER'];
 
@@ -15,11 +18,15 @@ const FALLBACK_EVENTS = [
 
 export default function AdminScreen({
   M,
+  canWrite,
   officerAuthed,
   officerHint,
   onOfficerUnlock,
   onLockOfficer,
   onBackToLedger,
+  onRosterChanged,
+  onOpenBrother,
+  onAddBrother,
   notify,
 }) {
   const { pointsData, actions, timeframe } = usePoints();
@@ -183,14 +190,16 @@ export default function AdminScreen({
 
   return (
     <div className="ncr-shell">
-      <div className="ncr-folio-row">
-        <button className="ncr-link-btn" onClick={onBackToLedger} style={{ fontSize: 11, letterSpacing: '.2em' }}>
-          ← Ledger
-        </button>
-        <span className="ncr-folio-line" />
-        <span className="ncr-folio-note">Officers Only · Writes to the chapter records</span>
+      <div className="ncr-hero" style={{ marginBottom: 26 }}>
+        <div className="ncr-folio-row">
+          <button className="ncr-link-btn" onClick={onBackToLedger} style={{ fontSize: 11, letterSpacing: '.2em' }}>
+            ← Ledger
+          </button>
+          <span className="ncr-folio-line" />
+          <span className="ncr-folio-note">Officers Only · Writes to the chapter records</span>
+        </div>
+        <h1 className="ncr-display-1" style={{ margin: '14px 0 0' }}>Chapter Administration</h1>
       </div>
-      <h1 className="ncr-display-1" style={{ margin: '14px 0 26px' }}>Points Administration</h1>
 
       {!officerAuthed && (
         <div className="ncr-card" style={{ maxWidth: 400, margin: '8px 0 40px', borderTop: '4px solid var(--ncr-crimson)', padding: '32px 34px' }}>
@@ -225,10 +234,12 @@ export default function AdminScreen({
       {officerAuthed && (
         <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, borderBottom: '1.5px solid var(--ncr-ink)', marginBottom: 34, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex' }}>
-              {tabBtn('attendance', 'Record Attendance')}
-              {tabBtn('event', 'Event Builder')}
-              {tabBtn('adjust', 'Manual Adjustments')}
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {tabBtn('attendance', 'Attendance')}
+              {tabBtn('event', 'Events')}
+              {tabBtn('adjust', 'Adjustments')}
+              {tabBtn('roster', 'Roster & Trees')}
+              {tabBtn('posts', 'Hub Posts')}
             </div>
             <button className="ncr-btn-ghost" onClick={onLockOfficer} style={{ marginBottom: 8, padding: '7px 13px', color: 'var(--ncr-muted)' }}>
               Lock
@@ -383,6 +394,19 @@ export default function AdminScreen({
               </div>
             </div>
           )}
+
+          {tab === 'roster' && (
+            <RosterAdmin
+              M={M}
+              canWrite={canWrite}
+              notify={notify}
+              onChanged={onRosterChanged}
+              onOpenBrother={onOpenBrother}
+              onAddBrother={onAddBrother}
+            />
+          )}
+
+          {tab === 'posts' && <PostsAdmin notify={notify} />}
         </>
       )}
     </div>

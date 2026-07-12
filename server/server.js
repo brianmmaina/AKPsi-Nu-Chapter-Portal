@@ -40,7 +40,22 @@ for (const [key, description] of Object.entries(requiredEnvVars)) {
 }
 
 const PASSWORD = process.env.PASSWORD;
-const JWT_SECRET = process.env.JWT_SECRET || process.env.PASSWORD; // Fallback to password if not set
+
+// Officer/admin credential — separate from the member password so the member
+// password can circulate without granting write access. Falls back to PASSWORD
+// (with a warning) so existing deployments keep working until it's set.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.PASSWORD;
+if (!process.env.ADMIN_PASSWORD) {
+  console.warn('[WARN] ADMIN_PASSWORD not set — falling back to PASSWORD. Set a separate ADMIN_PASSWORD before launch.');
+}
+
+// In production a dedicated JWT secret is required; signing tokens with the
+// login password would let anyone who knows the password forge admin tokens.
+if (NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET environment variable must be set in production');
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET || process.env.PASSWORD;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
 // ============================================================================
@@ -64,10 +79,11 @@ const logger = {
 // SECURITY MIDDLEWARE
 // ============================================================================
 
-// Explicit CORS headers before any other middleware so Render's proxy
-// doesn't strip them on preflight requests
+// Explicit CORS headers before any other middleware so the host's proxy
+// doesn't strip them on preflight requests. Locked to FRONTEND_URL when set.
+const ALLOWED_ORIGIN = FRONTEND_URL ? FRONTEND_URL.replace(/\/$/, '') : '*';
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
@@ -77,7 +93,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: true,
+  origin: FRONTEND_URL ? ALLOWED_ORIGIN : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -170,11 +186,12 @@ const clearRateLimit = (ip) => {
 // JWT AUTHENTICATION
 // ============================================================================
 
-// Generate JWT token
-const generateToken = (ip) => {
+// Generate JWT token; role is 'member' or 'admin'
+const generateToken = (ip, role = 'member') => {
   return jwt.sign(
-    { 
+    {
       authenticated: true,
+      role: role,
       ip: ip,
       timestamp: Date.now()
     },
@@ -205,22 +222,14 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Legacy password check middleware (for backward compatibility with admin.html)
-const checkPassword = (req, res, next) => {
-  // First try JWT token
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return verifyToken(req, res, next);
-  }
-  
-  // Fallback to password in body (for admin.html compatibility)
-  const { password } = req.body;
-  const trimmedPassword = password && typeof password === 'string' ? password.trim() : '';
-  if (trimmedPassword === PASSWORD) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Invalid password' });
-  }
+// Admin-only middleware: valid JWT carrying the admin role.
+const requireAdmin = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
+    res.status(403).json({ error: 'Officer credential required' });
+  });
 };
 
 // ============================================================================
@@ -411,9 +420,24 @@ async function initializeDatabase() {
         CREATE INDEX IF NOT EXISTS idx_relationships_big_id ON relationships(big_id);
       `);
       
+      // Information Hub posts (announcements, newsletters, deadlines)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS posts (
+          id SERIAL PRIMARY KEY,
+          type TEXT NOT NULL DEFAULT 'announcement' CHECK(type IN ('announcement', 'newsletter', 'deadline')),
+          title TEXT NOT NULL,
+          body TEXT,
+          link_url TEXT,
+          posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
       // Insert families
       await pool.query(`
-        INSERT INTO families (name, theme) 
+        INSERT INTO families (name, theme)
         VALUES 
           ('WOLFPACK', 'wolfpack'),
           ('PRIDE', 'pride'),
@@ -508,13 +532,20 @@ app.post('/api/auth', (req, res) => {
   }
   
   const trimmedPassword = password.trim();
-  
-  if (trimmedPassword === PASSWORD) {
+
+  // Admin password checked first so the officer credential grants the admin
+  // role even when ADMIN_PASSWORD falls back to PASSWORD.
+  const role = trimmedPassword === ADMIN_PASSWORD ? 'admin'
+    : trimmedPassword === PASSWORD ? 'member'
+    : null;
+
+  if (role) {
     clearRateLimit(ip);
-    const token = generateToken(ip);
-    res.json({ 
+    const token = generateToken(ip, role);
+    res.json({
       success: true,
       token: token,
+      role: role,
       expiresIn: `${JWT_EXPIRY_HOURS}h`
     });
   } else {
@@ -600,7 +631,7 @@ async function validateBigIdInFamily(familyId, bigId) {
 }
 
 // Create new brother
-app.post('/api/brothers', checkPassword, async (req, res) => {
+app.post('/api/brothers', requireAdmin, async (req, res) => {
   try {
     const {
       family_id,
@@ -763,8 +794,37 @@ app.post('/api/brothers/sync-photo', async (req, res) => {
   }
 });
 
+// Bulk status update — e.g. mark a graduating pledge class as alumni.
+// Registered before /api/brothers/:id so the static path wins the match.
+app.put('/api/brothers/bulk-status', requireAdmin, async (req, res) => {
+  try {
+    const { ids, status } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids must be a non-empty array' });
+    }
+    const idNums = ids.map((v) => parseInt(v, 10)).filter((n) => !isNaN(n) && n > 0);
+    if (idNums.length !== ids.length) {
+      return res.status(400).json({ error: 'ids must all be valid brother IDs' });
+    }
+    const validatedStatus = status === 'graduated' ? 'graduated' : status === 'studying' ? 'studying' : null;
+    if (!validatedStatus) {
+      return res.status(400).json({ error: "status must be 'studying' or 'graduated'" });
+    }
+
+    const result = await pool.query(
+      `UPDATE brothers SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = ANY($2::int[])`,
+      [validatedStatus, idNums]
+    );
+
+    res.json({ success: true, updated: result.rowCount });
+  } catch (error) {
+    logger.error('Error bulk-updating status:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  }
+});
+
 // Update brother
-app.put('/api/brothers/:id', checkPassword, async (req, res) => {
+app.put('/api/brothers/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const brotherId = parseInt(id, 10);
@@ -830,7 +890,7 @@ app.put('/api/brothers/:id', checkPassword, async (req, res) => {
 });
 
 // Update relationship (change Big)
-app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
+app.put('/api/relationships/:littleId', requireAdmin, async (req, res) => {
   try {
     const { littleId } = req.params;
     const { family_id, big_id } = req.body;
@@ -863,7 +923,7 @@ app.put('/api/relationships/:littleId', checkPassword, async (req, res) => {
 });
 
 // Create relationship (add Little to existing Big)
-app.post('/api/relationships', checkPassword, async (req, res) => {
+app.post('/api/relationships', requireAdmin, async (req, res) => {
   try {
     const { family_id, big_id, little_id } = req.body;
     
@@ -892,6 +952,157 @@ app.post('/api/relationships', checkPassword, async (req, res) => {
     logger.error('Error creating relationship:', error.message);
     const sanitized = sanitizeError(error, req);
     res.status(error.message && error.message.includes('Big brother') ? 400 : 400).json(sanitized);
+  }
+});
+
+// Delete brother — littles pointing at them become roots; their own
+// relationship row is removed with them.
+app.delete('/api/brothers/:id', requireAdmin, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const brotherId = parseInt(req.params.id, 10);
+    if (isNaN(brotherId) || brotherId < 1) {
+      return res.status(400).json({ error: 'Invalid brother ID' });
+    }
+
+    await client.query('BEGIN');
+    await client.query('UPDATE relationships SET big_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE big_id = $1', [brotherId]);
+    await client.query('DELETE FROM relationships WHERE little_id = $1', [brotherId]);
+    const result = await client.query('DELETE FROM brothers WHERE id = $1', [brotherId]);
+    await client.query('COMMIT');
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Brother not found' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    logger.error('Error deleting brother:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  } finally {
+    client.release();
+  }
+});
+
+// Delete relationship (detach a little from their big — little becomes a root)
+app.delete('/api/relationships/:littleId', requireAdmin, async (req, res) => {
+  try {
+    const littleId = parseInt(req.params.littleId, 10);
+    const familyId = parseInt(req.query.family_id, 10);
+    if (isNaN(littleId) || littleId < 1 || isNaN(familyId) || familyId < 1) {
+      return res.status(400).json({ error: 'Invalid relationship IDs' });
+    }
+    await pool.query('DELETE FROM relationships WHERE family_id = $1 AND little_id = $2', [familyId, littleId]);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error deleting relationship:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  }
+});
+
+// ============================================================================
+// INFORMATION HUB POSTS
+// ============================================================================
+
+// Public: active posts (unexpired), newest first
+app.get('/api/posts', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM posts
+      WHERE expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP
+      ORDER BY posted_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    logger.error('Error fetching posts:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  }
+});
+
+// Admin: all posts including expired (for the Hub Posts management tab)
+app.get('/api/posts/all', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM posts ORDER BY posted_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    logger.error('Error fetching all posts:', error.message);
+    res.status(500).json(sanitizeError(error, req));
+  }
+});
+
+const validatePostFields = (body) => {
+  const type = ['announcement', 'newsletter', 'deadline'].includes(body.type) ? body.type : 'announcement';
+  const title = validateString(body.title, 'Title', 200);
+  if (!title) {
+    throw new Error('Title is required');
+  }
+  const postBody = validateString(body.body, 'Body', 5000);
+  const linkUrl = validateString(body.link_url, 'Link URL', 500);
+  if (linkUrl && !/^https?:\/\//i.test(linkUrl)) {
+    throw new Error('Link URL must start with http:// or https://');
+  }
+  const expiresAt = body.expires_at ? new Date(body.expires_at) : null;
+  if (expiresAt && isNaN(expiresAt.getTime())) {
+    throw new Error('expires_at must be a valid date');
+  }
+  return { type, title, postBody, linkUrl, expiresAt };
+};
+
+// Create post
+app.post('/api/posts', requireAdmin, async (req, res) => {
+  try {
+    const { type, title, postBody, linkUrl, expiresAt } = validatePostFields(req.body || {});
+    const result = await pool.query(`
+      INSERT INTO posts (type, title, body, link_url, expires_at)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [type, title, postBody, linkUrl, expiresAt]);
+    res.json({ success: true, post: result.rows[0] });
+  } catch (error) {
+    logger.error('Error creating post:', error.message);
+    res.status(400).json({ error: error.message || 'Invalid post' });
+  }
+});
+
+// Update post
+app.put('/api/posts/:id', requireAdmin, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    if (isNaN(postId) || postId < 1) {
+      return res.status(400).json({ error: 'Invalid post ID' });
+    }
+    const { type, title, postBody, linkUrl, expiresAt } = validatePostFields(req.body || {});
+    const result = await pool.query(`
+      UPDATE posts
+      SET type = $1, title = $2, body = $3, link_url = $4, expires_at = $5, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $6
+      RETURNING *
+    `, [type, title, postBody, linkUrl, expiresAt, postId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    res.json({ success: true, post: result.rows[0] });
+  } catch (error) {
+    logger.error('Error updating post:', error.message);
+    res.status(400).json({ error: error.message || 'Invalid post' });
+  }
+});
+
+// Delete post
+app.delete('/api/posts/:id', requireAdmin, async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    if (isNaN(postId) || postId < 1) {
+      return res.status(400).json({ error: 'Invalid post ID' });
+    }
+    const result = await pool.query('DELETE FROM posts WHERE id = $1', [postId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error deleting post:', error.message);
+    res.status(500).json(sanitizeError(error, req));
   }
 });
 

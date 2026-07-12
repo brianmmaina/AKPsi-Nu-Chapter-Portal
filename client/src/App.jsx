@@ -25,23 +25,22 @@ import { photoBg } from './record/palette';
 import { pointSystemConfig } from './config/pointSystemConfig';
 
 // Chapter photos behind each screen, washed into the paper tone.
-// Denser screens get a heavier wash so tables stay readable.
+// Washes stay light so the photos show; text outside cards sits on local
+// scrim panels (.ncr-hero / .ncr-band) instead of relying on the page wash.
 const SCREEN_BG = {
-  gate: ['/images/gate-bg.jpg', 0.88],
-  landing: ['/images/landing-bg.jpg', 0.9],
-  index: ['/images/index-bg.jpg', 0.91],
-  rankings: ['/images/ledger-bg.jpg', 0.95],
-  admin: ['/images/ledger-bg.jpg', 0.96],
-  lineage: ['/images/lineage-bg.jpg', 0.92],
-  addbrother: ['/images/lineage-bg.jpg', 0.95],
-  alumni: ['/images/network-bg.jpg', 0.93],
-  resources: ['/images/resources-bg.jpg', 0.93],
+  gate: ['/images/gate-bg.jpg', 0.8],
+  landing: ['/images/landing-bg.jpg', 0.82],
+  index: ['/images/index-bg.jpg', 0.84],
+  rankings: ['/images/ledger-bg.jpg', 0.9],
+  admin: ['/images/ledger-bg.jpg', 0.92],
+  lineage: ['/images/lineage-bg.jpg', 0.86],
+  addbrother: ['/images/lineage-bg.jpg', 0.9],
+  alumni: ['/images/network-bg.jpg', 0.87],
+  resources: ['/images/resources-bg.jpg', 0.88],
 };
 const TREE_BG_COUNT = 5;
 
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
-const DEMO_PASSWORD = 'nuchapter';
-const DEMO_OFFICER_PASSWORDS = ['nuofficer', 'nuchapter'];
 
 const hasValidSession = () => {
   const token = sessionStorage.getItem('authToken');
@@ -140,12 +139,6 @@ function App() {
     } else {
       sessionStorage.removeItem('authToken');
       sessionStorage.removeItem('loginTime');
-      const demo = localStorage.getItem('ncr_auth') === 'true';
-      const demoTime = parseInt(localStorage.getItem('ncr_loginTime') || '0', 10);
-      if (demo && Date.now() - demoTime < SESSION_EXPIRY_MS) {
-        setAuthed(true);
-        setScreen('index');
-      }
     }
     loadLiveData();
   }, [loadLiveData]);
@@ -202,7 +195,7 @@ function App() {
     try {
       const response = await auth.login(password);
       if (response?.data?.success === true && response?.data?.token) {
-        return { ok: true, token: response.data.token, live: true };
+        return { ok: true, token: response.data.token, role: response.data.role || 'member', live: true };
       }
       return { ok: false, error: 'Invalid response from server' };
     } catch (error) {
@@ -245,19 +238,8 @@ function App() {
         refreshPoints();
         notify('Welcome to the archive — connected to the chapter records.');
       } else if (res.network) {
-        if (pw === DEMO_PASSWORD) {
-          localStorage.setItem('ncr_auth', 'true');
-          localStorage.setItem('ncr_loginTime', String(Date.now()));
-          setAuthed(true);
-          setScreen('index');
-          setNavStack([]);
-          setPw('');
-          setLoginError('');
-          notify('Welcome to the archive (offline preview).');
-        } else {
-          setLoginError('Chapter server unreachable — check your connection and try again.');
-          setPw('');
-        }
+        setLoginError('Chapter server unreachable — check your connection and try again.');
+        setPw('');
       } else {
         setLoginError(res.error || 'Invalid password. Please try again.');
         setPw('');
@@ -266,11 +248,15 @@ function App() {
     [pw, authenticate, loadLiveData, refreshPoints, notify],
   );
 
-  // Officer tools use the same chapter credential (server validates the JWT on writes).
+  // Officer tools need the officer (admin) credential — the server tags the
+  // JWT with a role and rejects writes from member tokens.
   const handleOfficerUnlock = useCallback(
     async (password) => {
       const res = await authenticate(password);
       if (res.ok) {
+        if (res.role !== 'admin') {
+          return { ok: false, error: 'That is the member password — officer tools need the officer credential.' };
+        }
         setOfficerAuthed(true);
         setAuthToken(res.token);
         sessionStorage.setItem('authToken', res.token);
@@ -278,10 +264,6 @@ function App() {
         return { ok: true };
       }
       if (res.network) {
-        if (DEMO_OFFICER_PASSWORDS.includes(password)) {
-          setOfficerAuthed(true);
-          return { ok: true };
-        }
         return { ok: false, error: 'Server unreachable — try again once the connection is back.' };
       }
       return { ok: false, error: res.error };
@@ -346,7 +328,7 @@ function App() {
     loadLiveData();
   }, [notify, refreshPoints, loadLiveData]);
 
-  const officerHint = 'Same chapter credential · verified by the server';
+  const officerHint = 'Officer credential · verified by the server';
 
   const showHeader = authed && screen !== 'landing' && screen !== 'gate';
   const headerActive =
@@ -360,7 +342,7 @@ function App() {
   let bgStyle = {};
   if (screen === 'tree') {
     const idx = Math.max(0, M.famOrder.indexOf(treeFamily)) % TREE_BG_COUNT;
-    bgStyle = photoBg(`/images/tree-${idx + 1}.jpg`, 0.93);
+    bgStyle = photoBg(`/images/tree-${idx + 1}.jpg`, 0.88);
   } else if (SCREEN_BG[screen]) {
     bgStyle = photoBg(SCREEN_BG[screen][0], SCREEN_BG[screen][1]);
   }
@@ -428,6 +410,7 @@ function App() {
             {screen === 'admin' && (
               <AdminScreen
                 M={M}
+                canWrite={canWrite}
                 officerAuthed={officerAuthed}
                 officerHint={officerHint}
                 onOfficerUnlock={handleOfficerUnlock}
@@ -436,6 +419,9 @@ function App() {
                   notify('Officer tools locked.');
                 }}
                 onBackToLedger={() => nav('rankings')}
+                onRosterChanged={loadLiveData}
+                onOpenBrother={setSelectedBrother}
+                onAddBrother={() => nav('addbrother')}
                 notify={notify}
               />
             )}
