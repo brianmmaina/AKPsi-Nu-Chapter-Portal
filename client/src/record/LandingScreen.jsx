@@ -40,7 +40,8 @@ export default function LandingScreen({ onEnter }) {
         <div className="ncr-rule-double" style={{ marginTop: 16 }} />
       </div>
 
-      <div className="ncr-hero ncr-hero--center" style={{ maxWidth: 1340, margin: '18px auto 0', padding: '60px 40px 52px' }}>
+      <div style={{ maxWidth: 1340, margin: '0 auto', padding: '18px 40px 0' }}>
+      <div className="ncr-hero ncr-hero--center" style={{ padding: '60px 40px 52px' }}>
         <img
           src="/akpsi-crest.png"
           alt="Alpha Kappa Psi crest"
@@ -75,6 +76,7 @@ export default function LandingScreen({ onEnter }) {
         <button className="ncr-btn" onClick={onEnter} style={{ marginTop: 36, height: 52, padding: '0 34px', letterSpacing: '.26em' }}>
           Enter the Archive
         </button>
+      </div>
       </div>
 
       <div style={{ maxWidth: 1340, margin: '0 auto', padding: '0 40px' }}>
