@@ -13,10 +13,19 @@ import {
 import { getFirestore, collection, getDocs, addDoc } from 'firebase/firestore';
 import api from '../api';
 
+// In production the Google auth handler is served from our own origin
+// (vercel.json proxies /__/auth/* to firebaseapp.com). Keeping it first-party
+// stops Safari's storage partitioning from stranding sign-in on
+// firebaseapp.com with "missing initial state". Localhost keeps the
+// firebaseapp.com handler since the dev server has no proxy for it.
+const isLocalHost =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 // Public client-SDK config — same project as client/public/portal.
 const firebaseConfig = {
   apiKey: 'AIzaSyBCcsZcqWZSL3EjJ-9e5LE_T0BT8VfSCP0',
-  authDomain: 'nu-chapter-connect-portal.firebaseapp.com',
+  authDomain: isLocalHost ? 'nu-chapter-connect-portal.firebaseapp.com' : window.location.host,
   projectId: 'nu-chapter-connect-portal',
   storageBucket: 'nu-chapter-connect-portal.firebasestorage.app',
   messagingSenderId: '107094410758',
