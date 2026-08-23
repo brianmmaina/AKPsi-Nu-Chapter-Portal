@@ -134,7 +134,12 @@ export default function NetworkScreen({
       // rules) — check it first so an unapproved account gets a designed
       // "pending" state instead of a raw permission error from the reads
       // below.
-      const approvedUser = await api.loadApprovedUser(user.email).catch(() => null);
+      const logAndNull = (label) => (err) => {
+        console.error(`Network: ${label} failed —`, err);
+        return null;
+      };
+
+      const approvedUser = await api.loadApprovedUser(user.email).catch(logAndNull('loadApprovedUser'));
 
       if (!approvedUser) {
         onSignedIn(user, {});
@@ -143,10 +148,10 @@ export default function NetworkScreen({
       }
 
       const [alumniDir, brotherDir, pairing, myRequests] = await Promise.all([
-        api.loadAlumniDirectory().catch(() => null),
-        api.loadBrotherDirectory().catch(() => null),
-        api.loadMyPairing(user.email).catch(() => null),
-        api.loadMyRequests(user.email).catch(() => null),
+        api.loadAlumniDirectory().catch(logAndNull('loadAlumniDirectory')),
+        api.loadBrotherDirectory().catch(logAndNull('loadBrotherDirectory')),
+        api.loadMyPairing(user.email).catch(logAndNull('loadMyPairing')),
+        api.loadMyRequests(user.email).catch(logAndNull('loadMyRequests')),
       ]);
 
       onSignedIn(user, { alumniDir, brotherDir, approvedUser, pairing, myRequests });
