@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pg from 'pg';
@@ -91,6 +92,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use(helmet());
 
 app.use(cors({
   origin: FRONTEND_URL ? ALLOWED_ORIGIN : true,
