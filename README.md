@@ -82,6 +82,19 @@ Both halves run on Render as two separate services:
 
 Tables are created/migrated automatically on server start (`initializeDatabase`), including the `posts` table for the Information Hub.
 
+### Firebase sign-in on Render
+
+The Network's Google sign-in uses `authDomain: nu-chapter-connect-portal.firebaseapp.com`, which works in every browser except Safari — Safari's storage partitioning strands the popup with "missing initial state".
+
+The fix is to serve the auth handler from our own origin. `vercel.json` has those rewrites, but Render ignores that file, and Render does **not** read `client/public/_redirects` either (which is why the SPA rewrite there is also inert). To finish the fix, add these as **Redirect/Rewrite rules on the frontend static site in the Render dashboard** — Render rewrites may target an external URL, but only when configured there or in `render.yaml`:
+
+| Source | Destination | Action |
+|---|---|---|
+| `/__/auth/*` | `https://nu-chapter-connect-portal.firebaseapp.com/__/auth/:splat` | Rewrite |
+| `/__/firebase/*` | `https://nu-chapter-connect-portal.firebaseapp.com/__/firebase/:splat` | Rewrite |
+
+Then add `akpsi-nu-chapter-portal.onrender.com` to **Firebase Console → Authentication → Settings → Authorized domains**, and switch `authDomain` in `client/src/record/networkService.js` back to `window.location.host`. Verify with `curl -I https://akpsi-nu-chapter-portal.onrender.com/__/auth/handler` — it must return 200, not 404.
+
 `vercel.json`, `railway.json`, `server/Dockerfile`, and `server/fly.toml` are leftovers from other hosts and can be ignored; the two Render services above are the canonical pair.
 
 ## Fall launch checklist
