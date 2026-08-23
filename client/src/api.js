@@ -41,7 +41,7 @@ api.interceptors.response.use(
 );
 
 export const auth = {
-  login: (password) => api.post('/auth', { password }),
+  login: (email, password) => api.post('/auth', { email, password }),
 };
 
 export const families = {

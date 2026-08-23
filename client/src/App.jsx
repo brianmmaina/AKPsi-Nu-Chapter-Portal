@@ -41,6 +41,10 @@ const TREE_BG_COUNT = 5;
 
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+// Screens an alumni account may reach. The server refuses the rest anyway;
+// this keeps them from being offered a door that will not open.
+const ALUMNI_SCREENS = ['index', 'lineage', 'tree', 'landing', 'gate'];
+
 const hasValidSession = () => {
   const token = sessionStorage.getItem('authToken');
   const loginTime = parseInt(sessionStorage.getItem('loginTime') || '0', 10);
@@ -51,6 +55,7 @@ const clearSession = () => {
   sessionStorage.removeItem('authenticated');
   sessionStorage.removeItem('authToken');
   sessionStorage.removeItem('loginTime');
+  sessionStorage.removeItem('role');
   sessionStorage.removeItem('selectedFamily');
   localStorage.removeItem('ncr_auth');
   localStorage.removeItem('ncr_loginTime');
@@ -61,6 +66,9 @@ function App() {
   const [authed, setAuthed] = useState(false);
   const [authToken, setAuthToken] = useState(null);
   const [officerAuthed, setOfficerAuthed] = useState(false);
+  // 'member' | 'alumni' | 'admin' — an alumni account sees Lineage and Index only.
+  const [role, setRole] = useState('member');
+  const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
@@ -132,13 +140,18 @@ function App() {
   // ── Session bootstrap ──
   useEffect(() => {
     if (hasValidSession()) {
+      const savedRole = sessionStorage.getItem('role') || 'member';
       setAuthed(true);
       setAuthToken(sessionStorage.getItem('authToken'));
+      setRole(savedRole);
+      if (savedRole === 'admin') setOfficerAuthed(true);
       setScreen('index');
     } else {
       sessionStorage.removeItem('authToken');
       sessionStorage.removeItem('loginTime');
+      return;
     }
+    // Reads carry a token now, so there is nothing to fetch before the gate.
     loadLiveData();
   }, [loadLiveData]);
 
@@ -154,6 +167,7 @@ function App() {
   // ── Navigation ──
   const nav = useCallback(
     (next, patch = {}) => {
+      if (role === 'alumni' && !ALUMNI_SCREENS.includes(next)) return;
       setNavStack((prev) => [...prev, screen]);
       setScreen(next);
       setSelectedBrother(null);
@@ -162,7 +176,7 @@ function App() {
       if (patch.treeFamily !== undefined) setTreeFamily(patch.treeFamily);
       window.scrollTo(0, 0);
     },
-    [screen],
+    [screen, role],
   );
 
   const back = useCallback(() => {
@@ -190,9 +204,9 @@ function App() {
   }, []);
 
   // ── Auth ──
-  const authenticate = useCallback(async (password) => {
+  const authenticate = useCallback(async (email, password) => {
     try {
-      const response = await auth.login(password);
+      const response = await auth.login(email, password);
       if (response?.data?.success === true && response?.data?.token) {
         return { ok: true, token: response.data.token, role: response.data.role || 'member', live: true };
       }
@@ -215,22 +229,32 @@ function App() {
   const handleEnter = useCallback(
     async (e) => {
       e.preventDefault();
+      if (!email.trim()) {
+        setLoginError('Please enter your BU email.');
+        return;
+      }
       if (!pw.trim()) {
         setLoginError('Please enter the chapter password.');
         return;
       }
       setLoginBusy(true);
-      const res = await authenticate(pw);
+      const res = await authenticate(email, pw);
       setLoginBusy(false);
       if (res.ok) {
         sessionStorage.setItem('authenticated', 'true');
         sessionStorage.setItem('authToken', res.token);
         sessionStorage.setItem('loginTime', String(Date.now()));
+        sessionStorage.setItem('role', res.role);
         setAuthed(true);
         setAuthToken(res.token);
+        setRole(res.role);
+        // The officer password already proved the admin role at the gate;
+        // making officers type it a second time bought nothing.
+        if (res.role === 'admin') setOfficerAuthed(true);
         setScreen('index');
         setNavStack([]);
         setPw('');
+        setEmail('');
         setLoginError('');
         window.scrollTo(0, 0);
         loadLiveData();
@@ -244,19 +268,21 @@ function App() {
         setPw('');
       }
     },
-    [pw, authenticate, loadLiveData, refreshPoints, notify],
+    [email, pw, authenticate, loadLiveData, refreshPoints, notify],
   );
 
   // Officer tools need the officer (admin) credential — the server tags the
   // JWT with a role and rejects writes from member tokens.
   const handleOfficerUnlock = useCallback(
     async (password) => {
-      const res = await authenticate(password);
+      const res = await authenticate(email, password);
       if (res.ok) {
         if (res.role !== 'admin') {
           return { ok: false, error: 'That is the member password — officer tools need the officer credential.' };
         }
         setOfficerAuthed(true);
+        setRole('admin');
+        sessionStorage.setItem('role', 'admin');
         setAuthToken(res.token);
         sessionStorage.setItem('authToken', res.token);
         sessionStorage.setItem('loginTime', String(Date.now()));
@@ -267,7 +293,7 @@ function App() {
       }
       return { ok: false, error: res.error };
     },
-    [authenticate],
+    [authenticate, email],
   );
 
   // ── Search ──
@@ -365,6 +391,8 @@ function App() {
 
         {screen === 'gate' && (
           <GateScreen
+            email={email}
+            onEmailChange={(e) => setEmail(e.target.value)}
             pw={pw}
             onPwChange={(e) => setPw(e.target.value)}
             onSubmit={handleEnter}
@@ -390,7 +418,7 @@ function App() {
 
         {authed && (
           <main id="main-content">
-            {screen === 'index' && <IndexScreen onOpen={(key) => nav(key)} stats={indexStats} term={term} />}
+            {screen === 'index' && <IndexScreen onOpen={(key) => nav(key)} stats={indexStats} term={term} role={role} />}
 
             {screen === 'rankings' && (
               <LedgerScreen

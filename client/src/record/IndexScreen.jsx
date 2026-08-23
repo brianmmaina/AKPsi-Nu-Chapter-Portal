@@ -22,8 +22,8 @@ const termKicker = (term) => {
   return m ? `${m[1]} Term · ${toRoman(Number(m[2]))}` : String(term || '');
 };
 
-export default function IndexScreen({ onOpen, stats, term }) {
-  const sections = [
+export default function IndexScreen({ onOpen, stats, term, role = 'member' }) {
+  const allSections = [
     {
       no: '01',
       title: 'Life Points Ledger',
@@ -61,6 +61,12 @@ export default function IndexScreen({ onOpen, stats, term }) {
       key: 'alumni',
     },
   ];
+
+  // An alumni account keeps the lineage; the Ledger, Hub and Network are the
+  // active chapter's. Folio numbers are left as written so the archive's
+  // numbering stays stable between the two views.
+  const sections =
+    role === 'alumni' ? allSections.filter((s) => s.key === 'lineage') : allSections;
 
   return (
     <div className="ncr-shell">

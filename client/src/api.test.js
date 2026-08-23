@@ -45,12 +45,15 @@ describe('API Client', () => {
   });
 
   describe('auth', () => {
-    it('should call login endpoint with password', async () => {
+    it('should call login endpoint with the email and password', async () => {
       mockPost.mockResolvedValue({ data: { success: true } });
-      
-      await auth.login('testpassword');
-      
-      expect(mockPost).toHaveBeenCalledWith('/auth', { password: 'testpassword' });
+
+      await auth.login('brother@bu.edu', 'testpassword');
+
+      expect(mockPost).toHaveBeenCalledWith('/auth', {
+        email: 'brother@bu.edu',
+        password: 'testpassword',
+      });
     });
 
     it('should handle login failure', async () => {

@@ -232,6 +232,40 @@ const requireAdmin = (req, res, next) => {
   });
 };
 
+// Any signed-in reader, alumni included. Reads used to be open to the world;
+// the archive is chapter-only, so they now need a token like the writes do.
+const requireMember = verifyToken;
+
+// Screens an alumni account does not get: the Ledger, the Network and the
+// Information Hub are for the active chapter. Alumni keep Lineage and Index.
+const requireFullMember = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user && req.user.role === 'alumni') {
+      return res.status(403).json({ error: 'This section is for the active chapter.' });
+    }
+    next();
+  });
+};
+
+// An address on the roster decides which view its owner gets. Unrecognised
+// addresses fall through to full member access on purpose: only a fraction of
+// the roster carries an email, so failing closed would lock out most of the
+// chapter. The chapter password remains the actual gate.
+const roleForEmail = async (email) => {
+  if (!email) return 'member';
+  try {
+    const result = await pool.query(
+      "SELECT status FROM brothers WHERE LOWER(TRIM(email)) = $1 LIMIT 1",
+      [email.toLowerCase().trim()],
+    );
+    if (result.rows.length && result.rows[0].status === 'graduated') return 'alumni';
+    return 'member';
+  } catch (error) {
+    logger.error('Role lookup failed, defaulting to member:', error.message);
+    return 'member';
+  }
+};
+
 // ============================================================================
 // INPUT VALIDATION
 // ============================================================================
@@ -528,7 +562,7 @@ app.get('/', (req, res) => {
 });
 
 // Auth endpoint (with rate limiting and JWT token generation)
-app.post('/api/auth', (req, res) => {
+app.post('/api/auth', async (req, res) => {
   const ip = getClientIP(req);
   
   const rateLimitCheck = checkRateLimit(ip);
@@ -538,7 +572,7 @@ app.post('/api/auth', (req, res) => {
     });
   }
   
-  const { password } = req.body;
+  const { password, email } = req.body;
   if (!password || typeof password !== 'string') {
     recordFailedAttempt(ip);
     return res.status(400).json({ error: 'Password required' });
@@ -548,9 +582,15 @@ app.post('/api/auth', (req, res) => {
 
   // Admin password checked first so the officer credential grants the admin
   // role even when ADMIN_PASSWORD falls back to PASSWORD.
-  const role = trimmedPassword === ADMIN_PASSWORD ? 'admin'
+  let role = trimmedPassword === ADMIN_PASSWORD ? 'admin'
     : trimmedPassword === PASSWORD ? 'member'
     : null;
+
+  // A member's address decides whether they get the whole archive or the
+  // alumni view. Officers keep the admin role whatever their address says.
+  if (role === 'member') {
+    role = await roleForEmail(typeof email === 'string' ? email : '');
+  }
 
   if (role) {
     clearRateLimit(ip);
@@ -568,7 +608,7 @@ app.post('/api/auth', (req, res) => {
 });
 
 // Get all families
-app.get('/api/families', async (req, res) => {
+app.get('/api/families', requireMember, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM families ORDER BY name');
     res.json(result.rows);
@@ -580,7 +620,7 @@ app.get('/api/families', async (req, res) => {
 });
 
 // Get family tree data
-app.get('/api/families/:familyId/tree', async (req, res) => {
+app.get('/api/families/:familyId/tree', requireMember, async (req, res) => {
   try {
     const { familyId } = req.params;
     
@@ -606,7 +646,7 @@ app.get('/api/families/:familyId/tree', async (req, res) => {
 });
 
 // Get single brother
-app.get('/api/brothers/:id', async (req, res) => {
+app.get('/api/brothers/:id', requireMember, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM brothers WHERE id = $1', [id]);
@@ -1018,7 +1058,7 @@ app.delete('/api/relationships/:littleId', requireAdmin, async (req, res) => {
 // ============================================================================
 
 // Public: chapter settings as a key/value object
-app.get('/api/settings', async (req, res) => {
+app.get('/api/settings', requireMember, async (req, res) => {
   try {
     const result = await pool.query('SELECT key, value FROM settings');
     const settings = {};
@@ -1055,7 +1095,7 @@ app.put('/api/settings', requireAdmin, async (req, res) => {
 // ============================================================================
 
 // Public: active posts (unexpired), newest first
-app.get('/api/posts', async (req, res) => {
+app.get('/api/posts', requireFullMember, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT * FROM posts

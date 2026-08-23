@@ -1,6 +1,6 @@
 // Password gate — wired to POST /api/auth via the parent's handleEnter.
 
-export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBackToLanding, busy }) {
+export default function GateScreen({ email, onEmailChange, pw, onPwChange, onSubmit, loginError, onBackToLanding, busy }) {
   const year = new Date().getFullYear();
   return (
     <div
@@ -77,6 +77,25 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
       </div>
       <form onSubmit={onSubmit} style={{ marginTop: 30, width: 'min(360px, 100%)', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
+          <label className="ncr-field-label" htmlFor="gate-email" style={{ marginBottom: 7 }}>
+            BU Email
+          </label>
+          <input
+            id="gate-email"
+            type="email"
+            value={email}
+            onChange={onEmailChange}
+            placeholder="you@bu.edu"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            autoFocus
+            className="ncr-input"
+            style={{ height: 46, padding: '0 14px', fontSize: 16 }}
+          />
+        </div>
+        <div>
           <label className="ncr-field-label" htmlFor="gate-password" style={{ marginBottom: 7 }}>
             Chapter Password
           </label>
@@ -86,7 +105,7 @@ export default function GateScreen({ pw, onPwChange, onSubmit, loginError, onBac
             value={pw}
             onChange={onPwChange}
             placeholder="••••••••"
-            autoFocus
+            autoComplete="current-password"
             className="ncr-input"
             style={{ height: 46, padding: '0 14px', fontSize: 16 }}
           />
