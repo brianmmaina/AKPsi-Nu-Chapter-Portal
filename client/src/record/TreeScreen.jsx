@@ -190,8 +190,11 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
 
       <div style={{ maxWidth: 1340, margin: '0 auto', padding: '36px 40px 64px' }}>
         <div className="ncr-side-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 48, alignItems: 'start' }}>
-          {/* Chart */}
-          <div>
+          {/* Chart. minWidth: 0 overrides the grid track's default min-width:
+              auto — without it, this 1fr column refuses to shrink below the
+              tree's natural width and the whole page overflows horizontally
+              instead of the chart's own overflow:auto box scrolling. */}
+          <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: 18, flexWrap: 'wrap' }}>
               <span className="ncr-label">Descent Chart · Principal Line</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
