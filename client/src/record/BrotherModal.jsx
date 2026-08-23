@@ -2,7 +2,7 @@
 // by category, streak progress, correction request, and the officer-gated
 // Edit Record form (profile fields + Big change + photo upload).
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { brothers as brothersApi, relationships as relationshipsApi } from '../api';
 import { getSupabaseClient } from '../services/supabaseClient';
 import { CAT_COLOR, CAT_SOFT, CAT_LABEL, STREAK_META } from './palette';
@@ -16,6 +16,10 @@ const fieldVal = { fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-
 
 export default function BrotherModal({ M, brotherId, pointsData, tfLabel, canEdit, onClose, onSaved, notify }) {
   const sb = M.brothers[brotherId];
+  // LinkedIn's CDN issues signed photo URLs that expire — once they do, the
+  // <img> 404s and needs to fall back to the initials placeholder.
+  const [photoBroken, setPhotoBroken] = useState(false);
+  useEffect(() => setPhotoBroken(false), [brotherId]);
 
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [correctionEvent, setCorrectionEvent] = useState('');
@@ -210,11 +214,16 @@ export default function BrotherModal({ M, brotherId, pointsData, tfLabel, canEdi
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
-                backgroundImage: sb.photo ? 'none' : 'repeating-linear-gradient(45deg, rgba(43,35,24,.05) 0 9px, transparent 9px 18px)',
+                backgroundImage: sb.photo && !photoBroken ? 'none' : 'repeating-linear-gradient(45deg, rgba(43,35,24,.05) 0 9px, transparent 9px 18px)',
               }}
             >
-              {sb.photo ? (
-                <img src={sb.photo} alt={sb.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {sb.photo && !photoBroken ? (
+                <img
+                  src={sb.photo}
+                  alt={sb.name}
+                  onError={() => setPhotoBroken(true)}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               ) : (
                 <span style={{ fontFamily: 'var(--ncr-display)', fontSize: 46, color: 'var(--ncr-ink-mid)' }}>{sb.initials}</span>
               )}

@@ -830,12 +830,19 @@ app.post('/api/brothers/sync-photo', async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Only update rows where profile_image_url is NULL or empty — manual uploads always win
+    // Manual uploads (Supabase Storage URLs) always win. LinkedIn's bulk-
+    // imported photos are signed CDN links that expire a few months after
+    // import — once dead they're worse than nothing, so a fresh Google photo
+    // is allowed to replace one. Everything else needs an empty field.
     const result = await pool.query(
       `UPDATE brothers
        SET profile_image_url = $1
        WHERE LOWER(TRIM(email)) = $2
-         AND (profile_image_url IS NULL OR profile_image_url = '')
+         AND (
+           profile_image_url IS NULL
+           OR profile_image_url = ''
+           OR profile_image_url LIKE '%media.licdn.com%'
+         )
        RETURNING id`,
       [photoUrl, normalizedEmail]
     );

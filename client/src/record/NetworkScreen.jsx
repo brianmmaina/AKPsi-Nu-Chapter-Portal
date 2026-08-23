@@ -3,7 +3,7 @@
 // card matched to the roster by email, and photo sync on sign-in.
 // Mentorship pairing admin remains in the /portal app (linked below).
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { SAMPLE_ALUMNI } from './sampleData';
 
 // Firebase is heavy — load it only when the Network is actually used.
@@ -24,6 +24,8 @@ const MENTOR_STEPS = [
 
 export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSignedOut, onOpenBrother, notify }) {
   const [busy, setBusy] = useState(false);
+  const [netPhotoBroken, setNetPhotoBroken] = useState(false);
+  useEffect(() => setNetPhotoBroken(false), [netUser?.photo]);
   const [filter, setFilter] = useState('All');
   const [dirQuery, setDirQuery] = useState('');
   const [dirField, setDirField] = useState('All');
@@ -197,8 +199,13 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {netUser.photo ? (
-                <img src={netUser.photo} alt="" style={{ width: 44, height: 44, objectFit: 'cover', border: '1px solid var(--ncr-crimson)' }} />
+              {netUser.photo && !netPhotoBroken ? (
+                <img
+                  src={netUser.photo}
+                  alt=""
+                  onError={() => setNetPhotoBroken(true)}
+                  style={{ width: 44, height: 44, objectFit: 'cover', border: '1px solid var(--ncr-crimson)' }}
+                />
               ) : (
                 <span
                   style={{

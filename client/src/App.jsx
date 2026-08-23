@@ -465,7 +465,7 @@ function App() {
                 onSelectFamily={(fid) => setTreeFamily(fid)}
                 onOpenBrother={setSelectedBrother}
                 onBackToLineage={() => nav('lineage')}
-                onAddBrother={() => nav('addbrother')}
+                onAddBrother={officerAuthed ? () => nav('addbrother') : null}
                 notify={notify}
               />
             )}

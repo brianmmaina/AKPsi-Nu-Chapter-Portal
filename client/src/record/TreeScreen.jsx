@@ -17,6 +17,7 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [exporting, setExporting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const zoomBy = useCallback((d) => {
     setZoom((z) => Math.min(2.5, Math.max(0.2, +(z + d).toFixed(2))));
@@ -104,6 +105,23 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
     if (document.fullscreenElement) document.exitFullscreen();
     else if (el.requestFullscreen) el.requestFullscreen();
   };
+
+  // The chart's own width drives fitZoom, and requestFullscreen resizes the
+  // container without firing a resize event, so the zoom/pan computed for
+  // the small inline box otherwise sticks around and strands the tree in a
+  // corner of the fullscreen viewport.
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const active = document.fullscreenElement === boxRef.current;
+      setIsFullscreen(active);
+      requestAnimationFrame(() => {
+        setZoom(fitZoom());
+        setPan({ x: 0, y: 0 });
+      });
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, [fitZoom]);
 
   return (
     <div style={{ position: 'relative', zIndex: 5 }}>
@@ -200,7 +218,14 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
               onMouseMove={onMove}
               onMouseUp={onUp}
               onMouseLeave={onUp}
-              style={{ overflow: 'auto', cursor: 'grab', border: '1px solid rgba(43,35,24,.14)', background: 'var(--ncr-well)', padding: '26px 16px' }}
+              style={{
+                overflow: 'auto',
+                cursor: 'grab',
+                border: '1px solid rgba(43,35,24,.14)',
+                background: 'var(--ncr-well)',
+                padding: '26px 16px',
+                ...(isFullscreen ? { width: '100vw', height: '100vh' } : {}),
+              }}
             >
               {/* Outer box tracks the scaled size so the scroll area shrinks with the zoom. */}
               <div
@@ -305,9 +330,11 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <span className="ncr-label">Full Roster</span>
-              <button className="ncr-link-btn ncr-link-btn--crimson" onClick={onAddBrother} style={{ fontSize: 10.5 }}>
-                + Add
-              </button>
+              {onAddBrother && (
+                <button className="ncr-link-btn ncr-link-btn--crimson" onClick={onAddBrother} style={{ fontSize: 10.5 }}>
+                  + Add
+                </button>
+              )}
             </div>
             <div style={{ borderTop: `1.5px solid ${fam.accent}` }}>
               {register.map((m) => (
