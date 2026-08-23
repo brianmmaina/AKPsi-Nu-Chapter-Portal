@@ -60,9 +60,16 @@ cd client && npm run build    # production build → client/dist
 
 ## Deployment
 
-**Frontend — Vercel** (config in `vercel.json`): builds `client/`, SPA rewrite to `index.html`. Set env vars from `client/.env.example` in the Vercel dashboard — `VITE_API_URL` must point at the deployed server.
+Both halves run on Render as two separate services:
 
-**Backend — Render** (web service: root directory `server`, start command `node server.js`): the server already handles Render's proxy headers and SSL. Required env vars, set in the Render dashboard:
+| Service | URL | What it is |
+|---|---|---|
+| Frontend | `https://akpsi-nu-chapter-portal.onrender.com` | Static site: build `cd client && npm install && npm run build`, publish directory `client/dist`, SPA rewrite via `client/public/_redirects` |
+| Backend | `https://akpsi-backend.onrender.com` | Web service: root directory `server`, start command `node server.js` |
+
+**Frontend env** — set from `client/.env.example` in the Render dashboard. `VITE_API_URL` must point at the backend service (`https://akpsi-backend.onrender.com`). Vite inlines it at build time, so changing it requires a rebuild, not just a restart.
+
+**Backend env** — the server already handles Render's proxy headers and SSL. Required vars, set in the Render dashboard:
 
 | Var | Purpose |
 |---|---|
@@ -75,14 +82,15 @@ cd client && npm run build    # production build → client/dist
 
 Tables are created/migrated automatically on server start (`initializeDatabase`), including the `posts` table for the Information Hub.
 
-`railway.json`, `server/Dockerfile`, and `server/fly.toml` are leftovers from other hosts and can be ignored; Vercel + Render is the canonical pair.
+`vercel.json`, `railway.json`, `server/Dockerfile`, and `server/fly.toml` are leftovers from other hosts and can be ignored; the two Render services above are the canonical pair.
 
 ## Fall launch checklist
 
 1. Set a fresh `PASSWORD` and a distinct `ADMIN_PASSWORD`; set `JWT_SECRET` and `FRONTEND_URL` on the server.
-2. Deploy server → confirm `GET /health` responds; deploy client with `VITE_API_URL` set.
-3. Log in with the member password → confirm read-only (Officer Tools rejects it).
-4. Unlock Officer Tools with the officer password → **Roster & Trees**: mark the graduating class as Graduated, add the new pledge class, fix any Big links.
-5. **Hub Posts**: publish the welcome announcement / newsletter / first deadlines and confirm they appear under Resources & Records.
-6. Verify Firestore security rules on the `nu-chapter-connect-portal` Firebase project (alumni directory + mentor requests).
-7. Walk every screen on a phone — the wash/scrim system should keep text readable over every chapter photo.
+2. Deploy server → confirm `GET /health` responds; deploy client with `VITE_API_URL` pointing at it.
+3. Confirm CORS is locked down: a request to the backend from an unknown `Origin` must not echo that origin back.
+4. Log in with the member password → confirm read-only (Officer Tools rejects it).
+5. Unlock Officer Tools with the officer password → **Roster & Trees**: mark the graduating class as Graduated, add the new pledge class, fix any Big links.
+6. **Hub Posts**: publish the welcome announcement / newsletter / first deadlines and confirm they appear under Resources & Records.
+7. Verify Firestore security rules on the `nu-chapter-connect-portal` Firebase project (alumni directory + mentor requests).
+8. Walk every screen on a phone — the wash/scrim system should keep text readable over every chapter photo.
