@@ -22,16 +22,33 @@ const MENTOR_STEPS = [
   { no: 'III', title: 'Shared Workspace', desc: 'Meet for referrals, mock interviews, and resume reviews.', current: true },
 ];
 
-export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSignedOut, onOpenBrother, notify }) {
+export default function NetworkScreen({
+  M,
+  netUser,
+  netAlumni,
+  netBrothers,
+  netApprovedUser,
+  netMyPairing,
+  netMyRequests,
+  onSignedIn,
+  onSignedOut,
+  onOpenBrother,
+  notify,
+}) {
   const [busy, setBusy] = useState(false);
   const [netPhotoBroken, setNetPhotoBroken] = useState(false);
   useEffect(() => setNetPhotoBroken(false), [netUser?.photo]);
   const [filter, setFilter] = useState('All');
+  const [dirSource, setDirSource] = useState('All'); // 'All' | 'Alumni' | 'Brothers'
   const [dirQuery, setDirQuery] = useState('');
   const [dirField, setDirField] = useState('All');
   const [dirLocation, setDirLocation] = useState('All');
   const [dirYear, setDirYear] = useState('All');
   const signedIn = !!netUser;
+  // Signed in with Google, but no approvedUsers doc — the roster/mentorship
+  // reads are gated to approved accounts server-side, so there's nothing to
+  // fetch or show beyond this state.
+  const pendingApproval = signedIn && !netApprovedUser;
 
   const meBro = useMemo(() => {
     if (!netUser || !netUser.email) return null;
@@ -39,21 +56,35 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
   }, [M, netUser]);
 
   const alumniSource = useMemo(() => {
-    if (netAlumni && netAlumni.length) {
-      return netAlumni.map((a) => ({
-        name: a.name || '—',
-        year: String(a.gradYear || a.year || ''),
-        company: a.company || '—',
-        role: a.role || '',
-        industry: a.field || a.industry || 'Other',
-        location: a.location || '',
-        mentor: !!a.mentor,
-        linkedin: a.linkedin || '',
-        email: (a.email || '').toLowerCase(),
-      }));
-    }
-    return SAMPLE_ALUMNI;
-  }, [netAlumni]);
+    const alumniRows = (netAlumni || []).map((a) => ({
+      kind: 'alumni',
+      name: a.name || '—',
+      year: String(a.gradYear || a.year || ''),
+      company: a.company || '—',
+      role: a.role || '',
+      industry: a.field || a.industry || 'Other',
+      location: a.location || '',
+      mentor: !!a.mentor,
+      linkedin: a.linkedin || '',
+      email: (a.email || '').toLowerCase(),
+    }));
+    const brotherRows = (netBrothers || []).map((b) => ({
+      kind: 'brother',
+      name: b.name || '—',
+      year: String(b.gradYear || b.year || ''),
+      company: b.company || b.major || '—',
+      role: b.role || b.pledgeClass || '',
+      industry: b.field || b.industry || b.major || 'Other',
+      location: b.location || '',
+      mentor: false,
+      linkedin: b.linkedin || '',
+      email: (b.email || '').toLowerCase(),
+    }));
+    if (!alumniRows.length && !brotherRows.length) return SAMPLE_ALUMNI.map((a) => ({ kind: 'alumni', ...a }));
+    if (dirSource === 'Alumni') return alumniRows;
+    if (dirSource === 'Brothers') return brotherRows;
+    return [...alumniRows, ...brotherRows];
+  }, [netAlumni, netBrothers, dirSource]);
 
   // Dynamic filter options derived from the loaded directory.
   const dirFields = useMemo(
@@ -98,13 +129,27 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
     try {
       const api = await svc();
       const user = await api.netSignIn();
-      let dir = null;
-      try {
-        dir = await api.loadAlumniDirectory();
-      } catch {
-        dir = null;
+
+      // Approval gates the roster/mentorship reads server-side (Firestore
+      // rules) — check it first so an unapproved account gets a designed
+      // "pending" state instead of a raw permission error from the reads
+      // below.
+      const approvedUser = await api.loadApprovedUser(user.email).catch(() => null);
+
+      if (!approvedUser) {
+        onSignedIn(user, {});
+        notify(`Signed in as ${user.name || user.email}. Waiting on officer approval.`);
+        return;
       }
-      onSignedIn(user, dir);
+
+      const [alumniDir, brotherDir, pairing, myRequests] = await Promise.all([
+        api.loadAlumniDirectory().catch(() => null),
+        api.loadBrotherDirectory().catch(() => null),
+        api.loadMyPairing(user.email).catch(() => null),
+        api.loadMyRequests(user.email).catch(() => null),
+      ]);
+
+      onSignedIn(user, { alumniDir, brotherDir, approvedUser, pairing, myRequests });
       notify(`Signed in as ${user.name || user.email}.`);
     } catch (err) {
       notify(`Google sign-in failed: ${err.message || err}`, 'error');
@@ -123,11 +168,38 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
     onSignedOut();
   };
 
-  const sendMentorRequest = async (a) => {
+  // Matches the portal's canRequestMentorshipType: brothers may request a
+  // mentor from an alumni row, alumni may offer to mentor a brother row.
+  const myRole = (netApprovedUser?.role || '').toLowerCase();
+  const isAdminRole = !!netApprovedUser?.role && netApprovedUser.role.toLowerCase() === 'admin';
+  const requestTypeFor = (row) => {
+    if (row.kind === 'alumni') return 'mentor';
+    if (row.kind === 'brother') return 'mentee';
+    return null;
+  };
+  const canRequest = (row) => {
+    const type = requestTypeFor(row);
+    if (!type) return false;
+    if (isAdminRole) return true;
+    if (type === 'mentor') return myRole === 'brother';
+    if (type === 'mentee') return myRole === 'alumni';
+    return false;
+  };
+  const alreadyRequested = (row) =>
+    (netMyRequests || []).some((r) => (r.email || '').toLowerCase() === row.email && r.status !== 'declined');
+
+  const sendMentorRequest = async (row) => {
+    const type = requestTypeFor(row);
+    if (!type) return;
     try {
       const api = await svc();
-      await api.requestMentor({ name: a.name, email: a.email }, netUser || {});
-      notify(`Mentor request for ${a.name} sent to the VPAR.`);
+      await api.submitMentorshipRequest({
+        type,
+        targetName: row.name,
+        targetEmail: row.email,
+        requester: netUser || {},
+      });
+      notify(type === 'mentor' ? `Mentor request for ${row.name} sent to the VPAR.` : `Offer to mentor ${row.name} sent to the VPAR.`);
     } catch (err) {
       notify(`Could not send the request: ${err.message || err}`, 'error');
     }
@@ -235,6 +307,20 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
             <button className="ncr-btn-ghost" onClick={signOut} style={{ padding: '8px 16px', fontSize: 10.5 }}>Sign out</button>
           </div>
 
+          {pendingApproval && (
+            <div className="ncr-card" style={{ maxWidth: 520, margin: '0 auto 60px', textAlign: 'center', padding: '36px 32px' }}>
+              <div style={{ fontFamily: 'var(--ncr-display)', fontSize: 22, color: 'var(--ncr-ink)', marginBottom: 10 }}>
+                Waiting on approval
+              </div>
+              <p style={{ fontFamily: 'var(--ncr-ui)', fontSize: 14, color: 'var(--ncr-ink-mid)', lineHeight: 1.55, margin: 0 }}>
+                Your Google account isn't approved for the directory or mentorship program yet. Ask an officer (VPAR)
+                to approve <strong>{netUser.email}</strong>, then sign in again.
+              </p>
+            </div>
+          )}
+
+          {!pendingApproval && (
+          <>
           {/* Personal cards */}
           <div className="ncr-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18, marginBottom: 42 }}>
             <div className="ncr-card" style={{ borderTop: '3px solid #9a7327', padding: 20 }}>
@@ -262,11 +348,44 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
               )}
             </div>
             <div className="ncr-card" style={{ borderTop: '3px solid #5f6f86', padding: 20 }}>
-              <div className="ncr-label ncr-label--sm" style={{ fontSize: 10, letterSpacing: '.18em', marginBottom: 12 }}>Your Mentor</div>
-              <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ncr-ink)' }}>—</div>
-              <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>
-                Pairings are managed by the VPAR
+              <div className="ncr-label ncr-label--sm" style={{ fontSize: 10, letterSpacing: '.18em', marginBottom: 12 }}>
+                {netMyPairing && netMyPairing.alumniEmail === netUser.email ? 'Your Mentees' : 'Your Mentor'}
               </div>
+              {netMyPairing ? (
+                netMyPairing.alumniEmail === netUser.email ? (
+                  (netMyPairing.brothers || []).map((b) => (
+                    <div key={b.email} style={{ marginBottom: 8 }}>
+                      <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 17, fontWeight: 700, color: 'var(--ncr-ink)' }}>{b.name}</div>
+                      <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 12, color: 'var(--ncr-ink-mid)' }}>
+                        {b.completedCheckIns || 0} of {b.totalCheckIns || 0} check-ins
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ncr-ink)' }}>
+                      {netMyPairing.alumniName}
+                    </div>
+                    <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>
+                      {[netMyPairing.alumniRole, netMyPairing.alumniCompany].filter(Boolean).join(' · ')}
+                    </div>
+                  </>
+                )
+              ) : (netMyRequests || []).some((r) => r.status !== 'declined') ? (
+                <>
+                  <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ncr-ink)' }}>Request pending</div>
+                  <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>
+                    The VPAR reviews requests before confirming a pairing.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ncr-ink)' }}>—</div>
+                  <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>
+                    Pairings are managed by the VPAR
+                  </div>
+                </>
+              )}
               <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ncr-green)', marginTop: 12 }}>
                 ● Shared workspace in the portal
               </div>
@@ -354,13 +473,33 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
             </a>
           </div>
 
-          {/* Alumni directory */}
+          {/* Directory */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
             <span className="ncr-label">
-              Alumni Directory
-              {!netAlumni || !netAlumni.length ? ' · preview data' : ''}
+              Directory
+              {!(netAlumni || []).length && !(netBrothers || []).length ? ' · preview data' : ''}
             </span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {['All', 'Alumni', 'Brothers'].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setDirSource(t)}
+                  style={{
+                    background: t === dirSource ? 'var(--ncr-ink)' : 'transparent',
+                    color: t === dirSource ? 'var(--ncr-paper-text)' : 'var(--ncr-ink)',
+                    border: '1px solid rgba(43,35,24,.5)',
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--ncr-ui)',
+                    fontSize: 10.5,
+                    letterSpacing: '.12em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+              <span style={{ width: 1, height: 18, background: 'var(--ncr-rule)' }} />
               {['All', 'Mentors'].map((t) => (
                 <button
                   key={t}
@@ -530,13 +669,21 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
                   </span>
                 </span>
                 <span style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <button
-                    className="ncr-btn-ghost"
-                    onClick={() => sendMentorRequest(a)}
-                    style={{ padding: '4px 10px', fontSize: 9.5, letterSpacing: '.1em' }}
-                  >
-                    Request Mentor
-                  </button>
+                  {canRequest(a) && (
+                    alreadyRequested(a) ? (
+                      <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ncr-muted)' }}>
+                        Pending
+                      </span>
+                    ) : (
+                      <button
+                        className="ncr-btn-ghost"
+                        onClick={() => sendMentorRequest(a)}
+                        style={{ padding: '4px 10px', fontSize: 9.5, letterSpacing: '.1em' }}
+                      >
+                        {a.kind === 'alumni' ? 'Request Mentor' : 'Offer to Mentor'}
+                      </button>
+                    )
+                  )}
                   {a.linkedin && (
                     <a className="ncr-out-link" href={a.linkedin} target="_blank" rel="noopener noreferrer">
                       LinkedIn ↗
@@ -546,6 +693,8 @@ export default function NetworkScreen({ M, netUser, netAlumni, onSignedIn, onSig
               </div>
             );
           })}
+          </>
+          )}
         </div>
       )}
     </div>

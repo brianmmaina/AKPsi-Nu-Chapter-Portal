@@ -10,7 +10,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { getFirestore, collection, getDocs, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, getDoc, doc, addDoc, query, where } from 'firebase/firestore';
 import api from '../api';
 
 // Serving the Google auth handler from our own origin is the better setup —
@@ -73,22 +73,64 @@ export function netCurrentUser() {
 
 export async function loadAlumniDirectory() {
   const snap = await getDocs(collection(db, 'alumni'));
-  return snap.docs.map((d) => ({ fbId: d.id, ...d.data() }));
+  return snap.docs.map((d) => ({ fbId: d.id, kind: 'alumni', ...d.data() }));
 }
 
 export async function loadBrotherDirectory() {
   const snap = await getDocs(collection(db, 'brothers'));
-  return snap.docs.map((d) => ({ fbId: d.id, ...d.data() }));
+  return snap.docs.map((d) => ({ fbId: d.id, kind: 'brother', ...d.data() }));
 }
 
-export async function requestMentor(mentor, requester) {
+// Matches the portal's own safeEmailKey(): lowercase, every dot -> underscore.
+const emailDocId = (email) => (email || '').toLowerCase().trim().replace(/\./g, '_');
+
+/** approvedUsers doc for this email, or null if the account isn't approved. */
+export async function loadApprovedUser(email) {
+  const snap = await getDoc(doc(db, 'approvedUsers', emailDocId(email)));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/**
+ * type: 'mentor' (a brother requesting a mentor) or 'mentee' (an alumnus
+ * offering to mentor) — matches the portal's own mentorRequests.type values
+ * and its canRequestMentorshipType(brother->mentor, alumni->mentee) rule.
+ */
+export async function submitMentorshipRequest({ type, targetName, targetEmail, requester }) {
   await addDoc(collection(db, 'mentorRequests'), {
-    type: 'mentor',
-    name: mentor.name || '',
-    email: (mentor.email || '').toLowerCase(),
+    type,
+    name: targetName || '',
+    email: (targetEmail || '').toLowerCase(),
     requestedByName: requester && requester.name ? requester.name : '',
     requestedByEmail: requester && requester.email ? requester.email : '',
     createdAt: new Date().toISOString(),
     status: 'pending',
   });
+}
+
+/** This user's own outstanding mentor/mentee requests, so a row can show
+ * "Request pending" instead of re-offering the button forever. */
+export async function loadMyRequests(email) {
+  const snap = await getDocs(
+    query(collection(db, 'mentorRequests'), where('requestedByEmail', '==', (email || '').toLowerCase())),
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * This user's active pairing, or null if unpaired. Checks both directions:
+ * as the alumni mentor (alumniEmail), or as a paired brother — the portal's
+ * pairing docs only store mentees in a nested `brothers[]` array today,
+ * which Firestore can't query by field, so the mentee side also checks a
+ * flat `menteeEmails` array that doesn't exist in the data yet (Slice 1b's
+ * pairing-creation work needs to start writing it). Until then this only
+ * ever resolves for the alumni side — expected, not a bug.
+ */
+export async function loadMyPairing(email) {
+  const lower = (email || '').toLowerCase();
+  const [asMentor, asMentee] = await Promise.all([
+    getDocs(query(collection(db, 'mentorshipPairings'), where('alumniEmail', '==', lower))),
+    getDocs(query(collection(db, 'mentorshipPairings'), where('menteeEmails', 'array-contains', lower))),
+  ]);
+  const match = asMentor.docs[0] || asMentee.docs[0];
+  return match ? { id: match.id, ...match.data() } : null;
 }

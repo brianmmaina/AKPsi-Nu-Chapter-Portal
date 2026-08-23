@@ -90,6 +90,10 @@ function App() {
   // Network (Firebase)
   const [netUser, setNetUser] = useState(null);
   const [netAlumni, setNetAlumni] = useState(null);
+  const [netBrothers, setNetBrothers] = useState(null);
+  const [netApprovedUser, setNetApprovedUser] = useState(null);
+  const [netMyPairing, setNetMyPairing] = useState(null);
+  const [netMyRequests, setNetMyRequests] = useState(null);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -489,13 +493,25 @@ function App() {
                 M={M}
                 netUser={netUser}
                 netAlumni={netAlumni}
-                onSignedIn={(user, dir) => {
+                netBrothers={netBrothers}
+                netApprovedUser={netApprovedUser}
+                netMyPairing={netMyPairing}
+                netMyRequests={netMyRequests}
+                onSignedIn={(user, profile) => {
                   setNetUser(user);
-                  setNetAlumni(dir);
+                  setNetAlumni(profile?.alumniDir ?? null);
+                  setNetBrothers(profile?.brotherDir ?? null);
+                  setNetApprovedUser(profile?.approvedUser ?? null);
+                  setNetMyPairing(profile?.pairing ?? null);
+                  setNetMyRequests(profile?.myRequests ?? null);
                 }}
                 onSignedOut={() => {
                   setNetUser(null);
                   setNetAlumni(null);
+                  setNetBrothers(null);
+                  setNetApprovedUser(null);
+                  setNetMyPairing(null);
+                  setNetMyRequests(null);
                 }}
                 onOpenBrother={setSelectedBrother}
                 notify={notify}
