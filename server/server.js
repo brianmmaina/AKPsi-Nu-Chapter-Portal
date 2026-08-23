@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
 
 const { Pool } = pg;
 
@@ -512,10 +513,17 @@ async function initializeDatabase() {
   }
 }
 
-initializeDatabase().catch(err => {
-  logger.error('Failed to initialize database on startup:', err.message);
-  logger.error('The server will start but API requests may fail until database is connected.');
-});
+// Skipped when this file is imported (e.g. by tests) rather than run directly.
+// process.argv[1] isn't URL-encoded but import.meta.url is (spaces in the
+// repo path become %20), so compare decoded filesystem paths, not strings.
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  initializeDatabase().catch(err => {
+    logger.error('Failed to initialize database on startup:', err.message);
+    logger.error('The server will start but API requests may fail until database is connected.');
+  });
+}
 
 // ============================================================================
 // ERROR HANDLING MIDDLEWARE
@@ -1206,7 +1214,11 @@ app.delete('/api/posts/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on 0.0.0.0:${PORT}`);
-  logger.info(`Environment: ${NODE_ENV}`);
-});
+if (isMainModule) {
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server running on 0.0.0.0:${PORT}`);
+    logger.info(`Environment: ${NODE_ENV}`);
+  });
+}
+
+export default app;
