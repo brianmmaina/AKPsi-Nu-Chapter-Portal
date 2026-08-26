@@ -33,6 +33,7 @@ export default function NetworkScreen({
   onSignedIn,
   onSignedOut,
   onOpenBrother,
+  onOpenAdmin,
   notify,
 }) {
   const [busy, setBusy] = useState(false);
@@ -309,7 +310,14 @@ export default function NetworkScreen({
                 </div>
               </div>
             </div>
-            <button className="ncr-btn-ghost" onClick={signOut} style={{ padding: '8px 16px', fontSize: 10.5 }}>Sign out</button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {!pendingApproval && (
+                <button className="ncr-link-btn" onClick={onOpenAdmin} style={{ fontSize: 10.5, letterSpacing: '.16em' }}>
+                  Network Admin
+                </button>
+              )}
+              <button className="ncr-btn-ghost" onClick={signOut} style={{ padding: '8px 16px', fontSize: 10.5 }}>Sign out</button>
+            </div>
           </div>
 
           {pendingApproval && (

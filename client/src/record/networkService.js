@@ -10,7 +10,19 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { getFirestore, collection, getDocs, getDoc, doc, addDoc, query, where } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  query,
+  where,
+} from 'firebase/firestore';
 import api from '../api';
 
 // Serving the Google auth handler from our own origin is the better setup —
@@ -82,12 +94,114 @@ export async function loadBrotherDirectory() {
 }
 
 // Matches the portal's own safeEmailKey(): lowercase, every dot -> underscore.
-const emailDocId = (email) => (email || '').toLowerCase().trim().replace(/\./g, '_');
+// Exported so every file doing role-collection lookups computes this
+// identically — a second, slightly different implementation drifting into
+// another file is exactly the kind of bug the isApproved() regex fix caught.
+export const emailDocId = (email) => (email || '').toLowerCase().trim().replace(/\./g, '_');
 
 /** approvedUsers doc for this email, or null if the account isn't approved. */
 export async function loadApprovedUser(email) {
   const snap = await getDoc(doc(db, 'approvedUsers', emailDocId(email)));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/** Every approvedUsers doc — the Approvals admin tab's source list. */
+export async function loadApprovedUsers() {
+  const snap = await getDocs(collection(db, 'approvedUsers'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/** Create or update an approvedUsers doc (grants roster/mentorship access). */
+export async function upsertApprovedUser(email, role) {
+  const lower = (email || '').toLowerCase().trim();
+  await setDoc(doc(db, 'approvedUsers', emailDocId(lower)), { email: lower, role }, { merge: true });
+}
+
+/**
+ * Revokes an approvedUsers doc and cascades: any elevated-role docs for the
+ * same email are removed in the same batch, so revoking someone doesn't
+ * leave them as an orphaned admin/family-head/eboard-member/DEI-editor with
+ * no roster access to have earned it through.
+ */
+export async function revokeApprovedUser(email) {
+  const id = emailDocId(email);
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'approvedUsers', id));
+  batch.delete(doc(db, 'admins', id));
+  batch.delete(doc(db, 'familyHeads', id));
+  batch.delete(doc(db, 'eboardMembers', id));
+  batch.delete(doc(db, 'deiEditors', id));
+  await batch.commit();
+}
+
+/** Is this email an admin (the authoritative admins collection, not approvedUsers.role)? */
+export async function checkIsAdmin(email) {
+  const snap = await getDoc(doc(db, 'admins', emailDocId(email)));
+  return snap.exists();
+}
+
+const ROLE_COLLECTIONS = ['admins', 'familyHeads', 'eboardMembers', 'deiEditors'];
+
+/**
+ * Every doc across the four elevated-role collections, merged by email doc
+ * id, for the Roles admin tab's table: { [docId]: { admins, familyHeads,
+ * eboardMembers, deiEditors } } — each value is the doc data or null.
+ */
+export async function loadRoleCollections() {
+  const snaps = await Promise.all(ROLE_COLLECTIONS.map((name) => getDocs(collection(db, name))));
+  const byId = {};
+  snaps.forEach((snap, i) => {
+    const name = ROLE_COLLECTIONS[i];
+    snap.docs.forEach((d) => {
+      byId[d.id] = byId[d.id] || {};
+      byId[d.id][name] = { id: d.id, ...d.data() };
+    });
+  });
+  return byId;
+}
+
+export async function setAdmin(email, on) {
+  const ref = doc(db, 'admins', emailDocId(email));
+  if (on) await setDoc(ref, { email: (email || '').toLowerCase().trim() });
+  else await deleteDoc(ref);
+}
+
+export async function setFamilyHead(email, on) {
+  const ref = doc(db, 'familyHeads', emailDocId(email));
+  if (on) await setDoc(ref, { email: (email || '').toLowerCase().trim() });
+  else await deleteDoc(ref);
+}
+
+export async function setEboardMember(email, { active }) {
+  const ref = doc(db, 'eboardMembers', emailDocId(email));
+  if (active) await setDoc(ref, { email: (email || '').toLowerCase().trim(), active: true }, { merge: true });
+  else await deleteDoc(ref);
+}
+
+export async function setDeiEditor(email, { active, categories }) {
+  const ref = doc(db, 'deiEditors', emailDocId(email));
+  if (active) {
+    await setDoc(
+      ref,
+      { email: (email || '').toLowerCase().trim(), active: true, categories: categories || {} },
+      { merge: true },
+    );
+  } else {
+    await deleteDoc(ref);
+  }
+}
+
+/** kind: 'alumni' | 'brothers' — the Firestore-backed directory profiles Slice 1 reads. */
+export async function createDirectoryProfile(kind, data) {
+  await addDoc(collection(db, kind), data);
+}
+
+export async function updateDirectoryProfile(kind, id, data) {
+  await setDoc(doc(db, kind, id), data, { merge: true });
+}
+
+export async function deleteDirectoryProfile(kind, id) {
+  await deleteDoc(doc(db, kind, id));
 }
 
 /**

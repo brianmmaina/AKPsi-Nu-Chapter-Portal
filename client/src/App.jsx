@@ -15,6 +15,7 @@ import LineageScreen from './record/LineageScreen';
 import TreeScreen from './record/TreeScreen';
 import AddBrotherScreen from './record/AddBrotherScreen';
 import NetworkScreen from './record/NetworkScreen';
+import NetworkAdminScreen from './record/NetworkAdminScreen';
 import ResourcesScreen from './record/ResourcesScreen';
 import BrotherModal from './record/BrotherModal';
 import MajorModal from './record/MajorModal';
@@ -35,6 +36,7 @@ const SCREEN_BG = {
   lineage: ['/images/lineage-bg.jpg', 0.86],
   addbrother: ['/images/lineage-bg.jpg', 0.9],
   alumni: ['/images/network-bg.jpg', 0.87],
+  networkadmin: ['/images/network-bg.jpg', 0.92],
   resources: ['/images/resources-bg.jpg', 0.88],
 };
 const TREE_BG_COUNT = 5;
@@ -514,6 +516,15 @@ function App() {
                   setNetMyRequests(null);
                 }}
                 onOpenBrother={setSelectedBrother}
+                onOpenAdmin={() => nav('networkadmin')}
+                notify={notify}
+              />
+            )}
+
+            {screen === 'networkadmin' && (
+              <NetworkAdminScreen
+                netUser={netUser}
+                onBack={() => nav('alumni')}
                 notify={notify}
               />
             )}
