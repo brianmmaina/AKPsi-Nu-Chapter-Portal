@@ -22,13 +22,10 @@ export default function NetworkApprovals({ approvedUsers, run }) {
     const trimmed = email.trim();
     if (!trimmed) return;
     setBusy(true);
-    try {
-      const api = await svc();
-      await run(() => api.upsertApprovedUser(trimmed, role), `${trimmed} approved as ${role}.`);
-      setEmail('');
-    } finally {
-      setBusy(false);
-    }
+    const api = await svc();
+    const ok = await run(() => api.upsertApprovedUser(trimmed, role), `${trimmed} approved as ${role}.`);
+    if (ok) setEmail('');
+    setBusy(false);
   };
 
   const revoke = async (u) => {

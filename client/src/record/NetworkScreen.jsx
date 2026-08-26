@@ -194,6 +194,16 @@ export default function NetworkScreen({
   const alreadyRequested = (row) =>
     (netMyRequests || []).some((r) => (r.email || '').toLowerCase() === row.email && r.status !== 'declined');
 
+  const submitCheckIn = async (brotherEmail, brotherName) => {
+    try {
+      const api = await svc();
+      await api.submitCheckIn(netMyPairing.id, brotherEmail, brotherName, netUser.email);
+      notify('Check-in submitted — the VPAR reviews it before it counts.');
+    } catch (err) {
+      notify(`Could not submit check-in: ${err.message || err}`, 'error');
+    }
+  };
+
   const sendMentorRequest = async (row) => {
     const type = requestTypeFor(row);
     if (!type) return;
@@ -367,11 +377,14 @@ export default function NetworkScreen({
               {netMyPairing ? (
                 netMyPairing.alumniEmail === netUser.email ? (
                   (netMyPairing.brothers || []).map((b) => (
-                    <div key={b.email} style={{ marginBottom: 8 }}>
+                    <div key={b.email} style={{ marginBottom: 12 }}>
                       <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 17, fontWeight: 700, color: 'var(--ncr-ink)' }}>{b.name}</div>
-                      <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 12, color: 'var(--ncr-ink-mid)' }}>
+                      <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 12, color: 'var(--ncr-ink-mid)', marginBottom: 6 }}>
                         {b.completedCheckIns || 0} of {b.totalCheckIns || 0} check-ins
                       </div>
+                      <button className="ncr-link-btn" onClick={() => submitCheckIn(b.email, b.name)} style={{ fontSize: 10.5 }}>
+                        Submit check-in
+                      </button>
                     </div>
                   ))
                 ) : (
@@ -379,9 +392,12 @@ export default function NetworkScreen({
                     <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ncr-ink)' }}>
                       {netMyPairing.alumniName}
                     </div>
-                    <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>
+                    <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginTop: 4, marginBottom: 8 }}>
                       {[netMyPairing.alumniRole, netMyPairing.alumniCompany].filter(Boolean).join(' · ')}
                     </div>
+                    <button className="ncr-link-btn" onClick={() => submitCheckIn(netUser.email, netUser.name)} style={{ fontSize: 10.5 }}>
+                      Submit check-in
+                    </button>
                   </>
                 )
               ) : (netMyRequests || []).some((r) => r.status !== 'declined') ? (

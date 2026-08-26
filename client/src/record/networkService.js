@@ -241,10 +241,143 @@ export async function loadMyRequests(email) {
  */
 export async function loadMyPairing(email) {
   const lower = (email || '').toLowerCase();
-  const [asMentor, asMentee] = await Promise.all([
-    getDocs(query(collection(db, 'mentorshipPairings'), where('alumniEmail', '==', lower))),
-    getDocs(query(collection(db, 'mentorshipPairings'), where('menteeEmails', 'array-contains', lower))),
-  ]);
-  const match = asMentor.docs[0] || asMentee.docs[0];
-  return match ? { id: match.id, ...match.data() } : null;
+  // Mentees live inside brothers[] *objects*, not a flat email array —
+  // Firestore's array-contains can't match a field within array-of-map
+  // entries, so there's no server-side query for "am I someone's mentee."
+  // Loading all pairings and filtering client-side is the only option
+  // (mirrors what the portal's own personal-dashboard code does).
+  const snap = await getDocs(collection(db, 'mentorshipPairings'));
+  const pairings = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const match = pairings.find(
+    (p) => (p.alumniEmail || '').toLowerCase() === lower
+      || (p.brothers || []).some((b) => (b.email || '').toLowerCase() === lower),
+  );
+  return match || null;
+}
+
+/** All pairings — the Mentorship admin tab's source list. */
+export async function loadPairings() {
+  const snap = await getDocs(collection(db, 'mentorshipPairings'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Create or update a pairing. Mirrors the portal's saveMentorshipPairing
+ * field shape and id scheme exactly — brothers is capped at 2, each entry
+ * normalized the same way (completedCheckIns/totalCheckIns defaulted).
+ */
+export async function savePairing(pairing) {
+  const alumniEmail = (pairing.alumniEmail || '').toLowerCase().trim();
+  const brothers = (pairing.brothers || [])
+    .filter((b) => b.email || b.name)
+    .slice(0, 2)
+    .map((b) => ({
+      name: b.name || '',
+      email: (b.email || '').toLowerCase().trim(),
+      completedCheckIns: Math.max(0, Number(b.completedCheckIns || 0)),
+      totalCheckIns: Math.max(1, Number(b.totalCheckIns || pairing.totalCheckIns || 3)),
+      progressNote: b.progressNote || '',
+    }));
+  if (!alumniEmail || !brothers.length) {
+    throw new Error('Choose one alumni mentor and at least one brother.');
+  }
+  const pairingId = pairing.id || `${emailDocId(alumniEmail)}-${Date.now()}`;
+  await setDoc(
+    doc(db, 'mentorshipPairings', pairingId),
+    {
+      alumniName: pairing.alumniName || '',
+      alumniEmail,
+      alumniCompany: pairing.alumniCompany || '',
+      alumniRole: pairing.alumniRole || '',
+      brothers,
+      status: pairing.status || 'active',
+      updatedAt: new Date().toISOString(),
+      ...(pairing.id ? {} : { createdAt: new Date().toISOString() }),
+    },
+    { merge: true },
+  );
+  return pairingId;
+}
+
+export async function deletePairing(pairingId) {
+  await deleteDoc(doc(db, 'mentorshipPairings', pairingId));
+}
+
+/** A brother or their alumni mentor submits "meeting completed"; admin approves. */
+export async function submitCheckIn(pairingId, brotherEmail, brotherName, requesterEmail) {
+  const pairingSnap = await getDoc(doc(db, 'mentorshipPairings', pairingId));
+  if (!pairingSnap.exists()) throw new Error('This pairing no longer exists.');
+  const pairing = pairingSnap.data();
+
+  const normalizedBrotherEmail = (brotherEmail || '').toLowerCase().trim();
+  const alumniEmail = (pairing.alumniEmail || '').toLowerCase().trim();
+  const requester = (requesterEmail || '').toLowerCase().trim();
+  const brotherAllowed = (pairing.brothers || []).some((b) => (b.email || '').toLowerCase().trim() === normalizedBrotherEmail);
+
+  if (requester !== alumniEmail && requester !== normalizedBrotherEmail) {
+    throw new Error('Only someone in this pairing can submit a check-in.');
+  }
+  if (!brotherAllowed) {
+    throw new Error('Choose a brother from this pairing.');
+  }
+
+  const requestId = `${pairingId}-${emailDocId(normalizedBrotherEmail)}-${Date.now()}`;
+  await setDoc(doc(db, 'mentorshipCheckInRequests', requestId), {
+    pairingId,
+    alumniName: pairing.alumniName || '',
+    alumniEmail,
+    brotherName: brotherName || '',
+    brotherEmail: normalizedBrotherEmail,
+    requesterEmail: requester,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/** All check-in requests — the Mentorship admin tab's approval queue. */
+export async function loadCheckInRequests() {
+  const snap = await getDocs(collection(db, 'mentorshipCheckInRequests'));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.status === 'pending' ? -1 : 1) - (b.status === 'pending' ? -1 : 1));
+}
+
+/**
+ * Approve/reject a check-in. On approval, increments the matching brother's
+ * completedCheckIns (capped at totalCheckIns) in the pairing doc — mirrors
+ * the portal's reviewMentorshipCheckInRequest exactly.
+ */
+export async function reviewCheckInRequest(requestId, approved, reviewerEmail) {
+  const requestRef = doc(db, 'mentorshipCheckInRequests', requestId);
+  const requestSnap = await getDoc(requestRef);
+  if (!requestSnap.exists()) throw new Error('This check-in request no longer exists.');
+  const request = requestSnap.data();
+
+  if (approved) {
+    const pairingRef = doc(db, 'mentorshipPairings', request.pairingId);
+    const pairingSnap = await getDoc(pairingRef);
+    if (!pairingSnap.exists()) throw new Error('The related pairing no longer exists.');
+    const pairing = pairingSnap.data();
+    const brotherEmail = (request.brotherEmail || '').toLowerCase().trim();
+    const brothers = (pairing.brothers || []).map((b) => {
+      const email = (b.email || '').toLowerCase().trim();
+      if (email !== brotherEmail) return b;
+      const totalCheckIns = Math.max(1, Number(b.totalCheckIns || 3));
+      const completedCheckIns = Math.min(totalCheckIns, Math.max(0, Number(b.completedCheckIns || 0)) + 1);
+      return { ...b, completedCheckIns, totalCheckIns, progressNote: `Latest check-in approved ${new Date().toLocaleDateString()}` };
+    });
+    await setDoc(pairingRef, { brothers, updatedAt: new Date().toISOString() }, { merge: true });
+  }
+
+  await setDoc(
+    requestRef,
+    {
+      status: approved ? 'approved' : 'rejected',
+      reviewedBy: reviewerEmail || '',
+      reviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
 }

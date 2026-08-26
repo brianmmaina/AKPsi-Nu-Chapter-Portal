@@ -27,28 +27,23 @@ export default function NetworkDirectory({ directory, run }) {
   const save = async () => {
     if (!editing.name.trim()) return;
     setBusy(true);
-    try {
-      const api = await svc();
-      const data = {
-        name: editing.name.trim(),
-        company: editing.company.trim(),
-        role: editing.role.trim(),
-        field: editing.field.trim(),
-        location: editing.location.trim(),
-        gradYear: editing.gradYear.trim(),
-        linkedin: editing.linkedin.trim(),
-        email: editing.email.trim().toLowerCase(),
-        mentor: !!editing.mentor,
-      };
-      if (editing.fbId) {
-        await run(() => api.updateDirectoryProfile(kind, editing.fbId, data), `${data.name} updated.`);
-      } else {
-        await run(() => api.createDirectoryProfile(kind, data), `${data.name} added to the ${kind} directory.`);
-      }
-      setEditing(null);
-    } finally {
-      setBusy(false);
-    }
+    const api = await svc();
+    const data = {
+      name: editing.name.trim(),
+      company: editing.company.trim(),
+      role: editing.role.trim(),
+      field: editing.field.trim(),
+      location: editing.location.trim(),
+      gradYear: editing.gradYear.trim(),
+      linkedin: editing.linkedin.trim(),
+      email: editing.email.trim().toLowerCase(),
+      mentor: !!editing.mentor,
+    };
+    const ok = editing.fbId
+      ? await run(() => api.updateDirectoryProfile(kind, editing.fbId, data), `${data.name} updated.`)
+      : await run(() => api.createDirectoryProfile(kind, data), `${data.name} added to the ${kind} directory.`);
+    if (ok) setEditing(null);
+    setBusy(false);
   };
 
   const remove = async (row) => {

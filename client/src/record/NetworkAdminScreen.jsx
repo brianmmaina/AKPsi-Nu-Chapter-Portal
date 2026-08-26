@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import NetworkApprovals from './NetworkApprovals';
 import NetworkRoles from './NetworkRoles';
 import NetworkDirectory from './NetworkDirectory';
+import NetworkMentorship from './NetworkMentorship';
 
 const svc = () => import('./networkService');
 
@@ -20,21 +21,27 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [roles, setRoles] = useState({});
   const [directory, setDirectory] = useState({ alumni: [], brothers: [] });
+  const [pairings, setPairings] = useState([]);
+  const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
       const api = await svc();
-      const [users, roleMap, alumniSnap, brothersSnap] = await Promise.all([
+      const [users, roleMap, alumniSnap, brothersSnap, pairingsSnap, checkInsSnap] = await Promise.all([
         api.loadApprovedUsers(),
         api.loadRoleCollections(),
         api.loadAlumniDirectory(),
         api.loadBrotherDirectory(),
+        api.loadPairings(),
+        api.loadCheckInRequests(),
       ]);
       setApprovedUsers(users);
       setRoles(roleMap);
       setDirectory({ alumni: alumniSnap, brothers: brothersSnap });
+      setPairings(pairingsSnap);
+      setCheckIns(checkInsSnap);
     } catch (err) {
       notify(`Could not load network admin data: ${err.message || err}`, 'error');
     } finally {
@@ -64,13 +71,18 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
     };
   }, [netUser, loadAll]);
 
+  // Returns whether it succeeded, so callers only reset form state
+  // (clearing an input, closing an edit panel) on the success path —
+  // a failed write shouldn't discard what the user typed.
   const run = async (fn, successMsg) => {
     try {
       await fn();
       await loadAll();
       if (successMsg) notify(successMsg);
+      return true;
     } catch (err) {
       notify(`Save failed: ${err.message || err}`, 'error');
+      return false;
     }
   };
 
@@ -140,6 +152,7 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
               {tabBtn('approvals', 'Approvals')}
               {tabBtn('roles', 'Roles')}
               {tabBtn('directory', 'Directory')}
+              {tabBtn('mentorship', 'Mentorship')}
             </div>
             {loading && (
               <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ncr-faint)' }}>
@@ -151,6 +164,7 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
           {tab === 'approvals' && <NetworkApprovals approvedUsers={approvedUsers} run={run} />}
           {tab === 'roles' && <NetworkRoles approvedUsers={approvedUsers} roles={roles} run={run} />}
           {tab === 'directory' && <NetworkDirectory directory={directory} run={run} />}
+          {tab === 'mentorship' && <NetworkMentorship pairings={pairings} checkIns={checkIns} netUser={netUser} run={run} />}
         </>
       )}
     </div>
