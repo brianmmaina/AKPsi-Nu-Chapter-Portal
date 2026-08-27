@@ -23,6 +23,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import api from '../api';
 
 // Serving the Google auth handler from our own origin is the better setup —
@@ -47,6 +48,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 /** Fills empty profile_image_url on the roster; manual uploads win server-side. */
 export const syncPhoto = (email, photoUrl) =>
@@ -380,4 +382,132 @@ export async function reviewCheckInRequest(requestId, approved, reviewerEmail) {
     },
     { merge: true },
   );
+}
+
+// ---------------------------------------------------------------------------
+// Content: DEI Hub, Job Board, Family Updates. Each post supports a single
+// cover image (the portal's own multi-image galleries are out of scope here).
+// ---------------------------------------------------------------------------
+
+async function uploadCoverImage(collectionName, postId, file) {
+  if (!file) return null;
+  const path = `${collectionName}/${postId}/${file.name}`;
+  const fileRef = ref(storage, path);
+  await uploadBytes(fileRef, file);
+  const url = await getDownloadURL(fileRef);
+  return { url, name: file.name };
+}
+
+/** deiEditors doc for this email, or null — categories is a map of name -> bool. */
+export async function loadDeiEditorAccess(email) {
+  const snap = await getDoc(doc(db, 'deiEditors', emailDocId(email)));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function loadDeiPosts() {
+  const snap = await getDocs(collection(db, 'deiPosts'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function saveDeiPost(post, imageFile) {
+  const postId = post.id || `dei-${Date.now()}`;
+  const uploaded = await uploadCoverImage('deiPosts', postId, imageFile);
+  const images = uploaded ? [...(post.images || []), uploaded] : post.images || [];
+  await setDoc(
+    doc(db, 'deiPosts', postId),
+    {
+      category: post.category,
+      title: post.title || '',
+      body: post.body || '',
+      status: post.status || 'published',
+      imageAlt: post.imageAlt || '',
+      imageUrls: images.map((i) => i.url).filter(Boolean),
+      images,
+      coverImageUrl: images[0]?.url || post.coverImageUrl || '',
+      links: post.links || [],
+      authorEmail: post.authorEmail,
+      authorName: post.authorName || '',
+      updatedAt: new Date().toISOString(),
+      ...(post.id ? {} : { createdAt: new Date().toISOString() }),
+    },
+    { merge: true },
+  );
+  return postId;
+}
+
+export async function deleteDeiPost(id) {
+  await deleteDoc(doc(db, 'deiPosts', id));
+}
+
+export async function loadJobPosts() {
+  const snap = await getDocs(collection(db, 'jobPosts'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function saveJobPost(post) {
+  const title = (post.title || '').trim();
+  const company = (post.company || '').trim();
+  const body = (post.body || '').trim();
+  if (!title || !company || !body) {
+    throw new Error('Job title, company, and description are required.');
+  }
+  const postId = post.id || `job-${Date.now()}`;
+  await setDoc(
+    doc(db, 'jobPosts', postId),
+    {
+      title,
+      company,
+      location: (post.location || '').trim(),
+      type: (post.type || '').trim(),
+      body,
+      link: (post.link || '').trim(),
+      status: post.status || 'published',
+      authorEmail: post.authorEmail,
+      authorName: post.authorName || '',
+      updatedAt: new Date().toISOString(),
+      ...(post.id ? {} : { createdAt: new Date().toISOString() }),
+    },
+    { merge: true },
+  );
+  return postId;
+}
+
+export async function deleteJobPost(id) {
+  await deleteDoc(doc(db, 'jobPosts', id));
+}
+
+export async function loadHomepageArticles() {
+  const snap = await getDocs(collection(db, 'homepageArticles'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function saveHomepageArticle(article, imageFile) {
+  const articleId = article.id || `article-${Date.now()}`;
+  const uploaded = await uploadCoverImage('homepageArticles', articleId, imageFile);
+  const images = uploaded ? [...(article.images || []), uploaded] : article.images || [];
+  await setDoc(
+    doc(db, 'homepageArticles', articleId),
+    {
+      category: article.category || 'Chapter Update',
+      title: article.title || 'Untitled Update',
+      body: article.body || '',
+      imageAlt: article.imageAlt || '',
+      imageUrls: images.map((i) => i.url).filter(Boolean),
+      images,
+      coverImageUrl: images[0]?.url || article.coverImageUrl || '',
+      authorEmail: article.authorEmail,
+      authorUid: article.authorUid || '',
+      authorRole: article.authorRole || '',
+      createdByFamilyHead: !!article.createdByFamilyHead,
+      status: article.status || 'published',
+      updatedAt: new Date().toISOString(),
+      ...(article.id ? {} : { createdAt: new Date().toISOString() }),
+    },
+    { merge: true },
+  );
+  return articleId;
+}
+
+export async function deleteHomepageArticle(id) {
+  await deleteDoc(doc(db, 'homepageArticles', id));
 }

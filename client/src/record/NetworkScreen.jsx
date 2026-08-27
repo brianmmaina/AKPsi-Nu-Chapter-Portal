@@ -5,6 +5,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { SAMPLE_ALUMNI } from './sampleData';
+import NetworkContentSection from './NetworkContentSection';
 
 // Firebase is heavy — load it only when the Network is actually used.
 const svc = () => import('./networkService');
@@ -50,6 +51,89 @@ export default function NetworkScreen({
   // reads are gated to approved accounts server-side, so there's nothing to
   // fetch or show beyond this state.
   const pendingApproval = signedIn && !netApprovedUser;
+
+  // Content sections (DEI Hub, Job Board, Family Updates) load lazily on
+  // first visit rather than at sign-in — keeps the initial load light,
+  // since most sign-ins are just here for the directory.
+  const [section, setSection] = useState('directory');
+  const [deiPosts, setDeiPosts] = useState(null);
+  const [jobPosts, setJobPosts] = useState(null);
+  const [articles, setArticles] = useState(null);
+  const [deiAccess, setDeiAccess] = useState(null);
+  const [contentEditing, setContentEditing] = useState(null); // { type, post } or null
+  const [contentBusy, setContentBusy] = useState(false);
+  const [deiCategory, setDeiCategory] = useState('overview');
+
+  useEffect(() => {
+    if (pendingApproval || !netUser?.email) return;
+    let cancelled = false;
+    (async () => {
+      const api = await svc();
+      if (section === 'dei' && deiPosts === null) {
+        const [posts, access] = await Promise.all([api.loadDeiPosts(), api.loadDeiEditorAccess(netUser.email)]);
+        if (!cancelled) {
+          setDeiPosts(posts);
+          setDeiAccess(access);
+        }
+      }
+      if (section === 'jobs' && jobPosts === null) {
+        const posts = await api.loadJobPosts();
+        if (!cancelled) setJobPosts(posts);
+      }
+      if (section === 'updates' && articles === null) {
+        const posts = await api.loadHomepageArticles();
+        if (!cancelled) setArticles(posts);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [section, pendingApproval, netUser, deiPosts, jobPosts, articles]);
+
+  const reloadSection = async () => {
+    const api = await svc();
+    if (section === 'dei') setDeiPosts(await api.loadDeiPosts());
+    if (section === 'jobs') setJobPosts(await api.loadJobPosts());
+    if (section === 'updates') setArticles(await api.loadHomepageArticles());
+  };
+
+  const netIsAdmin = (netApprovedUser?.role || '').toLowerCase() === 'admin';
+  const netIsAlumni = (netApprovedUser?.role || '').toLowerCase() === 'alumni';
+  const canPostJob = netIsAdmin || netIsAlumni;
+  const canPostUpdate = netIsAdmin; // familyHead grant isn't fetched client-side yet; admin always can.
+  const deiCategoryGranted = (cat) => netIsAdmin || !!deiAccess?.categories?.[cat];
+
+  const saveContent = async (type, form, imageFile) => {
+    setContentBusy(true);
+    try {
+      const api = await svc();
+      const withAuthor = { ...form, authorEmail: netUser.email, authorName: netUser.name };
+      if (type === 'dei') await api.saveDeiPost({ ...withAuthor, category: form.category || deiCategory }, imageFile);
+      if (type === 'jobs') await api.saveJobPost(withAuthor);
+      if (type === 'updates') await api.saveHomepageArticle(withAuthor, imageFile);
+      await reloadSection();
+      setContentEditing(null);
+      notify('Posted.');
+    } catch (err) {
+      notify(`Could not save: ${err.message || err}`, 'error');
+    } finally {
+      setContentBusy(false);
+    }
+  };
+
+  const deleteContent = async (type, post) => {
+    if (!window.confirm(`Delete "${post.title}"?`)) return;
+    try {
+      const api = await svc();
+      if (type === 'dei') await api.deleteDeiPost(post.id);
+      if (type === 'jobs') await api.deleteJobPost(post.id);
+      if (type === 'updates') await api.deleteHomepageArticle(post.id);
+      await reloadSection();
+      notify('Deleted.');
+    } catch (err) {
+      notify(`Could not delete: ${err.message || err}`, 'error');
+    }
+  };
 
   const meBro = useMemo(() => {
     if (!netUser || !netUser.email) return null;
@@ -502,6 +586,117 @@ export default function NetworkScreen({
             </a>
           </div>
 
+          {/* Section tabs */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderBottom: '1.5px solid var(--ncr-ink)', marginBottom: 26, paddingBottom: 0 }}>
+            {[
+              { key: 'directory', label: 'Directory' },
+              { key: 'dei', label: 'DEI Hub' },
+              { key: 'jobs', label: 'Job Board' },
+              { key: 'updates', label: 'Family Updates' },
+            ].map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setSection(s.key)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '10px 18px',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--ncr-ui)',
+                  fontSize: 11,
+                  letterSpacing: '.14em',
+                  textTransform: 'uppercase',
+                  color: section === s.key ? 'var(--ncr-ink)' : 'var(--ncr-muted)',
+                  borderBottom: `2px solid ${section === s.key ? 'var(--ncr-crimson)' : 'transparent'}`,
+                  marginBottom: -1.5,
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {section === 'dei' && (
+            <NetworkContentSection
+              type="dei"
+              posts={(deiPosts || []).filter((p) => p.category === deiCategory)}
+              editing={contentEditing?.type === 'dei' ? contentEditing.post : undefined}
+              busy={contentBusy}
+              canPost={deiCategoryGranted(deiCategory)}
+              canEditPost={(p) => netIsAdmin || p.authorEmail === netUser.email}
+              onNew={() => setContentEditing({ type: 'dei', post: { category: deiCategory } })}
+              onEdit={(post) => setContentEditing({ type: 'dei', post })}
+              onCancel={() => setContentEditing(null)}
+              onSave={(form, file) => saveContent('dei', form, file)}
+              onDelete={(post) => deleteContent('dei', post)}
+              extraFields={[]}
+              header={
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                  {['overview', 'resources', 'events', 'feedback'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setDeiCategory(cat)}
+                      style={{
+                        background: cat === deiCategory ? 'var(--ncr-ink)' : 'transparent',
+                        color: cat === deiCategory ? 'var(--ncr-paper-text)' : 'var(--ncr-ink)',
+                        border: '1px solid rgba(43,35,24,.5)',
+                        padding: '6px 14px',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--ncr-ui)',
+                        fontSize: 10.5,
+                        letterSpacing: '.12em',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              }
+            />
+          )}
+
+          {section === 'jobs' && (
+            <NetworkContentSection
+              type="jobs"
+              posts={jobPosts || []}
+              editing={contentEditing?.type === 'jobs' ? contentEditing.post : undefined}
+              busy={contentBusy}
+              canPost={canPostJob}
+              canEditPost={(p) => netIsAdmin || p.authorEmail === netUser.email}
+              onNew={() => setContentEditing({ type: 'jobs', post: {} })}
+              onEdit={(post) => setContentEditing({ type: 'jobs', post })}
+              onCancel={() => setContentEditing(null)}
+              onSave={(form) => saveContent('jobs', form)}
+              onDelete={(post) => deleteContent('jobs', post)}
+              extraFields={[
+                { key: 'company', label: 'Company' },
+                { key: 'location', label: 'Location' },
+                { key: 'type', label: 'Type (e.g. Internship, Full-time)' },
+                { key: 'link', label: 'Application Link' },
+              ]}
+            />
+          )}
+
+          {section === 'updates' && (
+            <NetworkContentSection
+              type="updates"
+              posts={articles || []}
+              editing={contentEditing?.type === 'updates' ? contentEditing.post : undefined}
+              busy={contentBusy}
+              canPost={canPostUpdate}
+              canEditPost={(p) => netIsAdmin || p.authorEmail === netUser.email}
+              onNew={() => setContentEditing({ type: 'updates', post: {} })}
+              onEdit={(post) => setContentEditing({ type: 'updates', post })}
+              onCancel={() => setContentEditing(null)}
+              onSave={(form, file) => saveContent('updates', form, file)}
+              onDelete={(post) => deleteContent('updates', post)}
+              extraFields={[{ key: 'category', label: 'Category' }]}
+            />
+          )}
+
+          {section === 'directory' && (
+          <>
           {/* Directory */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
             <span className="ncr-label">
@@ -722,6 +917,8 @@ export default function NetworkScreen({
               </div>
             );
           })}
+          </>
+          )}
           </>
           )}
         </div>
