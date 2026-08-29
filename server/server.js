@@ -552,10 +552,24 @@ const sanitizeError = (error, req) => {
 // Health check endpoint - simple and fast
 app.get('/health', (req, res) => {
   // Just return healthy - don't check database (it's slow and causes timeouts)
-  res.json({ 
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
+});
+
+// Touches the database — unlike /health, which deliberately doesn't.
+// Supabase's free tier auto-pauses a project after 7 days with no database
+// activity; a scheduled ping here (see .github/workflows/keepalive.yml)
+// keeps it active. No auth needed — it returns nothing sensitive.
+app.get('/api/keepalive', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (error) {
+    logger.error('Keepalive query failed:', error.message);
+    res.status(503).json({ status: 'error' });
+  }
 });
 
 // Root route
