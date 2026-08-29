@@ -527,6 +527,22 @@ const loadGoogleSheetsSnapshot = async (): Promise<PointsData> => {
 
   const sheetData = await fetchGoogleSheetData(sheetId, apiKey);
 
+  // The Checkpoint Tracker tab keeps every name ever entered — graduated
+  // brothers never get removed from the sheet itself. Cross-reference
+  // against the Postgres roster (which officers do keep current via
+  // Roster & Trees) to filter the live points list to active brothers only.
+  // Fails open (no filtering) if the roster fetch itself fails, so a
+  // backend hiccup doesn't blank out the points list entirely.
+  try {
+    const activeRoster = await tryFetchRosterFromBackend();
+    if (activeRoster.length > 0) {
+      const activeNames = new Set(activeRoster.map((p) => p.memberName.trim().toLowerCase()));
+      sheetData.members = sheetData.members.filter((m) => activeNames.has(m.memberName.trim().toLowerCase()));
+    }
+  } catch {
+    // Fail open — see comment above.
+  }
+
   const eventMap = new Map(sheetData.events.map((e) => [e.id, e]));
 
   const attendanceByMember = new Map<string, typeof sheetData.attendance>();
