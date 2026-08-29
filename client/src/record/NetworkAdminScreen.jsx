@@ -10,6 +10,7 @@ import NetworkApprovals from './NetworkApprovals';
 import NetworkRoles from './NetworkRoles';
 import NetworkDirectory from './NetworkDirectory';
 import NetworkMentorship from './NetworkMentorship';
+import NetworkMessagesAdmin from './NetworkMessagesAdmin';
 
 const svc = () => import('./networkService');
 
@@ -23,25 +24,28 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
   const [directory, setDirectory] = useState({ alumni: [], brothers: [] });
   const [pairings, setPairings] = useState([]);
   const [checkIns, setCheckIns] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
       const api = await svc();
-      const [users, roleMap, alumniSnap, brothersSnap, pairingsSnap, checkInsSnap] = await Promise.all([
+      const [users, roleMap, alumniSnap, brothersSnap, pairingsSnap, checkInsSnap, messagesSnap] = await Promise.all([
         api.loadApprovedUsers(),
         api.loadRoleCollections(),
         api.loadAlumniDirectory(),
         api.loadBrotherDirectory(),
         api.loadPairings(),
         api.loadCheckInRequests(),
+        api.loadAllMessages(),
       ]);
       setApprovedUsers(users);
       setRoles(roleMap);
       setDirectory({ alumni: alumniSnap, brothers: brothersSnap });
       setPairings(pairingsSnap);
       setCheckIns(checkInsSnap);
+      setMessages(messagesSnap);
     } catch (err) {
       notify(`Could not load network admin data: ${err.message || err}`, 'error');
     } finally {
@@ -153,6 +157,7 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
               {tabBtn('roles', 'Roles')}
               {tabBtn('directory', 'Directory')}
               {tabBtn('mentorship', 'Mentorship')}
+              {tabBtn('messages', 'Messages')}
             </div>
             {loading && (
               <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ncr-faint)' }}>
@@ -165,6 +170,7 @@ export default function NetworkAdminScreen({ netUser, onBack, notify }) {
           {tab === 'roles' && <NetworkRoles approvedUsers={approvedUsers} roles={roles} run={run} />}
           {tab === 'directory' && <NetworkDirectory directory={directory} run={run} />}
           {tab === 'mentorship' && <NetworkMentorship pairings={pairings} checkIns={checkIns} netUser={netUser} run={run} />}
+          {tab === 'messages' && <NetworkMessagesAdmin approvedUsers={approvedUsers} messages={messages} netUser={netUser} run={run} />}
         </>
       )}
     </div>

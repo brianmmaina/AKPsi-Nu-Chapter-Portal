@@ -23,6 +23,33 @@ const MENTOR_STEPS = [
   { no: 'III', title: 'Shared Workspace', desc: 'Meet for referrals, mock interviews, and resume reviews.', current: true },
 ];
 
+function MessageReplyBox({ onSend, busy }) {
+  const [text, setText] = useState('');
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--ncr-rule)' }} onClick={(e) => e.stopPropagation()}>
+      <textarea
+        className="ncr-textarea"
+        rows={2}
+        placeholder="Write a reply…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        style={{ marginBottom: 8 }}
+      />
+      <button
+        className="ncr-link-btn"
+        disabled={busy || !text.trim()}
+        onClick={() => {
+          onSend(text);
+          setText('');
+        }}
+        style={{ fontSize: 11 }}
+      >
+        Send reply
+      </button>
+    </div>
+  );
+}
+
 export default function NetworkScreen({
   M,
   netUser,
@@ -63,6 +90,10 @@ export default function NetworkScreen({
   const [contentEditing, setContentEditing] = useState(null); // { type, post } or null
   const [contentBusy, setContentBusy] = useState(false);
   const [deiCategory, setDeiCategory] = useState('overview');
+  const [messages, setMessages] = useState(null);
+  const [templates, setTemplates] = useState(null);
+  const [templateDraft, setTemplateDraft] = useState({ name: '', subject: '', body: '' });
+  const [messagesBusy, setMessagesBusy] = useState(false);
 
   useEffect(() => {
     if (pendingApproval || !netUser?.email) return;
@@ -84,17 +115,88 @@ export default function NetworkScreen({
         const posts = await api.loadHomepageArticles();
         if (!cancelled) setArticles(posts);
       }
+      if (section === 'messages' && messages === null) {
+        const rows = await api.loadMyMessages(netUser.email);
+        if (!cancelled) setMessages(rows);
+      }
+      if (section === 'templates' && templates === null) {
+        const t = await api.loadMyOutreachTemplates(netUser.email);
+        if (!cancelled) setTemplates(t);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [section, pendingApproval, netUser, deiPosts, jobPosts, articles]);
+  }, [section, pendingApproval, netUser, deiPosts, jobPosts, articles, messages, templates]);
 
   const reloadSection = async () => {
     const api = await svc();
     if (section === 'dei') setDeiPosts(await api.loadDeiPosts());
     if (section === 'jobs') setJobPosts(await api.loadJobPosts());
     if (section === 'updates') setArticles(await api.loadHomepageArticles());
+    if (section === 'messages') setMessages(await api.loadMyMessages(netUser.email));
+  };
+
+  const replyMessage = async (id, replyText) => {
+    if (!replyText.trim()) return;
+    setMessagesBusy(true);
+    try {
+      const api = await svc();
+      await api.replyToMessage(id, replyText.trim(), netUser.email);
+      await reloadSection();
+      notify('Reply sent.');
+    } catch (err) {
+      notify(`Could not send reply: ${err.message || err}`, 'error');
+    } finally {
+      setMessagesBusy(false);
+    }
+  };
+
+  const openMessage = async (msg) => {
+    if (msg.status === 'unread') {
+      try {
+        const api = await svc();
+        await api.markMessageRead(msg.id);
+        setMessages((rows) => rows.map((r) => (r.id === msg.id ? { ...r, status: 'read' } : r)));
+      } catch {
+        /* non-critical */
+      }
+    }
+  };
+
+  const saveTemplate = async () => {
+    if (!templateDraft.name.trim()) return;
+    const next = { ...(templates || {}), [templateDraft.name.trim()]: { subject: templateDraft.subject, body: templateDraft.body } };
+    try {
+      const api = await svc();
+      await api.saveMyOutreachTemplates(netUser.email, next);
+      setTemplates(next);
+      setTemplateDraft({ name: '', subject: '', body: '' });
+      notify('Template saved.');
+    } catch (err) {
+      notify(`Could not save template: ${err.message || err}`, 'error');
+    }
+  };
+
+  const deleteTemplate = async (name) => {
+    const next = { ...(templates || {}) };
+    delete next[name];
+    try {
+      const api = await svc();
+      await api.saveMyOutreachTemplates(netUser.email, next);
+      setTemplates(next);
+    } catch (err) {
+      notify(`Could not delete template: ${err.message || err}`, 'error');
+    }
+  };
+
+  const firstTemplate = templates ? Object.values(templates)[0] : null;
+  const mailtoFor = (email) => {
+    const params = new URLSearchParams();
+    if (firstTemplate?.subject) params.set('subject', firstTemplate.subject);
+    if (firstTemplate?.body) params.set('body', firstTemplate.body);
+    const qs = params.toString();
+    return `mailto:${email}${qs ? `?${qs}` : ''}`;
   };
 
   const netIsAdmin = (netApprovedUser?.role || '').toLowerCase() === 'admin';
@@ -593,6 +695,8 @@ export default function NetworkScreen({
               { key: 'dei', label: 'DEI Hub' },
               { key: 'jobs', label: 'Job Board' },
               { key: 'updates', label: 'Family Updates' },
+              { key: 'messages', label: 'Messages' },
+              { key: 'templates', label: 'My Templates' },
             ].map((s) => (
               <button
                 key={s.key}
@@ -693,6 +797,64 @@ export default function NetworkScreen({
               onDelete={(post) => deleteContent('updates', post)}
               extraFields={[{ key: 'category', label: 'Category' }]}
             />
+          )}
+
+          {section === 'messages' && (
+            <div>
+              {(messages || []).length === 0 && (
+                <div style={{ color: 'var(--ncr-muted)', fontFamily: 'var(--ncr-ui)', fontSize: 12.5 }}>
+                  No messages from the chapter yet.
+                </div>
+              )}
+              {(messages || []).map((msg) => (
+                <div
+                  key={msg.id}
+                  className="ncr-card"
+                  style={{ padding: '16px 22px', marginBottom: 12, borderLeft: `4px solid ${msg.status === 'unread' ? 'var(--ncr-crimson)' : 'var(--ncr-rule)'}` }}
+                  onClick={() => openMessage(msg)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14 }}>
+                    <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 17, fontWeight: 700, color: 'var(--ncr-ink)' }}>{msg.subject}</div>
+                    <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.1em', textTransform: 'capitalize', color: 'var(--ncr-muted)' }}>{msg.status}</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 11.5, color: 'var(--ncr-faint)', marginTop: 2 }}>From {msg.senderName || msg.senderEmail}</div>
+                  <p style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13.5, color: 'var(--ncr-ink-mid)', lineHeight: 1.55, margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{msg.body}</p>
+                  {msg.replyText && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--ncr-rule)' }}>
+                      <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 10.5, letterSpacing: '.1em', color: 'var(--ncr-faint)', marginBottom: 4 }}>Your reply</div>
+                      <p style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', margin: 0, whiteSpace: 'pre-wrap' }}>{msg.replyText}</p>
+                    </div>
+                  )}
+                  {!msg.replyText && (
+                    <MessageReplyBox onSend={(text) => replyMessage(msg.id, text)} busy={messagesBusy} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {section === 'templates' && (
+            <div style={{ maxWidth: 560 }}>
+              <p style={{ fontFamily: 'var(--ncr-ui)', fontSize: 13, color: 'var(--ncr-ink-mid)', marginBottom: 20 }}>
+                Save a reusable subject/body — the directory's Email action will pre-fill from your first saved template.
+              </p>
+              {Object.entries(templates || {}).map(([name, t]) => (
+                <div key={name} className="ncr-card" style={{ padding: '14px 20px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--ncr-serif)', fontSize: 15, fontWeight: 700, color: 'var(--ncr-ink)' }}>{name}</div>
+                    <div style={{ fontFamily: 'var(--ncr-ui)', fontSize: 12, color: 'var(--ncr-ink-mid)', marginTop: 4 }}>{t.subject}</div>
+                  </div>
+                  <button className="ncr-link-btn" onClick={() => deleteTemplate(name)} style={{ color: 'var(--ncr-crimson)', fontSize: 11 }}>Delete</button>
+                </div>
+              ))}
+              <div style={{ marginTop: 20, borderTop: '1px solid var(--ncr-rule)', paddingTop: 18 }}>
+                <div className="ncr-field-label" style={{ marginBottom: 10 }}>New Template</div>
+                <input className="ncr-input" placeholder="Template name" value={templateDraft.name} onChange={(e) => setTemplateDraft({ ...templateDraft, name: e.target.value })} style={{ marginBottom: 10 }} />
+                <input className="ncr-input" placeholder="Subject" value={templateDraft.subject} onChange={(e) => setTemplateDraft({ ...templateDraft, subject: e.target.value })} style={{ marginBottom: 10 }} />
+                <textarea className="ncr-textarea" rows={4} placeholder="Body" value={templateDraft.body} onChange={(e) => setTemplateDraft({ ...templateDraft, body: e.target.value })} style={{ marginBottom: 10 }} />
+                <button className="ncr-btn-ghost" onClick={saveTemplate} disabled={!templateDraft.name.trim()}>Save Template</button>
+              </div>
+            </div>
           )}
 
           {section === 'directory' && (
@@ -911,6 +1073,11 @@ export default function NetworkScreen({
                   {a.linkedin && (
                     <a className="ncr-out-link" href={a.linkedin} target="_blank" rel="noopener noreferrer">
                       LinkedIn ↗
+                    </a>
+                  )}
+                  {a.email && (
+                    <a className="ncr-out-link" href={mailtoFor(a.email)}>
+                      Email
                     </a>
                   )}
                 </span>

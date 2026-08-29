@@ -511,3 +511,80 @@ export async function saveHomepageArticle(article, imageFile) {
 export async function deleteHomepageArticle(id) {
   await deleteDoc(doc(db, 'homepageArticles', id));
 }
+
+// ---------------------------------------------------------------------------
+// Messaging (admin-to-member, one-way) + personal outreach templates.
+// ---------------------------------------------------------------------------
+
+/** Admin-only — the portal's own sendPortalMessage throws for non-admins too. */
+export async function sendPortalMessage({ recipientEmail, recipientName, subject, body, senderEmail, senderName }) {
+  const recipient = (recipientEmail || '').toLowerCase().trim();
+  if (!recipient) throw new Error('Recipient email is required.');
+  await addDoc(collection(db, 'portalMessages'), {
+    recipientEmail: recipient,
+    recipientName: recipientName || '',
+    recipientRole: '',
+    pairingId: '',
+    subject: subject || 'Portal message',
+    body: body || '',
+    status: 'unread',
+    senderEmail: (senderEmail || '').toLowerCase().trim(),
+    senderName: senderName || 'VPAR',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/** This user's own inbox — recipientEmail is a flat field, so a real query works here. */
+export async function loadMyMessages(email) {
+  const snap = await getDocs(
+    query(collection(db, 'portalMessages'), where('recipientEmail', '==', (email || '').toLowerCase())),
+  );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+/** The admin inbox — every message across all recipients. */
+export async function loadAllMessages() {
+  const snap = await getDocs(collection(db, 'portalMessages'));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+export async function replyToMessage(id, replyText, authorEmail) {
+  await setDoc(
+    doc(db, 'portalMessages', id),
+    {
+      replyText,
+      replyAuthorEmail: (authorEmail || '').toLowerCase().trim(),
+      repliedAt: new Date().toISOString(),
+      status: 'replied',
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  );
+}
+
+export async function markMessageRead(id) {
+  await setDoc(doc(db, 'portalMessages', id), { status: 'read', updatedAt: new Date().toISOString() }, { merge: true });
+}
+
+export async function deleteMessage(id) {
+  await deleteDoc(doc(db, 'portalMessages', id));
+}
+
+/** Free-form named subject/body templates, one doc per user. */
+export async function loadMyOutreachTemplates(email) {
+  const snap = await getDoc(doc(db, 'outreachTemplates', emailDocId(email)));
+  return snap.exists() ? snap.data().templates || {} : {};
+}
+
+export async function saveMyOutreachTemplates(email, templates) {
+  await setDoc(
+    doc(db, 'outreachTemplates', emailDocId(email)),
+    { ownerEmail: (email || '').toLowerCase().trim(), templates, updatedAt: new Date().toISOString() },
+    { merge: true },
+  );
+}
