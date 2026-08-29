@@ -73,6 +73,8 @@ export default function NetworkScreen({
   const [dirField, setDirField] = useState('All');
   const [dirLocation, setDirLocation] = useState('All');
   const [dirYear, setDirYear] = useState('All');
+  const [dirPage, setDirPage] = useState(0);
+  const DIR_PAGE_SIZE = 25;
   const signedIn = !!netUser;
   // Signed in with Google, but no approvedUsers doc — the roster/mentorship
   // reads are gated to approved accounts server-side, so there's nothing to
@@ -308,7 +310,15 @@ export default function NetworkScreen({
     setDirField('All');
     setDirLocation('All');
     setDirYear('All');
+    setDirPage(0);
   };
+
+  const dirPageCount = Math.max(1, Math.ceil(alumni.length / DIR_PAGE_SIZE));
+  const dirPageClamped = Math.min(dirPage, dirPageCount - 1);
+  const pagedAlumni = alumni.slice(dirPageClamped * DIR_PAGE_SIZE, (dirPageClamped + 1) * DIR_PAGE_SIZE);
+  useEffect(() => {
+    setDirPage(0);
+  }, [dq, filter, dirField, dirLocation, dirYear, dirSource]);
 
   const signIn = async () => {
     if (busy) return;
@@ -689,35 +699,58 @@ export default function NetworkScreen({
           </div>
 
           {/* Section tabs */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderBottom: '1.5px solid var(--ncr-ink)', marginBottom: 26, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', borderBottom: '1.5px solid var(--ncr-ink)', marginBottom: 26, paddingBottom: 0 }}>
             {[
-              { key: 'directory', label: 'Directory' },
-              { key: 'dei', label: 'DEI Hub' },
-              { key: 'jobs', label: 'Job Board' },
-              { key: 'updates', label: 'Family Updates' },
-              { key: 'messages', label: 'Messages' },
-              { key: 'templates', label: 'My Templates' },
-            ].map((s) => (
-              <button
-                key={s.key}
-                onClick={() => setSection(s.key)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: '10px 18px',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--ncr-ui)',
-                  fontSize: 11,
-                  letterSpacing: '.14em',
-                  textTransform: 'uppercase',
-                  color: section === s.key ? 'var(--ncr-ink)' : 'var(--ncr-muted)',
-                  borderBottom: `2px solid ${section === s.key ? 'var(--ncr-crimson)' : 'transparent'}`,
-                  marginBottom: -1.5,
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
+              { key: 'directory', label: 'Directory', count: alumniSource.length },
+              { key: 'dei', label: 'DEI Hub', count: deiPosts?.length },
+              { key: 'jobs', label: 'Job Board', count: jobPosts?.length },
+              { key: 'updates', label: 'Family Updates', count: articles?.length },
+              { key: 'messages', label: 'Messages', count: (messages || []).filter((m) => m.status === 'unread').length || undefined },
+              { key: 'templates', label: 'My Templates', count: Object.keys(templates || {}).length || undefined },
+            ].map((s) => {
+              const active = section === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSection(s.key)}
+                  style={{
+                    background: active ? 'var(--ncr-ink)' : 'transparent',
+                    border: 'none',
+                    padding: '11px 18px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--ncr-ui)',
+                    fontSize: 11.5,
+                    fontWeight: active ? 700 : 400,
+                    letterSpacing: '.14em',
+                    textTransform: 'uppercase',
+                    color: active ? 'var(--ncr-paper-text)' : 'var(--ncr-muted)',
+                    borderBottom: `3px solid ${active ? 'var(--ncr-crimson)' : 'transparent'}`,
+                    marginBottom: -1.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    transition: 'background .12s, color .12s',
+                  }}
+                >
+                  {s.label}
+                  {typeof s.count === 'number' && s.count > 0 && (
+                    <span
+                      style={{
+                        background: active ? 'var(--ncr-crimson)' : 'rgba(43,35,24,.12)',
+                        color: active ? '#fff' : 'var(--ncr-ink)',
+                        borderRadius: 10,
+                        padding: '1px 7px',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: 0,
+                      }}
+                    >
+                      {s.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {section === 'dei' && (
@@ -1004,7 +1037,7 @@ export default function NetworkScreen({
               No alumni match these filters.
             </div>
           )}
-          {alumni.map((a, i) => {
+          {pagedAlumni.map((a, i) => {
             const indColor = IND_COLOR[a.industry] || IND_FALLBACK;
             return (
               <div
@@ -1084,6 +1117,29 @@ export default function NetworkScreen({
               </div>
             );
           })}
+          {alumni.length > DIR_PAGE_SIZE && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 24 }}>
+              <button
+                className="ncr-btn-ghost"
+                onClick={() => setDirPage((p) => Math.max(0, p - 1))}
+                disabled={dirPageClamped === 0}
+                style={{ padding: '6px 16px', fontSize: 10.5 }}
+              >
+                ← Prev
+              </button>
+              <span style={{ fontFamily: 'var(--ncr-ui)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ncr-muted)' }}>
+                Page {dirPageClamped + 1} of {dirPageCount}
+              </span>
+              <button
+                className="ncr-btn-ghost"
+                onClick={() => setDirPage((p) => Math.min(dirPageCount - 1, p + 1))}
+                disabled={dirPageClamped >= dirPageCount - 1}
+                style={{ padding: '6px 16px', fontSize: 10.5 }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
           </>
           )}
           </>
