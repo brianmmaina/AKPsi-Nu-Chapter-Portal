@@ -339,13 +339,23 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
                 </button>
               )}
             </div>
-            <div style={{ borderTop: `1.5px solid ${fam.accent}` }}>
+            <div
+              style={{
+                borderTop: `1.5px solid ${fam.accent}`,
+                background: 'var(--ncr-well)',
+                border: '1px solid rgba(43,35,24,.14)',
+                borderTopWidth: 1.5,
+                borderTopColor: fam.accent,
+                maxHeight: 640,
+                overflowY: 'auto',
+              }}
+            >
               {register.map((m) => (
                 <button
                   key={m.id}
                   className="ncr-row-btn"
                   onClick={() => onOpenBrother(m.id)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 2px', borderBottom: '1px solid var(--ncr-rule-faint)' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--ncr-rule-faint)' }}
                 >
                   <span
                     style={{
