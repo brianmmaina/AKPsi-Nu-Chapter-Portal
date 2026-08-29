@@ -253,24 +253,53 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
                     height: layout.height,
                   }}
                 >
-                  {layout.edges.map((ed, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        position: 'absolute',
-                        left: ed.left,
-                        top: ed.top,
-                        width: ed.width,
-                        height: 1.5,
-                        background: hexA(fam.accent, 0.45),
-                        transform: `rotate(${ed.angle}deg)`,
-                        transformOrigin: '0 0',
-                      }}
-                    />
-                  ))}
+                  {layout.edges.map((ed, i) => {
+                    const rad = (ed.angle * Math.PI) / 180;
+                    const endX = ed.left + ed.width * Math.cos(rad);
+                    const endY = ed.top + ed.width * Math.sin(rad);
+                    return (
+                      <div key={i}>
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: ed.left,
+                            top: ed.top,
+                            width: ed.width,
+                            height: 2,
+                            background: hexA(fam.accent, 0.55),
+                            transform: `rotate(${ed.angle}deg)`,
+                            transformOrigin: '0 0',
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: ed.left - 2,
+                            top: ed.top - 2,
+                            width: 5,
+                            height: 5,
+                            borderRadius: '50%',
+                            background: fam.accent,
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: endX - 2,
+                            top: endY - 2,
+                            width: 5,
+                            height: 5,
+                            borderRadius: '50%',
+                            background: fam.accent,
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                   {layout.nodes.map((n) => (
                     <button
                       key={n.id}
+                      className="ncr-lift"
                       onClick={() => onOpenBrother(n.id)}
                       style={{
                         position: 'absolute',
@@ -281,7 +310,9 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
                         boxSizing: 'border-box',
                         background: n.isRoot ? fam.accent : 'var(--ncr-card-alt)',
                         border: n.isRoot ? `1.5px solid ${fam.accent}` : '1px solid var(--ncr-rule)',
-                        padding: '6px 8px',
+                        borderTop: n.isRoot ? `1.5px solid ${fam.accent}` : `3px solid ${fam.accent}`,
+                        boxShadow: '0 4px 10px rgba(43,35,24,.12)',
+                        padding: n.isRoot ? '6px 8px' : '8px 8px 6px',
                         cursor: 'pointer',
                         textAlign: 'center',
                         overflow: 'hidden',
