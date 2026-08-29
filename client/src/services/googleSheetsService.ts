@@ -18,14 +18,29 @@ import type { AttendanceStatus } from '../utils/streakEngine';
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A single transient blip (momentary network hiccup, a brief rate-limit)
+// used to immediately drop straight to the sample-data fallback with no
+// retry at all. Two quick retries with backoff absorb that without masking
+// a real, persistent failure (still throws after 3 total attempts).
 async function fetchRange(sheetId: string, apiKey: string, range: string): Promise<string[][]> {
   const url = `${SHEETS_BASE}/${sheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Google Sheets API error ${res.status} fetching "${range}"`);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Google Sheets API error ${res.status} fetching "${range}"`);
+      }
+      const json = await res.json();
+      return (json.values as string[][] | undefined) ?? [];
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) await sleep(300 * 2 ** attempt);
+    }
   }
-  const json = await res.json();
-  return (json.values as string[][] | undefined) ?? [];
+  throw lastError;
 }
 
 const cell = (row: string[], idx: number): string => (row[idx] ?? '').trim();
