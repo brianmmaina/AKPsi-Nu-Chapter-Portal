@@ -23,12 +23,16 @@ export default function TreeScreen({ M, treeFamily, onSelectFamily, onOpenBrothe
     setZoom((z) => Math.min(2.5, Math.max(0.2, +(z + d).toFixed(2))));
   }, []);
 
-  // Fit the whole tree into the viewport width.
+  // Fit the tree to the viewport width, but never shrink below a readable
+  // size — a wide, many-generation tree stays legible and just scrolls/pans
+  // horizontally instead of cramming everything into view at once.
+  const MIN_READABLE_ZOOM = 0.75;
   const fitZoom = useCallback(() => {
     const el = boxRef.current;
     const available = el ? el.clientWidth - 34 : 0;
     if (!available || !layout.width) return 1;
-    return Math.min(1, Math.max(0.2, +(available / layout.width).toFixed(2)));
+    const fit = +(available / layout.width).toFixed(2);
+    return Math.min(1, Math.max(MIN_READABLE_ZOOM, fit));
   }, [layout.width]);
 
   const zoomReset = useCallback(() => {
